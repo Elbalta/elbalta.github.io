@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compras Grupales - Mercado Valledor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --secondary: #f9a825;
+            --background: #f8f5f0;
+            --card: #ffffff;
+            --text: #333333;
+            --border: #e0e0e0;
+            --success: #388e3c;
+            --warning: #f57c00;
+            --error: #d32f2f;
+            --admin-bg: #f0f7ff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="none" width="100" height="100"/><path fill="rgba(46, 125, 50, 0.03)" d="M0,0 L100,0 L100,100 L0,100 Z"/></svg>');
+            background-size: 300px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .logo i {
+            font-size: 2.8rem;
+            color: #fff;
+        }
+        
+        .logo h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .logo p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .admin-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--secondary);
+            color: #333;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 25px;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 70vh;
+        }
+        
+        /* Estilos para formulario de solicitante */
+        .solicitante-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #444;
+            font-size: 1.1rem;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            background: #f9f9f9;
+            transition: all 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+            background: white;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .product-card {
+            border: 1px solid #eaeaea;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: rgba(46, 125, 50, 0.3);
+        }
+        
+        .product-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 10px 0 5px;
+            color: #333;
+        }
+        
+        .product-info {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(to right, var(--secondary), #e69100);
+        }
+        
+        .btn-admin {
+            background: linear-gradient(to right, #1565c0, #0d47a1);
+        }
+        
+        /* Panel de administrador */
+        .admin-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(46, 125, 50, 0.15);
+        }
+        
+        .admin-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .orders-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 25px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .orders-table th, .orders-table td {
+            padding: 15px 18px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .orders-table th {
+            background-color: rgba(46, 125, 50, 0.15);
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+        }
+        
+        .orders-table tr {
+            transition: background-color 0.2s;
+        }
+        
+        .orders-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .orders-table tr:hover {
+            background-color: rgba(46, 125, 50, 0.05);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .status-pendiente {
+            background-color: #ffecb3;
+            color: #f57c00;
+        }
+        
+        .status-completado {
+            background-color: #c8e6c9;
+            color: #388e3c;
+        }
+        
+        .action-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-right: 8px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+        
+        .btn-complete {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 3px 8px rgba(46, 125, 50, 0.3);
+        }
+        
+        .btn-delete {
+            background: linear-gradient(to right, var(--error), #b71c1c);
+            color: white;
+            box-shadow: 0 3px 8px rgba(211, 47, 47, 0.3);
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+        }
+        
+        .product-quantity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        
+        .quantity-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quantity-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .quantity-input {
+            width: 80px; /* Más espacio para números */
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding: 8px 12px; /* Más padding para mejor visualización */
+        }
+        
+        .notification {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            padding: 18px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transform: translateX(120%);
+            transition: transform 0.4s ease;
+            max-width: 400px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: rgba(56, 142, 60, 0.9);
+            border-left: 5px solid #2e7d32;
+        }
+        
+        .notification.error {
+            background: rgba(211, 47, 47, 0.9);
+            border-left: 5px solid #b71c1c;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 1rem;
+            margin-top: 50px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(5px);
+        }
+        
+        .summary-card {
+            background: var(--card);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid rgba(46, 125, 50, 0.1);
+        }
+        
+        .summary-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .summary-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+            background: rgba(46, 125, 50, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .summary-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+        
+        .admin-login-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .admin-login-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .login-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+            position: relative;
+        }
+        
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        /* Modal para agregar pedido */
+        .add-order-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .add-order-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .stat-title {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .compras-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .compras-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 800px;
+            width: 90%;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+            position: relative;
+        }
+        
+        .compras-container h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--primary);
+        }
+        
+        .compras-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .compras-table th, .compras-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .compras-table th {
+            background-color: rgba(46, 125, 50, 0.1);
+            font-weight: 600;
+        }
+        
+        .compras-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .compras-table tr:hover {
+            background-color: rgba(46, 125, 50, 0.05);
+        }
+        
+        @media (max-width: 768px) {
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-controls {
+                flex-direction: column;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .solicitante-form {
+                padding: 20px;
+            }
+            
+            .orders-table th, .orders-table td {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            
+            .action-btn {
+                padding: 6px 10px;
+                font-size: 0.85rem;
+            }
+            
+            .quantity-input {
+                width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-shopping-basket"></i>
+            <div>
+                <h1>Compras Grupales</h1>
+                <p>Mercado Valledor - Entregas los fines de semana</p>
+            </div>
+        </div>
+        <a href="#" id="admin-login-link" class="admin-login-btn">
+            <i class="fas fa-user-shield"></i> Acceso administrador
+        </a>
+    </header>
+    
+    <div class="container">
+        <div class="app-container">
+            <!-- Formulario para solicitante -->
+            <div class="solicitante-form" id="solicitante-form">
+                <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary);">
+                    <i class="fas fa-cart-plus"></i> Realiza tu pedido
+                </h2>
+                
+                <div class="form-group">
+                    <label for="nombre"><i class="fas fa-user"></i> Nombre completo</label>
+                    <input type="text" id="nombre" required placeholder="Juan Pérez">
+                </div>
+                
+                <div class="form-group">
+                    <label for="telefono"><i class="fas fa-phone"></i> Teléfono</label>
+                    <input type="tel" id="telefono" required placeholder="+56912345678">
+                </div>
+                
+                <h3 style="margin: 25px 0 15px; color: var(--primary);">
+                    <i class="fas fa-apple-alt"></i> Selecciona los productos:
+                </h3>
+                
+                <div class="product-grid">
+                    <!-- Palta -->
+                    <div class="product-card">
+                        <div class="product-name">Paltas</div>
+                        <div class="product-info">Precio por kilo: $3.500</div>
+                        <div class="form-group">
+                            <label for="paltas">Kilos:</label>
+                            <div class="product-quantity">
+                                <button type="button" class="quantity-btn" data-target="paltas" data-action="decrease">-</button>
+                                <input type="number" id="paltas" min="0" step="1" value="0" class="quantity-input">
+                                <button type="button" class="quantity-btn" data-target="paltas" data-action="increase">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Papa -->
+                    <div class="product-card">
+                        <div class="product-name">Papas</div>
+                        <div class="product-info">Saco de 25 kilos o sueltas</div>
+                        <div class="form-group">
+                            <label for="sacos-papas">Sacos:</label>
+                            <div class="product-quantity">
+                                <button type="button" class="quantity-btn" data-target="sacos-papas" data-action="decrease">-</button>
+                                <input type="number" id="sacos-papas" min="0" step="1" value="0" class="quantity-input">
+                                <button type="button" class="quantity-btn" data-target="sacos-papas" data-action="increase">+</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="kilos-papas">Kilos sueltos:</label>
+                            <div class="product-quantity">
+                                <button type="button" class="quantity-btn" data-target="kilos-papas" data-action="decrease">-</button>
+                                <input type="number" id="kilos-papas" min="0" step="1" value="0" class="quantity-input">
+                                <button type="button" class="quantity-btn" data-target="kilos-papas" data-action="increase">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Limón -->
+                    <div class="product-card">
+                        <div class="product-name">Limones</div>
+                        <div class="product-info">Precio por kilo: $1.800</div>
+                        <div class="form-group">
+                            <label for="limones">Kilos:</label>
+                            <div class="product-quantity">
+                                <button type="button" class="quantity-btn" data-target="limones" data-action="decrease">-</button>
+                                <input type="number" id="limones" min="0" step="1" value="0" class="quantity-input">
+                                <button type="button" class="quantity-btn" data-target="limones" data-action="increase">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lechuga -->
+                    <div class="product-card">
+                        <div class="product-name">Lechugas</div>
+                        <div class="product-info">Precio por unidad: $800</div>
+                        <div class="form-group">
+                            <label for="lechugas">Unidades:</label>
+                            <div class="product-quantity">
+                                <button type="button" class="quantity-btn" data-target="lechugas" data-action="decrease">-</button>
+                                <input type="number" id="lechugas" min="0" step="1" value="0" class="quantity-input">
+                                <button type="button" class="quantity-btn" data-target="lechugas" data-action="increase">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="comentarios"><i class="fas fa-comment"></i> Comentarios adicionales</label>
+                    <textarea id="comentarios" placeholder="Especificaciones especiales, alergias, etc." rows="3"></textarea>
+                </div>
+                
+                <button class="btn" id="enviar-pedido">
+                    <i class="fas fa-paper-plane"></i> Enviar Pedido
+                </button>
+            </div>
+            
+            <!-- Panel de administrador -->
+            <div class="admin-container" id="admin-container">
+                <div class="admin-header">
+                    <h2><i class="fas fa-user-shield"></i> Panel de Administrador</h2>
+                    <div class="admin-controls">
+                        <button class="btn btn-admin" id="add-order-btn">
+                            <i class="fas fa-plus-circle"></i> Agregar Pedido
+                        </button>
+                        <button class="btn btn-admin" id="compras-btn">
+                            <i class="fas fa-shopping-cart"></i> Ver Resumen de Compra
+                        </button>
+                        <button class="btn btn-admin" id="export-btn">
+                            <i class="fas fa-file-export"></i> Exportar
+                        </button>
+                        <button class="btn btn-admin" id="refresh-btn">
+                            <i class="fas fa-sync"></i> Actualizar
+                        </button>
+                        <button class="btn btn-admin" id="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Salir
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-title">Total de Pedidos</div>
+                        <div class="stat-value" id="total-pedidos">0</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-title">Pedidos Pendientes</div>
+                        <div class="stat-value" id="pedidos-pendientes">0</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-title">Sacos de Papas</div>
+                        <div class="stat-value" id="total-sacos">0</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-title">Total Kilos Papas</div>
+                        <div class="stat-value" id="total-kilos-papas">0</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 20px 0 15px;">
+                    <i class="fas fa-list"></i> Lista de Pedidos
+                </h3>
+                
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Productos</th>
+                            <th>Comentarios</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-body">
+                        <!-- Los pedidos se insertarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Login -->
+    <div class="login-modal" id="login-modal">
+        <div class="login-container">
+            <span class="close-modal" id="close-login">&times;</span>
+            <h2><i class="fas fa-lock"></i> Acceso Administrador</h2>
+            <div class="form-group">
+                <label for="admin-email"><i class="fas fa-envelope"></i> Correo:</label>
+                <input type="email" id="admin-email" placeholder="admin@ejemplo.com">
+            </div>
+            <div class="form-group">
+                <label for="admin-password"><i class="fas fa-lock"></i> Contraseña:</label>
+                <input type="password" id="admin-password" placeholder="••••••••">
+            </div>
+            <button class="btn btn-admin" id="login-btn" style="width: 100%;">
+                <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+            </button>
+            <p id="login-error" style="color: #d32f2f; margin-top: 15px; display: none; text-align: center;">
+                <i class="fas fa-exclamation-circle"></i> Credenciales incorrectas
+            </p>
+            
+            <div style="margin-top: 30px; text-align: center; color: #666; background: #f9f9f9; padding: 15px; border-radius: 10px;">
+                <p>Para probar la aplicación:</p>
+                <p style="font-weight: 500; margin-top: 10px;"><i class="fas fa-user"></i> <strong>Email:</strong> admin@valledor.com</p>
+                <p style="font-weight: 500;"><i class="fas fa-key"></i> <strong>Contraseña:</strong> admin123</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para agregar pedido -->
+    <div class="add-order-modal" id="add-order-modal">
+        <div class="add-order-container">
+            <span class="close-modal" id="close-add-order">&times;</span>
+            <h2><i class="fas fa-cart-plus"></i> Agregar Nuevo Pedido</h2>
+            
+            <div class="form-group">
+                <label for="admin-nombre"><i class="fas fa-user"></i> Nombre completo</label>
+                <input type="text" id="admin-nombre" required placeholder="Juan Pérez">
+            </div>
+            
+            <div class="form-group">
+                <label for="admin-telefono"><i class="fas fa-phone"></i> Teléfono</label>
+                <input type="tel" id="admin-telefono" required placeholder="+56912345678">
+            </div>
+            
+            <h3 style="margin: 15px 0;"><i class="fas fa-apple-alt"></i> Productos:</h3>
+            
+            <div class="product-grid">
+                <!-- Palta -->
+                <div class="product-card">
+                    <div class="product-name">Paltas</div>
+                    <div class="product-info">Precio por kilo: $3.500</div>
+                    <div class="form-group">
+                        <label for="admin-paltas">Kilos:</label>
+                        <div class="product-quantity">
+                            <button type="button" class="quantity-btn" data-target="admin-paltas" data-action="decrease">-</button>
+                            <input type="number" id="admin-paltas" min="0" step="1" value="0" class="quantity-input">
+                            <button type="button" class="quantity-btn" data-target="admin-paltas" data-action="increase">+</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Papa -->
+                <div class="product-card">
+                    <div class="product-name">Papas</div>
+                    <div class="product-info">Saco de 25 kilos o sueltas</div>
+                    <div class="form-group">
+                        <label for="admin-sacos-papas">Sacos:</label>
+                        <div class="product-quantity">
+                            <button type="button" class="quantity-btn" data-target="admin-sacos-papas" data-action="decrease">-</button>
+                            <input type="number" id="admin-sacos-papas" min="0" step="1" value="0" class="quantity-input">
+                            <button type="button" class="quantity-btn" data-target="admin-sacos-papas" data-action="increase">+</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-kilos-papas">Kilos sueltos:</label>
+                        <div class="product-quantity">
+                            <button type="button" class="quantity-btn" data-target="admin-kilos-papas" data-action="decrease">-</button>
+                            <input type="number" id="admin-kilos-papas" min="0" step="1" value="0" class="quantity-input">
+                            <button type="button" class="quantity-btn" data-target="admin-kilos-papas" data-action="increase">+</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Limón -->
+                <div class="product-card">
+                    <div class="product-name">Limones</div>
+                    <div class="product-info">Precio por kilo: $1.800</div>
+                    <div class="form-group">
+                        <label for="admin-limones">Kilos:</label>
+                        <div class="product-quantity">
+                            <button type="button" class="quantity-btn" data-target="admin-limones" data-action="decrease">-</button>
+                            <input type="number" id="admin-limones" min="0" step="1" value="0" class="quantity-input">
+                            <button type="button" class="quantity-btn" data-target="admin-limones" data-action="increase">+</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lechuga -->
+                <div class="product-card">
+                    <div class="product-name">Lechugas</div>
+                    <div class="product-info">Precio por unidad: $800</div>
+                    <div class="form-group">
+                        <label for="admin-lechugas">Unidades:</label>
+                        <div class="product-quantity">
+                            <button type="button" class="quantity-btn" data-target="admin-lechugas" data-action="decrease">-</button>
+                            <input type="number" id="admin-lechugas" min="0" step="1" value="0" class="quantity-input">
+                            <button type="button" class="quantity-btn" data-target="admin-lechugas" data-action="increase">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="admin-comentarios"><i class="fas fa-comment"></i> Comentarios</label>
+                <textarea id="admin-comentarios" placeholder="Comentarios adicionales" rows="3"></textarea>
+            </div>
+            
+            <button class="btn" id="admin-enviar-pedido">
+                <i class="fas fa-paper-plane"></i> Agregar Pedido
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal para resumen de compras -->
+    <div class="compras-modal" id="compras-modal">
+        <div class="compras-container">
+            <span class="close-modal" id="close-compras">&times;</span>
+            <h2><i class="fas fa-shopping-cart"></i> Resumen de Compra para el Mercado</h2>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-title">Total Paltas</div>
+                    <div class="stat-value" id="compras-paltas">0 kg</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Sacos de Papas</div>
+                    <div class="stat-value" id="compras-sacos">0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Papas Sueltas</div>
+                    <div class="stat-value" id="compras-papas-sueltas">0 kg</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Total Limones</div>
+                    <div class="stat-value" id="compras-limones">0 kg</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Total Lechugas</div>
+                    <div class="stat-value" id="compras-lechugas">0 unidades</div>
+                </div>
+            </div>
+            
+            <h3 style="margin: 20px 0 15px; text-align: center;">
+                <i class="fas fa-clipboard-list"></i> Detalle por Producto
+            </h3>
+            
+            <table class="compras-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Unidad</th>
+                    </tr>
+                </thead>
+                <tbody id="compras-body">
+                    <!-- Los detalles se insertarán aquí -->
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 25px; text-align: center;">
+                <button class="btn" id="print-compras">
+                    <i class="fas fa-print"></i> Imprimir Resumen
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-text">Pedido registrado con éxito!</span>
+    </div>
+    
+    <div class="footer">
+        <p>Sistema de pedidos grupales para Mercado Valledor | Entregas los fines de semana</p>
+        <p>© 2023 - Todos los derechos reservados</p>
+    </div>
+
+    <script>
+        // Datos iniciales
+        let pedidos = [];
+        let isAdmin = false;
+        let adminEmail = "";
+        
+        // Elementos DOM
+        const solicitanteForm = document.getElementById('solicitante-form');
+        const adminContainer = document.getElementById('admin-container');
+        const adminLoginLink = document.getElementById('admin-login-link');
+        const loginModal = document.getElementById('login-modal');
+        const closeLogin = document.getElementById('close-login');
+        const loginBtn = document.getElementById('login-btn');
+        const loginError = document.getElementById('login-error');
+        const logoutBtn = document.getElementById('logout-btn');
+        const enviarPedidoBtn = document.getElementById('enviar-pedido');
+        const ordersBody = document.getElementById('orders-body');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notification-text');
+        const exportBtn = document.getElementById('export-btn');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const totalPedidosElement = document.getElementById('total-pedidos');
+        const pedidosPendientesElement = document.getElementById('pedidos-pendientes');
+        const totalSacosElement = document.getElementById('total-sacos');
+        const totalKilosPapasElement = document.getElementById('total-kilos-papas');
+        const addOrderBtn = document.getElementById('add-order-btn');
+        const addOrderModal = document.getElementById('add-order-modal');
+        const closeAddOrderModal = document.getElementById('close-add-order');
+        const adminEnviarPedidoBtn = document.getElementById('admin-enviar-pedido');
+        const comprasBtn = document.getElementById('compras-btn');
+        const comprasModal = document.getElementById('compras-modal');
+        const closeComprasModal = document.getElementById('close-compras');
+        const comprasPaltas = document.getElementById('compras-paltas');
+        const comprasSacos = document.getElementById('compras-sacos');
+        const comprasPapasSueltas = document.getElementById('compras-papas-sueltas');
+        const comprasLimones = document.getElementById('compras-limones');
+        const comprasLechugas = document.getElementById('compras-lechugas');
+        const comprasBody = document.getElementById('compras-body');
+        const printComprasBtn = document.getElementById('print-compras');
+        
+        // Botones de cantidad
+        document.querySelectorAll('.quantity-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.dataset.target;
+                const action = btn.dataset.action;
+                const input = document.getElementById(target);
+                let value = parseInt(input.value) || 0;
+                
+                if (action === 'increase') {
+                    value += 1;
+                } else if (action === 'decrease' && value > 0) {
+                    value -= 1;
+                }
+                
+                input.value = value;
+            });
+        });
+        
+        // Enviar pedido (solicitante)
+        enviarPedidoBtn.addEventListener('click', () => {
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+            const paltas = parseInt(document.getElementById('paltas').value) || 0;
+            const sacosPapas = parseInt(document.getElementById('sacos-papas').value) || 0;
+            const kilosPapas = parseInt(document.getElementById('kilos-papas').value) || 0;
+            const limones = parseInt(document.getElementById('limones').value) || 0;
+            const lechugas = parseInt(document.getElementById('lechugas').value) || 0;
+            const comentarios = document.getElementById('comentarios').value;
+            
+            if (!nombre || !telefono) {
+                showNotification('Por favor completa tu nombre y teléfono', true);
+                return;
+            }
+            
+            if (paltas === 0 && sacosPapas === 0 && kilosPapas === 0 && limones === 0 && lechugas === 0) {
+                showNotification('Por favor selecciona al menos un producto', true);
+                return;
+            }
+            
+            // Crear nuevo pedido
+            const nuevoPedido = {
+                id: Date.now().toString(),
+                nombre, 
+                telefono,
+                paltas, 
+                sacosPapas, 
+                kilosPapas, 
+                limones, 
+                lechugas,
+                comentarios,
+                fecha: new Date().toLocaleString(),
+                estado: 'pendiente'
+            };
+            
+            pedidos.push(nuevoPedido);
+            
+            // Mostrar notificación
+            showNotification('Pedido registrado con éxito!');
+            
+            // Resetear formulario
+            document.getElementById('nombre').value = '';
+            document.getElementById('telefono').value = '';
+            document.getElementById('paltas').value = '0';
+            document.getElementById('sacos-papas').value = '0';
+            document.getElementById('kilos-papas').value = '0';
+            document.getElementById('limones').value = '0';
+            document.getElementById('lechugas').value = '0';
+            document.getElementById('comentarios').value = '';
+        });
+        
+        // Actualizar panel de administrador
+        function actualizarPanelAdmin() {
+            // Filtrar solo pedidos pendientes para el total
+            const pedidosPendientes = pedidos.filter(p => p.estado === 'pendiente');
+            const totalPedidos = pedidos.length;
+            const totalPendientes = pedidosPendientes.length;
+            
+            totalPedidosElement.textContent = totalPedidos;
+            pedidosPendientesElement.textContent = totalPendientes;
+            
+            // Calcular estadísticas de productos
+            let totalSacos = 0;
+            let totalKilosPapas = 0;
+            
+            pedidos.forEach(pedido => {
+                totalSacos += pedido.sacosPapas || 0;
+                totalKilosPapas += pedido.kilosPapas || 0;
+            });
+            
+            // Añadir kilos de los sacos
+            totalKilosPapas += totalSacos * 25;
+            
+            totalSacosElement.textContent = totalSacos;
+            totalKilosPapasElement.textContent = totalKilosPapas;
+            
+            // Actualizar tabla de pedidos
+            ordersBody.innerHTML = '';
+            
+            if (pedidos.length === 0) {
+                ordersBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #666;">No hay pedidos registrados</td></tr>';
+                return;
+            }
+            
+            // Ordenar pedidos: primero pendientes, luego completados
+            const pedidosOrdenados = [...pedidos].sort((a, b) => {
+                if (a.estado === 'pendiente' && b.estado === 'completado') return -1;
+                if (a.estado === 'completado' && b.estado === 'pendiente') return 1;
+                return 0;
+            });
+            
+            pedidosOrdenados.forEach(pedido => {
+                const row = document.createElement('tr');
+                
+                // Resaltar fila según estado
+                if (pedido.estado === 'completado') {
+                    row.style.opacity = '0.7';
+                }
+                
+                // Formatear productos
+                const productos = [];
+                if (pedido.paltas > 0) productos.push(`Paltas: ${pedido.paltas} kg`);
+                if (pedido.sacosPapas > 0) productos.push(`Sacos papas: ${pedido.sacosPapas}`);
+                if (pedido.kilosPapas > 0) productos.push(`Papas sueltas: ${pedido.kilosPapas} kg`);
+                if (pedido.limones > 0) productos.push(`Limones: ${pedido.limones} kg`);
+                if (pedido.lechugas > 0) productos.push(`Lechugas: ${pedido.lechugas}`);
+                
+                row.innerHTML = `
+                    <td>${pedido.nombre}</td>
+                    <td>${pedido.telefono}</td>
+                    <td>${productos.join('<br>')}</td>
+                    <td>${pedido.comentarios || '---'}</td>
+                    <td>
+                        <span class="status-badge status-${pedido.estado}">
+                            ${pedido.estado === 'pendiente' ? 'Pendiente' : 'Completado'}
+                        </span>
+                    </td>
+                    <td>
+                        ${pedido.estado === 'pendiente' ? 
+                            `<button class="action-btn btn-complete" data-id="${pedido.id}">
+                                <i class="fas fa-check"></i> Completar
+                            </button>` : ''}
+                        <button class="action-btn btn-delete" data-id="${pedido.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                ordersBody.appendChild(row);
+            });
+            
+            // Añadir event listeners a los botones de acción
+            document.querySelectorAll('.btn-complete').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const pedido = pedidos.find(p => p.id === id);
+                    if (pedido) {
+                        pedido.estado = 'completado';
+                        actualizarPanelAdmin();
+                        showNotification(`Pedido de ${pedido.nombre} marcado como completado`);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const index = pedidos.findIndex(p => p.id === id);
+                    if (index !== -1) {
+                        const nombre = pedidos[index].nombre;
+                        pedidos.splice(index, 1);
+                        actualizarPanelAdmin();
+                        showNotification(`Pedido de ${nombre} eliminado`);
+                    }
+                });
+            });
+        }
+        
+        // Calcular resumen de compras
+        function calcularResumenCompras() {
+            let totalPaltas = 0;
+            let totalSacos = 0;
+            let totalPapasSueltas = 0;
+            let totalLimones = 0;
+            let totalLechugas = 0;
+            
+            // Sumar solo pedidos pendientes
+            const pedidosPendientes = pedidos.filter(p => p.estado === 'pendiente');
+            
+            pedidosPendientes.forEach(pedido => {
+                totalPaltas += pedido.paltas || 0;
+                totalSacos += pedido.sacosPapas || 0;
+                totalPapasSueltas += pedido.kilosPapas || 0;
+                totalLimones += pedido.limones || 0;
+                totalLechugas += pedido.lechugas || 0;
+            });
+            
+            // Actualizar valores en el modal
+            comprasPaltas.textContent = totalPaltas + ' kg';
+            comprasSacos.textContent = totalSacos;
+            comprasPapasSueltas.textContent = totalPapasSueltas + ' kg';
+            comprasLimones.textContent = totalLimones + ' kg';
+            comprasLechugas.textContent = totalLechugas + ' unidades';
+            
+            // Actualizar tabla de resumen
+            comprasBody.innerHTML = '';
+            
+            const productos = [
+                { nombre: 'Paltas', cantidad: totalPaltas, unidad: 'kg' },
+                { nombre: 'Sacos de Papas', cantidad: totalSacos, unidad: 'unidades' },
+                { nombre: 'Papas Sueltas', cantidad: totalPapasSueltas, unidad: 'kg' },
+                { nombre: 'Limones', cantidad: totalLimones, unidad: 'kg' },
+                { nombre: 'Lechugas', cantidad: totalLechugas, unidad: 'unidades' }
+            ];
+            
+            productos.forEach(producto => {
+                if (producto.cantidad > 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${producto.nombre}</td>
+                        <td>${producto.cantidad}</td>
+                        <td>${producto.unidad}</td>
+                    `;
+                    comprasBody.appendChild(row);
+                }
+            });
+            
+            if (comprasBody.children.length === 0) {
+                comprasBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #666;">No hay productos para comprar</td></tr>';
+            }
+        }
+        
+        // Exportar a Excel
+        exportBtn.addEventListener('click', () => {
+            if (pedidos.length === 0) {
+                showNotification('No hay pedidos para exportar', true);
+                return;
+            }
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Nombre,Telefono,Paltas (kg),Sacos Papas,Kilos Papas,Limones (kg),Lechugas,Comentarios,Estado,Fecha\n";
+            
+            pedidos.forEach(pedido => {
+                const row = [
+                    `"${pedido.nombre}"`,
+                    pedido.telefono,
+                    pedido.paltas,
+                    pedido.sacosPapas,
+                    pedido.kilosPapas,
+                    pedido.limones,
+                    pedido.lechugas,
+                    `"${pedido.comentarios}"`,
+                    pedido.estado,
+                    pedido.fecha
+                ].join(',');
+                
+                csvContent += row + "\n";
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "pedidos_valledor.csv");
+            document.body.appendChild(link);
+            
+            link.click();
+            document.body.removeChild(link);
+        });
+        
+        // Botón de actualizar
+        refreshBtn.addEventListener('click', () => {
+            actualizarPanelAdmin();
+            showNotification('Lista de pedidos actualizada');
+        });
+        
+        // Mostrar notificación
+        function showNotification(message, isError = false) {
+            notificationText.textContent = message;
+            notification.className = 'notification ' + (isError ? 'error' : 'success');
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Abrir modal de login
+        adminLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginModal.style.display = 'flex';
+        });
+        
+        // Cerrar modal de login
+        closeLogin.addEventListener('click', () => {
+            loginModal.style.display = 'none';
+        });
+        
+        // Iniciar sesión como administrador
+        loginBtn.addEventListener('click', () => {
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            
+            // Credenciales válidas para este ejemplo
+            if (email === "admin@valledor.com" && password === "admin123") {
+                isAdmin = true;
+                adminEmail = email;
+                loginModal.style.display = 'none';
+                solicitanteForm.style.display = 'none';
+                adminContainer.style.display = 'block';
+                actualizarPanelAdmin();
+                showNotification('Sesión iniciada como administrador');
+            } else {
+                loginError.style.display = 'block';
+                setTimeout(() => {
+                    loginError.style.display = 'none';
+                }, 3000);
+            }
+        });
+        
+        // Cerrar sesión
+        logoutBtn.addEventListener('click', () => {
+            isAdmin = false;
+            adminEmail = "";
+            adminContainer.style.display = 'none';
+            solicitanteForm.style.display = 'block';
+            showNotification('Sesión cerrada');
+        });
+        
+        // Abrir modal para agregar pedido (admin)
+        addOrderBtn.addEventListener('click', () => {
+            addOrderModal.style.display = 'flex';
+        });
+        
+        // Cerrar modal de agregar pedido
+        closeAddOrderModal.addEventListener('click', () => {
+            addOrderModal.style.display = 'none';
+        });
+        
+        // Enviar pedido desde administrador
+        adminEnviarPedidoBtn.addEventListener('click', () => {
+            const nombre = document.getElementById('admin-nombre').value;
+            const telefono = document.getElementById('admin-telefono').value;
+            const paltas = parseInt(document.getElementById('admin-paltas').value) || 0;
+            const sacosPapas = parseInt(document.getElementById('admin-sacos-papas').value) || 0;
+            const kilosPapas = parseInt(document.getElementById('admin-kilos-papas').value) || 0;
+            const limones = parseInt(document.getElementById('admin-limones').value) || 0;
+            const lechugas = parseInt(document.getElementById('admin-lechugas').value) || 0;
+            const comentarios = document.getElementById('admin-comentarios').value;
+            
+            // Validar
+            if (!nombre || !telefono) {
+                showNotification('Por favor completa nombre y teléfono', true);
+                return;
+            }
+            
+            if (paltas === 0 && sacosPapas === 0 && kilosPapas === 0 && limones === 0 && lechugas === 0) {
+                showNotification('Por favor selecciona al menos un producto', true);
+                return;
+            }
+            
+            const nuevoPedido = {
+                id: Date.now().toString(),
+                nombre,
+                telefono,
+                paltas,
+                sacosPapas,
+                kilosPapas,
+                limones,
+                lechugas,
+                comentarios,
+                fecha: new Date().toLocaleString(),
+                estado: 'pendiente'
+            };
+            
+            pedidos.push(nuevoPedido);
+            actualizarPanelAdmin();
+            addOrderModal.style.display = 'none';
+            
+            // Resetear formulario
+            document.getElementById('admin-nombre').value = '';
+            document.getElementById('admin-telefono').value = '';
+            document.getElementById('admin-paltas').value = '0';
+            document.getElementById('admin-sacos-papas').value = '0';
+            document.getElementById('admin-kilos-papas').value = '0';
+            document.getElementById('admin-limones').value = '0';
+            document.getElementById('admin-lechugas').value = '0';
+            document.getElementById('admin-comentarios').value = '';
+            
+            showNotification('Pedido agregado con éxito');
+        });
+        
+        // Agregar event listeners para los botones de cantidad en el modal
+        document.querySelectorAll('#add-order-modal .quantity-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.dataset.target;
+                const action = btn.dataset.action;
+                const input = document.getElementById(target);
+                let value = parseInt(input.value) || 0;
+                
+                if (action === 'increase') {
+                    value += 1;
+                } else if (action === 'decrease' && value > 0) {
+                    value -= 1;
+                }
+                
+                input.value = value;
+            });
+        });
+        
+        // Mostrar resumen de compras
+        comprasBtn.addEventListener('click', () => {
+            calcularResumenCompras();
+            comprasModal.style.display = 'flex';
+        });
+        
+        // Cerrar modal de resumen de compras
+        closeComprasModal.addEventListener('click', () => {
+            comprasModal.style.display = 'none';
+        });
+        
+        // Imprimir resumen de compras
+        printComprasBtn.addEventListener('click', () => {
+            window.print();
+        });
+        
+        // Inicializar con datos de muestra
+        document.addEventListener('DOMContentLoaded', () => {
+            pedidos.push({
+                id: '1',
+                nombre: 'María González',
+                telefono: '+56987654321',
+                paltas: 3,
+                sacosPapas: 1,
+                kilosPapas: 2,
+                limones: 1,
+                lechugas: 3,
+                comentarios: 'Por favor, que las paltas estén maduras',
+                fecha: '2023-10-25 10:30',
+                estado: 'pendiente'
+            });
+            
+            pedidos.push({
+                id: '2',
+                nombre: 'Carlos Rodríguez',
+                telefono: '+56912348765',
+                paltas: 2,
+                sacosPapas: 0,
+                kilosPapas: 7,
+                limones: 2,
+                lechugas: 2,
+                comentarios: 'Limones grandes por favor',
+                fecha: '2023-10-24 15:45',
+                estado: 'pendiente'
+            });
+            
+            pedidos.push({
+                id: '3',
+                nombre: 'Ana Martínez',
+                telefono: '+56955443322',
+                paltas: 4,
+                sacosPapas: 0,
+                kilosPapas: 0,
+                limones: 2,
+                lechugas: 4,
+                comentarios: 'Entregar después de las 17:00 hrs',
+                fecha: '2023-10-23 09:15',
+                estado: 'completado'
+            });
+        });
+    </script>
+</body>
+</html>
