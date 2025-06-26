@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compras Grupales - Lazo Mercado </title>
+    <title>Compras Grupales - Lazo Mercado</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #2e7d32;
@@ -661,11 +662,6 @@
             animation: fadeIn 0.4s ease;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
         .price-manager {
             background: white;
             border-radius: 15px;
@@ -762,6 +758,195 @@
             transform: translateX(26px);
         }
         
+        /* Nuevos estilos para Finanzas y Modelo Canvas */
+        .finance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .finance-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .finance-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .finance-icon {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-right: 15px;
+        }
+        
+        .finance-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .finance-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+        
+        .finance-subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .progress-container {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-size: 0.8rem;
+            line-height: 20px;
+            transition: width 0.5s ease;
+        }
+        
+        .goal-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+        
+        /* Estilos para el modelo de negocio (Canvas) */
+        .canvas-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 15px;
+            height: 600px;
+        }
+        
+        .canvas-block {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            overflow: auto;
+            position: relative;
+        }
+        
+        .canvas-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .canvas-content {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            padding: 10px;
+            min-height: 120px;
+            outline: none;
+            border: 1px solid transparent;
+            transition: border-color 0.3s;
+        }
+        
+        .canvas-content:focus {
+            border-color: var(--primary);
+            border-radius: 8px;
+        }
+        
+        .edit-btn {
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 5px;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .edit-btn:hover {
+            background: rgba(46, 125, 50, 0.1);
+        }
+        
+        .canvas-block-1 { grid-area: 1 / 1 / 2 / 2; }
+        .canvas-block-2 { grid-area: 1 / 2 / 2 / 3; }
+        .canvas-block-3 { grid-area: 1 / 3 / 2 / 4; }
+        .canvas-block-4 { grid-area: 2 / 1 / 3 / 2; }
+        .canvas-block-5 { grid-area: 2 / 2 / 3 / 4; }
+        .canvas-block-6 { grid-area: 3 / 1 / 4 / 2; }
+        .canvas-block-7 { grid-area: 3 / 2 / 4 / 3; }
+        .canvas-block-8 { grid-area: 3 / 3 / 4 / 4; }
+        
+        .chart-container {
+            height: 250px;
+            position: relative;
+            margin-top: 20px;
+        }
+        
+        .canvas-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        /* Ajustes para responsive */
+        @media (max-width: 992px) {
+            .canvas-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                height: auto;
+            }
+            
+            .canvas-block {
+                grid-area: auto !important;
+                min-height: 180px;
+            }
+            
+            .admin-controls {
+                flex-direction: column;
+            }
+            
+            .admin-tabs {
+                flex-direction: column;
+            }
+            
+            .admin-tab {
+                padding: 12px;
+                text-align: left;
+                padding-left: 20px;
+            }
+        }
+        
         @media (max-width: 768px) {
             .product-grid {
                 grid-template-columns: 1fr;
@@ -815,6 +1000,32 @@
             .availability-toggle {
                 margin: 10px 0;
             }
+            
+            .finance-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .finance-card {
+                min-width: 100%;
+            }
+            
+            .chart-container {
+                height: 200px;
+            }
+            
+            .logo {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .logo i {
+                margin-bottom: 10px;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -824,7 +1035,7 @@
             <i class="fas fa-shopping-basket"></i>
             <div>
                 <h1>Compras Grupales</h1>
-                <p>Lazo Mercado  - Entregas a convenir</p>
+                <p>Lazo Mercado - Entregas a convenir</p>
             </div>
         </div>
         <a href="#" id="admin-login-link" class="admin-login-btn">
@@ -948,7 +1159,8 @@
                 <div class="admin-tabs">
                     <div class="admin-tab active" data-tab="pedidos">Pedidos</div>
                     <div class="admin-tab" data-tab="precios">Gestión de Productos</div>
-                    <div class="admin-tab" data-tab="resumen">Resumen</div>
+                    <div class="admin-tab" data-tab="finanzas">Finanzas</div>
+                    <div class="admin-tab" data-tab="modelo">Modelo de Negocio</div>
                 </div>
                 
                 <!-- Pestaña de Pedidos -->
@@ -996,7 +1208,7 @@
                     </table>
                 </div>
                 
-                <!-- Pestaña de Gestión de Productos (Modificada) -->
+                <!-- Pestaña de Gestión de Productos -->
                 <div class="admin-tab-content" id="precios-tab">
                     <div class="price-manager">
                         <h3><i class="fas fa-tags"></i> Gestión de Productos y Precios</h3>
@@ -1097,53 +1309,222 @@
                     </div>
                 </div>
                 
-                <!-- Pestaña de Resumen -->
-                <div class="admin-tab-content" id="resumen-tab">
-                    <div class="stats-container">
-                        <div class="stat-card">
-                            <div class="stat-title">Total Ingresos</div>
-                            <div class="stat-value">$<span id="total-ingresos">0</span></div>
+                <!-- Pestaña de Finanzas -->
+                <div class="admin-tab-content" id="finanzas-tab">
+                    <div class="finance-grid">
+                        <div class="finance-card">
+                            <div class="finance-header">
+                                <i class="fas fa-money-bill-wave finance-icon"></i>
+                                <div>
+                                    <div class="finance-title">Ingresos Totales</div>
+                                    <div class="finance-value">$<span id="total-ingresos">0</span></div>
+                                </div>
+                            </div>
+                            <div class="finance-subtitle">Suma de todos los pedidos completados</div>
                         </div>
                         
-                        <div class="stat-card">
-                            <div class="stat-title">Producto Más Vendido</div>
-                            <div class="stat-value" id="producto-popular">---</div>
+                        <div class="finance-card">
+                            <div class="finance-header">
+                                <i class="fas fa-shopping-basket finance-icon"></i>
+                                <div>
+                                    <div class="finance-title">Costos de Adquisición</div>
+                                    <div class="finance-value">$<span id="total-costos">0</span></div>
+                                </div>
+                            </div>
+                            <div class="finance-subtitle">Estimado basado en compras a proveedores</div>
                         </div>
                         
-                        <div class="stat-card">
-                            <div class="stat-title">Cliente Frecuente</div>
-                            <div class="stat-value" id="cliente-frecuente">---</div>
+                        <div class="finance-card">
+                            <div class="finance-header">
+                                <i class="fas fa-chart-line finance-icon"></i>
+                                <div>
+                                    <div class="finance-title">Margen de Ganancia</div>
+                                    <div class="finance-value"><span id="margen-ganancia">0</span>%</div>
+                                </div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="margen-bar" style="width: 0%;">0%</div>
+                            </div>
+                            <div class="finance-subtitle">(Ingresos - Costos) / Ingresos</div>
                         </div>
                         
-                        <div class="stat-card">
-                            <div class="stat-title">Promedio por Pedido</div>
-                            <div class="stat-value">$<span id="promedio-pedido">0</span></div>
+                        <div class="finance-card">
+                            <div class="finance-header">
+                                <i class="fas fa-bullseye finance-icon"></i>
+                                <div>
+                                    <div class="finance-title">Meta de Ventas</div>
+                                    <div class="finance-value">$<span id="meta-ventas">0</span></div>
+                                </div>
+                            </div>
+                            <input type="number" class="goal-input" id="meta-input" placeholder="Ingrese meta de ventas">
+                            <div class="progress-container">
+                                <div class="progress-bar" id="meta-bar" style="width: 0%;">0%</div>
+                            </div>
+                            <div class="finance-subtitle">Progreso: <span id="meta-progreso">0</span>%</div>
                         </div>
                     </div>
                     
                     <div class="price-manager">
-                        <h3><i class="fas fa-chart-line"></i> Historial de Ventas</h3>
-                        <div style="height: 200px; background: #f9f9f9; border-radius: 10px; padding: 15px; margin-top: 15px; display: flex; align-items: flex-end; gap: 10px;">
-                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 30px; background: var(--primary); height: 50px; border-radius: 5px 5px 0 0;"></div>
-                                <div style="font-size: 0.8rem; margin-top: 5px;">Lun</div>
+                        <h3><i class="fas fa-chart-pie"></i> Distribución de Ingresos por Producto</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
+                            <div style="flex: 1; min-width: 300px;">
+                                <div class="chart-container">
+                                    <canvas id="ingresos-chart"></canvas>
+                                </div>
                             </div>
-                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 30px; background: var(--primary); height: 80px; border-radius: 5px 5px 0 0;"></div>
-                                <div style="font-size: 0.8rem; margin-top: 5px;">Mar</div>
+                            <div style="flex: 1; min-width: 300px;">
+                                <div class="chart-container">
+                                    <canvas id="margenes-chart"></canvas>
+                                </div>
                             </div>
-                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 30px; background: var(--primary); height: 120px; border-radius: 5px 5px 0 0;"></div>
-                                <div style="font-size: 0.8rem; margin-top: 5px;">Mié</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pestaña de Modelo de Negocio -->
+                <div class="admin-tab-content" id="modelo-tab">
+                    <div class="price-manager">
+                        <h3><i class="fas fa-project-diagram"></i> Modelo de Negocio - Canvas</h3>
+                        <p style="margin-bottom: 20px;">Visualice y ajuste los elementos clave de su estrategia de negocio. 
+                        Este modelo le ayudará a alinear sus actividades e identificar oportunidades de mejora.</p>
+                        
+                        <div class="canvas-container">
+                            <div class="canvas-block canvas-block-1">
+                                <div class="canvas-title">Socios Clave
+                                    <button class="edit-btn" data-block="socios"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <div class="canvas-content" contenteditable="false" id="socios-content">
+                                    <ul>
+                                        <li>Proveedores de frutas y verduras</li>
+                                        <li>Transportistas locales</li>
+                                        <li>Plataformas de venta online</li>
+                                        <li>Asociaciones de agricultores</li>
+                                    </ul>
+                                </div>
                             </div>
-                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 30px; background: var(--primary); height: 160px; border-radius: 5px 5px 0 0;"></div>
-                                <div style="font-size: 0.8rem; margin-top: 5px;">Jue</div>
+                            
+                            <div class="canvas-block canvas-block-2">
+                                <div class="canvas-title">Actividades Clave
+                                    <button class="edit-btn" data-block="actividades"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <div class="canvas-content" contenteditable="false" id="actividades-content">
+                                    <ul>
+                                        <li>Compra directa a productores</li>
+                                        <li>Logística de distribución</li>
+                                        <li>Gestión de pedidos grupales</li>
+                                        <li>Control de calidad de productos</li>
+                                    </ul>
+                                </div>
                             </div>
-                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 30px; background: var(--primary); height: 100px; border-radius: 5px 5px 0 0;"></div>
-                                <div style="font-size: 0.8rem; margin-top: 5px;">Vie</div>
+                            
+                            <div class="canvas-block canvas-block-3">
+                                <div class="canvas-title">Recursos Clave
+                                    <button class="edit-btn" data-block="recursos"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <div class="canvas-content" contenteditable="false" id="recursos-content">
+                                    <ul>
+                                        <li>Red de proveedores confiables</li>
+                                        <li>Plataforma de pedidos online</li>
+                                        <li>Base de clientes recurrentes</li>
+                                        <li>Sistema de distribución eficiente</li>
+                                    </ul>
+                                </div>
                             </div>
+                            
+                            <div class="canvas-block canvas-block-4">
+                                <div class="canvas-title">Propuesta de Valor
+                                    <button class="edit-btn" data-block="propuesta"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <div class="canvas-content" contenteditable="false" id="propuesta-content">
+                                    <ul>
+                                        <li>Productos frescos a precios justos</li>
+                                        <li>Ahorro por compras grupales</li>
+                                        <li>Entrega a domicilio conveniente</li>
+                                        <li>Variedad de productos de temporada</li>
+                                        <li>Transparencia en origen de productos</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="canvas-block canvas-block-5">
+                                <div class="canvas-title">Relación con Clientes
+                                    <button class="edit-btn" data-block="relacion"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <div class="canvas-content" contenteditable="false" id="relacion-content">
+                                    <ul>
+                                        <li>Atención personalizada</li>
+                                        <li>Soporte post-venta</li>
+                                        <li>Programa de fidelización</li>
+                                        <li>Comunicación constante</li>
+                                        <li>Flexibilidad en entregas</li>
+                                        <li>Grupos de WhatsApp para coordinación</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="canvas-block canvas-block-6">
+                                <div class="canvas-title">Canales
+                                    <button class="edit-btn" data-block="canales"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <div class="canvas-content" contenteditable="false" id="canales-content">
+                                    <ul>
+                                        <li>Plataforma web de pedidos</li>
+                                        <li>Grupos de WhatsApp</li>
+                                        <li>Redes sociales (Instagram, Facebook)</li>
+                                        <li>Recomendación boca a boca</li>
+                                        <li>Ferias locales</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="canvas-block canvas-block-7">
+                                <div class="canvas-title">Segmentos de Clientes
+                                    <button class="edit-btn" data-block="segmentos"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <div class="canvas-content" contenteditable="false" id="segmentos-content">
+                                    <ul>
+                                        <li>Familias que buscan ahorrar</li>
+                                        <li>Personas que valoran productos frescos</li>
+                                        <li>Vecinos organizados en comunidades</li>
+                                        <li>Restaurantes pequeños locales</li>
+                                        <li>Personas con poco tiempo para comprar</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="canvas-block canvas-block-8">
+                                <div class="canvas-title">Estructura de Costos
+                                    <button class="edit-btn" data-block="costos"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <div class="canvas-content" contenteditable="false" id="costos-content">
+                                    <ul>
+                                        <li>Adquisición de productos</li>
+                                        <li>Transporte y logística</li>
+                                        <li>Plataforma tecnológica</li>
+                                        <li>Marketing y promoción</li>
+                                        <li>Personal operativo</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="canvas-actions">
+                            <button class="btn btn-admin" id="save-canvas">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                            <button class="btn btn-admin" id="reset-canvas">
+                                <i class="fas fa-undo"></i> Restaurar Original
+                            </button>
+                        </div>
+                        
+                        <div style="margin-top: 30px; background: #e8f5e9; padding: 20px; border-radius: 10px;">
+                            <h4><i class="fas fa-lightbulb"></i> Estrategias de Mejora</h4>
+                            <ul>
+                                <li><strong>Optimización de costos:</strong> Negociar mejores precios con proveedores al aumentar volumen de compra.</li>
+                                <li><strong>Expansión de clientes:</strong> Crear programa de referidos para atraer nuevos grupos de compra.</li>
+                                <li><strong>Diversificación:</strong> Añadir nuevos productos de alta demanda según temporada.</li>
+                                <li><strong>Eficiencia logística:</strong> Agrupar entregas por zonas para reducir costos de transporte.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -1334,8 +1715,15 @@
         let pedidos = [];
         let isAdmin = false;
         let adminEmail = "";
+        let metaVentas = 0;
+        let costosProductos = {
+            producto1: 2500,  // Costo por kilo de paltas
+            producto2: 800,   // Costo por kilo de papas
+            producto3: 1000,  // Costo por kilo de limones
+            producto4: 400    // Costo por unidad de lechugas
+        };
         
-        // Configuración de productos - ahora con nombres personalizables
+        // Configuración de productos
         let productosConfig = {
             producto1: {
                 nombre: "Paltas",
@@ -1400,19 +1788,25 @@
         const printComprasBtn = document.getElementById('print-compras');
         const savePricesBtn = document.getElementById('save-prices');
         const totalIngresosElement = document.getElementById('total-ingresos');
-        const productoPopularElement = document.getElementById('producto-popular');
-        const clienteFrecuenteElement = document.getElementById('cliente-frecuente');
-        const promedioPedidoElement = document.getElementById('promedio-pedido');
+        const totalCostosElement = document.getElementById('total-costos');
+        const margenGananciaElement = document.getElementById('margen-ganancia');
+        const margenBar = document.getElementById('margen-bar');
+        const metaVentasElement = document.getElementById('meta-ventas');
+        const metaInput = document.getElementById('meta-input');
+        const metaBar = document.getElementById('meta-bar');
+        const metaProgresoElement = document.getElementById('meta-progreso');
+        const saveCanvasBtn = document.getElementById('save-canvas');
+        const resetCanvasBtn = document.getElementById('reset-canvas');
         
         // Tabs de administrador
         const adminTabs = document.querySelectorAll('.admin-tab');
         const adminTabContents = document.querySelectorAll('.admin-tab-content');
         
-        // Botones de cantidad
-        document.querySelectorAll('.quantity-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const target = btn.dataset.target;
-                const action = btn.dataset.action;
+        // Delegación de eventos para botones de cantidad
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('quantity-btn')) {
+                const target = e.target.dataset.target;
+                const action = e.target.dataset.action;
                 const input = document.getElementById(target);
                 let value = parseInt(input.value) || 0;
                 
@@ -1423,7 +1817,7 @@
                 }
                 
                 input.value = value;
-            });
+            }
         });
         
         // Actualizar nombres y precios en la interfaz
@@ -1482,17 +1876,11 @@
             
             // Producto 2
             const producto2Card = document.getElementById('producto2-card');
-            const producto2Info = document.getElementById('producto2-info');
-            const adminProducto2Info = document.getElementById('admin-producto2-info');
-            
             if (productosConfig.producto2.disponible) {
                 producto2Card.classList.remove('unavailable');
                 if (producto2Card.querySelector('.unavailable-tag')) {
                     producto2Card.querySelector('.unavailable-tag').remove();
                 }
-                
-                producto2Info.textContent = "Precio por kilo: $" + productosConfig.producto2.precio.toLocaleString();
-                if (adminProducto2Info) adminProducto2Info.textContent = "Precio por kilo: $" + productosConfig.producto2.precio.toLocaleString();
             } else {
                 producto2Card.classList.add('unavailable');
                 if (!producto2Card.querySelector('.unavailable-tag')) {
@@ -1572,18 +1960,15 @@
             
             // Calcular estadísticas de productos
             let totalKilosPapas = 0;
-            let totalIngresos = 0;
+            let totalKilos = 0;
             
             pedidos.forEach(pedido => {
                 totalKilosPapas += pedido.kilosProducto2 || 0;
-                totalIngresos += pedido.total || 0;
+                totalKilos += pedido.producto1 + pedido.kilosProducto2 + pedido.producto3;
             });
             
             totalKilosPapasElement.textContent = totalKilosPapas;
-            totalIngresosElement.textContent = totalIngresos.toLocaleString();
-            
-            // Calcular estadísticas de resumen
-            calcularEstadisticasResumen();
+            totalKilosElement.textContent = totalKilos;
             
             // Actualizar tabla de pedidos
             ordersBody.innerHTML = '';
@@ -1665,69 +2050,178 @@
             });
         }
         
-        // Calcular estadísticas para la pestaña de resumen
-        function calcularEstadisticasResumen() {
-            let totalIngresos = 0;
-            let productoVentas = {
+        // Calcular estadísticas para la pestaña de finanzas
+        function actualizarFinanzas() {
+            // Calcular ingresos totales (solo pedidos completados)
+            let ingresosTotales = 0;
+            let costosTotales = 0;
+            
+            pedidos.forEach(pedido => {
+                if (pedido.estado === 'completado') {
+                    ingresosTotales += pedido.total;
+                    
+                    // Calcular costos
+                    costosTotales += (pedido.producto1 * costosProductos.producto1);
+                    costosTotales += (pedido.kilosProducto2 * costosProductos.producto2);
+                    costosTotales += (pedido.producto3 * costosProductos.producto3);
+                    costosTotales += (pedido.producto4 * costosProductos.producto4);
+                }
+            });
+            
+            // Actualizar UI
+            totalIngresosElement.textContent = ingresosTotales.toLocaleString();
+            totalCostosElement.textContent = costosTotales.toLocaleString();
+            
+            // Calcular margen de ganancia
+            let margenGanancia = 0;
+            if (ingresosTotales > 0) {
+                margenGanancia = ((ingresosTotales - costosTotales) / ingresosTotales) * 100;
+            }
+            
+            margenGanancia = Math.round(margenGanancia);
+            margenGananciaElement.textContent = margenGanancia;
+            margenBar.style.width = `${margenGanancia}%`;
+            margenBar.textContent = `${margenGanancia}%`;
+            
+            // Actualizar progreso de meta
+            actualizarProgresoMeta();
+            
+            // Actualizar gráficos
+            actualizarGraficos();
+        }
+        
+        // Actualizar progreso hacia la meta de ventas
+        function actualizarProgresoMeta() {
+            const ingresosTotales = parseFloat(totalIngresosElement.textContent.replace(/,/g, '')) || 0;
+            let progreso = 0;
+            
+            if (metaVentas > 0) {
+                progreso = Math.min(100, Math.round((ingresosTotales / metaVentas) * 100));
+            }
+            
+            metaBar.style.width = `${progreso}%`;
+            metaBar.textContent = `${progreso}%`;
+            metaProgresoElement.textContent = progreso;
+        }
+        
+        // Actualizar gráficos de finanzas
+        function actualizarGraficos() {
+            // Calcular ingresos por producto
+            let ingresosPorProducto = {
                 producto1: 0,
                 producto2: 0,
                 producto3: 0,
                 producto4: 0
             };
             
-            let clientes = {};
-            
             pedidos.forEach(pedido => {
-                totalIngresos += pedido.total || 0;
-                
-                // Contar productos
-                if (pedido.producto1 > 0) productoVentas.producto1 += pedido.producto1;
-                if (pedido.kilosProducto2 > 0) productoVentas.producto2 += pedido.kilosProducto2;
-                if (pedido.producto3 > 0) productoVentas.producto3 += pedido.producto3;
-                if (pedido.producto4 > 0) productoVentas.producto4 += pedido.producto4;
-                
-                // Contar pedidos por cliente
-                if (!clientes[pedido.telefono]) {
-                    clientes[pedido.telefono] = {
-                        nombre: pedido.nombre,
-                        count: 0
-                    };
+                if (pedido.estado === 'completado') {
+                    ingresosPorProducto.producto1 += pedido.producto1 * productosConfig.producto1.precio;
+                    ingresosPorProducto.producto2 += pedido.kilosProducto2 * productosConfig.producto2.precio;
+                    ingresosPorProducto.producto3 += pedido.producto3 * productosConfig.producto3.precio;
+                    ingresosPorProducto.producto4 += pedido.producto4 * productosConfig.producto4.precio;
                 }
-                clientes[pedido.telefono].count++;
             });
             
-            // Actualizar total ingresos
-            totalIngresosElement.textContent = totalIngresos.toLocaleString();
+            // Datos para gráfico de ingresos
+            const ingresosData = {
+                labels: [
+                    productosConfig.producto1.nombre, 
+                    productosConfig.producto2.nombre, 
+                    productosConfig.producto3.nombre, 
+                    productosConfig.producto4.nombre
+                ],
+                datasets: [{
+                    data: [
+                        ingresosPorProducto.producto1,
+                        ingresosPorProducto.producto2,
+                        ingresosPorProducto.producto3,
+                        ingresosPorProducto.producto4
+                    ],
+                    backgroundColor: [
+                        '#2e7d32', 
+                        '#4caf50', 
+                        '#81c784', 
+                        '#c8e6c9'
+                    ]
+                }]
+            };
             
-            // Encontrar producto más popular
-            let maxVentas = 0;
-            let productoPopular = '---';
+            // Datos para gráfico de márgenes
+            const margenPorProducto = {
+                producto1: Math.round(((productosConfig.producto1.precio - costosProductos.producto1) / productosConfig.producto1.precio * 100) || 0,
+                producto2: Math.round(((productosConfig.producto2.precio - costosProductos.producto2) / productosConfig.producto2.precio * 100) || 0,
+                producto3: Math.round(((productosConfig.producto3.precio - costosProductos.producto3) / productosConfig.producto3.precio * 100) || 0,
+                producto4: Math.round(((productosConfig.producto4.precio - costosProductos.producto4) / productosConfig.producto4.precio * 100) || 0
+            };
             
-            for (const producto in productoVentas) {
-                if (productoVentas[producto] > maxVentas) {
-                    maxVentas = productoVentas[producto];
-                    productoPopular = productosConfig[producto].nombre;
+            const margenesData = {
+                labels: [
+                    productosConfig.producto1.nombre, 
+                    productosConfig.producto2.nombre, 
+                    productosConfig.producto3.nombre, 
+                    productosConfig.producto4.nombre
+                ],
+                datasets: [{
+                    label: 'Margen (%)',
+                    data: [
+                        margenPorProducto.producto1,
+                        margenPorProducto.producto2,
+                        margenPorProducto.producto3,
+                        margenPorProducto.producto4
+                    ],
+                    backgroundColor: '#4caf50'
+                }]
+            };
+            
+            // Crear o actualizar gráficos
+            const ingresosChart = new Chart(
+                document.getElementById('ingresos-chart'),
+                {
+                    type: 'pie',
+                    data: ingresosData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Distribución de Ingresos'
+                            }
+                        }
+                    }
                 }
-            }
+            );
             
-            productoPopularElement.textContent = productoPopular;
-            
-            // Encontrar cliente más frecuente
-            let maxPedidos = 0;
-            let clienteFrecuente = '---';
-            
-            for (const telefono in clientes) {
-                if (clientes[telefono].count > maxPedidos) {
-                    maxPedidos = clientes[telefono].count;
-                    clienteFrecuente = clientes[telefono].nombre;
+            const margenesChart = new Chart(
+                document.getElementById('margenes-chart'),
+                {
+                    type: 'bar',
+                    data: margenesData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Porcentaje (%)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Margen por Producto'
+                            }
+                        }
+                    }
                 }
-            }
-            
-            clienteFrecuenteElement.textContent = clienteFrecuente;
-            
-            // Calcular promedio por pedido
-            const promedio = pedidos.length > 0 ? totalIngresos / pedidos.length : 0;
-            promedioPedidoElement.textContent = promedio.toLocaleString('es-CL', {maximumFractionDigits: 0});
+            );
         }
         
         // Calcular resumen de compras
@@ -1820,48 +2314,34 @@
                 // Añadir clase active a la tab seleccionada
                 tab.classList.add('active');
                 document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+                
+                // Si es la pestaña de finanzas, actualizar datos
+                if (tab.dataset.tab === 'finanzas') {
+                    actualizarFinanzas();
+                }
             });
         });
         
-        // Enviar pedido (solicitante)
-        enviarPedidoBtn.addEventListener('click', () => {
-            const nombre = document.getElementById('nombre').value;
-            const telefono = document.getElementById('telefono').value;
-            const producto1 = parseInt(document.getElementById('producto1').value) || 0;
-            const kilosProducto2 = parseInt(document.getElementById('kilos-producto2').value) || 0;
-            const producto3 = parseInt(document.getElementById('producto3').value) || 0;
-            const producto4 = parseInt(document.getElementById('producto4').value) || 0;
-            const comentarios = document.getElementById('comentarios').value;
-            
-            if (!nombre || !telefono) {
-                showNotification('Por favor completa tu nombre y teléfono', true);
-                return;
-            }
-            
-            if (producto1 === 0 && kilosProducto2 === 0 && producto3 === 0 && producto4 === 0) {
-                showNotification('Por favor selecciona al menos un producto', true);
-                return;
-            }
-            
-            // Verificar disponibilidad
-            if (producto1 > 0 && !productosConfig.producto1.disponible) {
-                showNotification(`${productosConfig.producto1.nombre} no están disponibles actualmente`, true);
-                return;
-            }
-            
-            if (kilosProducto2 > 0 && !productosConfig.producto2.disponible) {
-                showNotification(`${productosConfig.producto2.nombre} no están disponibles actualmente`, true);
-                return;
-            }
-            
-            if (producto3 > 0 && !productosConfig.producto3.disponible) {
-                showNotification(`${productosConfig.producto3.nombre} no están disponibles actualmente`, true);
-                return;
-            }
-            
-            if (producto4 > 0 && !productosConfig.producto4.disponible) {
-                showNotification(`${productosConfig.producto4.nombre} no están disponibles actualmente`, true);
-                return;
+        // Función para crear un nuevo pedido
+        function crearPedido(nombre, telefono, producto1, kilosProducto2, producto3, producto4, comentarios, desdeAdmin = false) {
+            // Verificar disponibilidad si no es desde admin
+            if (!desdeAdmin) {
+                if (producto1 > 0 && !productosConfig.producto1.disponible) {
+                    showNotification(`${productosConfig.producto1.nombre} no están disponibles actualmente`, true);
+                    return false;
+                }
+                if (kilosProducto2 > 0 && !productosConfig.producto2.disponible) {
+                    showNotification(`${productosConfig.producto2.nombre} no están disponibles actualmente`, true);
+                    return false;
+                }
+                if (producto3 > 0 && !productosConfig.producto3.disponible) {
+                    showNotification(`${productosConfig.producto3.nombre} no están disponibles actualmente`, true);
+                    return false;
+                }
+                if (producto4 > 0 && !productosConfig.producto4.disponible) {
+                    showNotification(`${productosConfig.producto4.nombre} no están disponibles actualmente`, true);
+                    return false;
+                }
             }
             
             // Crear nuevo pedido
@@ -1884,18 +2364,45 @@
             // Mostrar notificación
             showNotification('Pedido registrado con éxito!');
             
-            // Resetear formulario
-            document.getElementById('nombre').value = '';
-            document.getElementById('telefono').value = '';
-            document.getElementById('producto1').value = '0';
-            document.getElementById('kilos-producto2').value = '0';
-            document.getElementById('producto3').value = '0';
-            document.getElementById('producto4').value = '0';
-            document.getElementById('comentarios').value = '';
+            return true;
+        }
+        
+        // Enviar pedido (solicitante)
+        enviarPedidoBtn.addEventListener('click', () => {
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+            const producto1 = parseInt(document.getElementById('producto1').value) || 0;
+            const kilosProducto2 = parseInt(document.getElementById('kilos-producto2').value) || 0;
+            const producto3 = parseInt(document.getElementById('producto3').value) || 0;
+            const producto4 = parseInt(document.getElementById('producto4').value) || 0;
+            const comentarios = document.getElementById('comentarios').value;
             
-            // Si es admin, actualizar panel
-            if (isAdmin) {
-                actualizarPanelAdmin();
+            if (!nombre || !telefono) {
+                showNotification('Por favor completa tu nombre y teléfono', true);
+                return;
+            }
+            
+            if (producto1 === 0 && kilosProducto2 === 0 && producto3 === 0 && producto4 === 0) {
+                showNotification('Por favor selecciona al menos un producto', true);
+                return;
+            }
+            
+            const success = crearPedido(nombre, telefono, producto1, kilosProducto2, producto3, producto4, comentarios);
+            
+            if (success) {
+                // Resetear formulario
+                document.getElementById('nombre').value = '';
+                document.getElementById('telefono').value = '';
+                document.getElementById('producto1').value = '0';
+                document.getElementById('kilos-producto2').value = '0';
+                document.getElementById('producto3').value = '0';
+                document.getElementById('producto4').value = '0';
+                document.getElementById('comentarios').value = '';
+                
+                // Si es admin, actualizar panel
+                if (isAdmin) {
+                    actualizarPanelAdmin();
+                }
             }
         });
         
@@ -1938,13 +2445,13 @@
         });
         
         // Abrir modal de login
-        adminLoginLink.addEventListener('click', (e) => {
+        adminLoginLink.addEventListener('click', function(e) {
             e.preventDefault();
             loginModal.style.display = 'flex';
         });
         
         // Cerrar modal de login
-        closeLogin.addEventListener('click', () => {
+        closeLogin.addEventListener('click', function() {
             loginModal.style.display = 'none';
         });
         
@@ -1973,40 +2480,24 @@
                 return;
             }
             
-            // Crear nuevo pedido
-            const nuevoPedido = {
-                id: Date.now().toString(),
-                nombre, 
-                telefono,
-                producto1, 
-                kilosProducto2, 
-                producto3, 
-                producto4,
-                comentarios,
-                fecha: new Date().toLocaleString(),
-                estado: 'pendiente',
-                total: calcularTotalPedido(producto1, kilosProducto2, producto3, producto4)
-            };
+            const success = crearPedido(nombre, telefono, producto1, kilosProducto2, producto3, producto4, comentarios, true);
             
-            pedidos.push(nuevoPedido);
-            
-            // Mostrar notificación
-            showNotification('Pedido agregado con éxito!');
-            
-            // Cerrar modal
-            addOrderModal.style.display = 'none';
-            
-            // Resetear formulario
-            document.getElementById('admin-nombre').value = '';
-            document.getElementById('admin-telefono').value = '';
-            document.getElementById('admin-producto1').value = '0';
-            document.getElementById('admin-kilos-producto2').value = '0';
-            document.getElementById('admin-producto3').value = '0';
-            document.getElementById('admin-producto4').value = '0';
-            document.getElementById('admin-comentarios').value = '';
-            
-            // Actualizar panel
-            actualizarPanelAdmin();
+            if (success) {
+                // Cerrar modal
+                addOrderModal.style.display = 'none';
+                
+                // Resetear formulario
+                document.getElementById('admin-nombre').value = '';
+                document.getElementById('admin-telefono').value = '';
+                document.getElementById('admin-producto1').value = '0';
+                document.getElementById('admin-kilos-producto2').value = '0';
+                document.getElementById('admin-producto3').value = '0';
+                document.getElementById('admin-producto4').value = '0';
+                document.getElementById('admin-comentarios').value = '';
+                
+                // Actualizar panel
+                actualizarPanelAdmin();
+            }
         });
         
         // Abrir modal de resumen de compras
@@ -2045,6 +2536,61 @@
             showNotification('Datos actualizados');
         });
         
+        // Editar modelo canvas
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const block = btn.dataset.block;
+                const content = document.getElementById(`${block}-content`);
+                content.contentEditable = 'true';
+                content.focus();
+            });
+        });
+        
+        // Guardar cambios del canvas
+        saveCanvasBtn.addEventListener('click', () => {
+            const canvasData = {};
+            const blocks = ['socios', 'actividades', 'recursos', 'propuesta', 'relacion', 'canales', 'segmentos', 'costos'];
+            
+            blocks.forEach(block => {
+                canvasData[block] = document.getElementById(`${block}-content`).innerHTML;
+            });
+            
+            localStorage.setItem('canvasData', JSON.stringify(canvasData));
+            showNotification('Modelo de negocio guardado');
+        });
+        
+        // Restaurar canvas original
+        resetCanvasBtn.addEventListener('click', () => {
+            if (confirm('¿Estás seguro de restaurar el modelo original? Se perderán tus cambios.')) {
+                localStorage.removeItem('canvasData');
+                cargarCanvasData();
+                showNotification('Modelo restaurado a valores originales');
+            }
+        });
+        
+        // Cargar datos del canvas
+        function cargarCanvasData() {
+            const canvasData = JSON.parse(localStorage.getItem('canvasData'));
+            const defaultData = {
+                socios: '<ul><li>Proveedores de frutas y verduras</li><li>Transportistas locales</li><li>Plataformas de venta online</li><li>Asociaciones de agricultores</li></ul>',
+                actividades: '<ul><li>Compra directa a productores</li><li>Logística de distribución</li><li>Gestión de pedidos grupales</li><li>Control de calidad de productos</li></ul>',
+                recursos: '<ul><li>Red de proveedores confiables</li><li>Plataforma de pedidos online</li><li>Base de clientes recurrentes</li><li>Sistema de distribución eficiente</li></ul>',
+                propuesta: '<ul><li>Productos frescos a precios justos</li><li>Ahorro por compras grupales</li><li>Entrega a domicilio conveniente</li><li>Variedad de productos de temporada</li><li>Transparencia en origen de productos</li></ul>',
+                relacion: '<ul><li>Atención personalizada</li><li>Soporte post-venta</li><li>Programa de fidelización</li><li>Comunicación constante</li><li>Flexibilidad en entregas</li><li>Grupos de WhatsApp para coordinación</li></ul>',
+                canales: '<ul><li>Plataforma web de pedidos</li><li>Grupos de WhatsApp</li><li>Redes sociales (Instagram, Facebook)</li><li>Recomendación boca a boca</li><li>Ferias locales</li></ul>',
+                segmentos: '<ul><li>Familias que buscan ahorrar</li><li>Personas que valoran productos frescos</li><li>Vecinos organizados en comunidades</li><li>Restaurantes pequeños locales</li><li>Personas con poco tiempo para comprar</li></ul>',
+                costos: '<ul><li>Adquisición de productos</li><li>Transporte y logística</li><li>Plataforma tecnológica</li><li>Marketing y promoción</li><li>Personal operativo</li></ul>'
+            };
+            
+            const blocks = ['socios', 'actividades', 'recursos', 'propuesta', 'relacion', 'canales', 'segmentos', 'costos'];
+            
+            blocks.forEach(block => {
+                const content = canvasData?.[block] || defaultData[block];
+                document.getElementById(`${block}-content`).innerHTML = content;
+            });
+        }
+        
         // Inicializar con datos de muestra
         document.addEventListener('DOMContentLoaded', () => {
             // Cargar configuración desde localStorage si existe
@@ -2068,6 +2614,18 @@
             document.getElementById('producto2-available').checked = productosConfig.producto2.disponible;
             document.getElementById('producto3-available').checked = productosConfig.producto3.disponible;
             document.getElementById('producto4-available').checked = productosConfig.producto4.disponible;
+            
+            // Cargar meta de ventas desde localStorage
+            const savedMeta = localStorage.getItem('metaVentas');
+            if (savedMeta) {
+                metaVentas = parseInt(savedMeta);
+                metaInput.value = metaVentas;
+                metaVentasElement.textContent = metaVentas.toLocaleString();
+                actualizarProgresoMeta();
+            }
+            
+            // Cargar datos del canvas
+            cargarCanvasData();
             
             // Actualizar UI
             actualizarProductosUI();
@@ -2113,6 +2671,24 @@
                 fecha: '2023-10-23 09:15',
                 estado: 'completado',
                 total: 18400
+            });
+            
+            // Event listener para cambiar la meta
+            metaInput.addEventListener('change', () => {
+                metaVentas = parseInt(metaInput.value) || 0;
+                localStorage.setItem('metaVentas', metaVentas);
+                metaVentasElement.textContent = metaVentas.toLocaleString();
+                actualizarProgresoMeta();
+            });
+            
+            // Configurar eventos de los modales
+            adminLoginLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                loginModal.style.display = 'flex';
+            });
+            
+            closeLogin.addEventListener('click', function() {
+                loginModal.style.display = 'none';
             });
         });
     </script>
