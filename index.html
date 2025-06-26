@@ -676,18 +676,16 @@
         
         .price-item {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             padding: 15px;
             border-bottom: 1px solid #eee;
-        }
-        
-        .price-item:last-child {
-            border-bottom: none;
+            gap: 15px;
         }
         
         .price-name {
-            flex: 2;
-            font-weight: 500;
+            flex: 1;
+            min-width: 200px;
         }
         
         .price-name-input {
@@ -703,8 +701,20 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 6px;
-            margin: 0 15px;
             text-align: right;
+        }
+        
+        .price-controls {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .availability-toggle {
@@ -712,7 +722,6 @@
             display: inline-block;
             width: 50px;
             height: 24px;
-            margin: 0 15px;
         }
         
         .availability-toggle input {
@@ -751,19 +760,6 @@
         
         input:checked + .slider:before {
             transform: translateX(26px);
-        }
-        
-        .saco-toggle {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        
-        .saco-toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
         }
         
         @media (max-width: 768px) {
@@ -811,7 +807,12 @@
                 width: 100%;
             }
             
-            .availability-toggle, .saco-toggle {
+            .price-controls {
+                width: 100%;
+                margin-top: 10px;
+            }
+            
+            .availability-toggle {
                 margin: 10px 0;
             }
         }
@@ -868,20 +869,12 @@
                         </div>
                     </div>
                     
-                    <!-- Producto 2 -->
+                    <!-- Producto 2 (Papas - solo por kilos) -->
                     <div class="product-card" id="producto2-card">
                         <div class="product-name" id="producto2-name">Papas</div>
-                        <div class="product-info" id="producto2-info">Saco de 25 kilos o sueltas</div>
-                        <div class="form-group" id="sacos-producto2-group">
-                            <label for="sacos-producto2">Sacos:</label>
-                            <div class="product-quantity">
-                                <button type="button" class="quantity-btn" data-target="sacos-producto2" data-action="decrease">-</button>
-                                <input type="number" id="sacos-producto2" min="0" step="1" value="0" class="quantity-input">
-                                <button type="button" class="quantity-btn" data-target="sacos-producto2" data-action="increase">+</button>
-                            </div>
-                        </div>
+                        <div class="product-info">Precio por kilo: <span id="producto2-price">$1.500</span></div>
                         <div class="form-group">
-                            <label for="kilos-producto2">Kilos sueltos:</label>
+                            <label for="kilos-producto2">Kilos:</label>
                             <div class="product-quantity">
                                 <button type="button" class="quantity-btn" data-target="kilos-producto2" data-action="decrease">-</button>
                                 <input type="number" id="kilos-producto2" min="0" step="1" value="0" class="quantity-input">
@@ -972,13 +965,13 @@
                         </div>
                         
                         <div class="stat-card">
-                            <div class="stat-title">Sacos de Papas</div>
-                            <div class="stat-value" id="total-sacos">0</div>
+                            <div class="stat-title">Kilos de Papas</div>
+                            <div class="stat-value" id="total-kilos-papas">0</div>
                         </div>
                         
                         <div class="stat-card">
-                            <div class="stat-title">Total Kilos Papas</div>
-                            <div class="stat-value" id="total-kilos-papas">0</div>
+                            <div class="stat-title">Total Kilos</div>
+                            <div class="stat-value" id="total-kilos">0</div>
                         </div>
                     </div>
                     
@@ -1003,7 +996,7 @@
                     </table>
                 </div>
                 
-                <!-- Pestaña de Gestión de Productos -->
+                <!-- Pestaña de Gestión de Productos (Modificada) -->
                 <div class="admin-tab-content" id="precios-tab">
                     <div class="price-manager">
                         <h3><i class="fas fa-tags"></i> Gestión de Productos y Precios</h3>
@@ -1014,15 +1007,17 @@
                                 <label>Nombre del Producto 1:</label>
                                 <input type="text" class="price-name-input" id="producto1-name-input" value="Paltas">
                             </div>
-                            <input type="text" class="price-input" id="producto1-price-input" value="3500">
-                            <span>$ por kilo</span>
-                            <label style="margin-left: 20px;">
-                                Disponible: 
-                                <label class="availability-toggle">
-                                    <input type="checkbox" id="producto1-available" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </label>
+                            <div class="price-controls">
+                                <input type="text" class="price-input" id="producto1-price-input" value="3500">
+                                <span>$ por kilo</span>
+                                <div class="toggle-container">
+                                    <label>Disponible:</label>
+                                    <label class="availability-toggle">
+                                        <input type="checkbox" id="producto1-available" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="price-item">
@@ -1030,22 +1025,17 @@
                                 <label>Nombre del Producto 2:</label>
                                 <input type="text" class="price-name-input" id="producto2-name-input" value="Papas">
                             </div>
-                            <input type="text" class="price-input" id="producto2-price-input" value="1500">
-                            <span>$ por kilo</span>
-                            <label style="margin-left: 20px;">
-                                Disponible: 
-                                <label class="availability-toggle">
-                                    <input type="checkbox" id="producto2-available" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </label>
-                            <label style="margin-left: 20px;">
-                                Venta por saco: 
-                                <label class="availability-toggle">
-                                    <input type="checkbox" id="producto2-saco" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </label>
+                            <div class="price-controls">
+                                <input type="text" class="price-input" id="producto2-price-input" value="1500">
+                                <span>$ por kilo</span>
+                                <div class="toggle-container">
+                                    <label>Disponible:</label>
+                                    <label class="availability-toggle">
+                                        <input type="checkbox" id="producto2-available" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="price-item">
@@ -1053,15 +1043,17 @@
                                 <label>Nombre del Producto 3:</label>
                                 <input type="text" class="price-name-input" id="producto3-name-input" value="Limones">
                             </div>
-                            <input type="text" class="price-input" id="producto3-price-input" value="1800">
-                            <span>$ por kilo</span>
-                            <label style="margin-left: 20px;">
-                                Disponible: 
-                                <label class="availability-toggle">
-                                    <input type="checkbox" id="producto3-available" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </label>
+                            <div class="price-controls">
+                                <input type="text" class="price-input" id="producto3-price-input" value="1800">
+                                <span>$ por kilo</span>
+                                <div class="toggle-container">
+                                    <label>Disponible:</label>
+                                    <label class="availability-toggle">
+                                        <input type="checkbox" id="producto3-available" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="price-item">
@@ -1069,15 +1061,17 @@
                                 <label>Nombre del Producto 4:</label>
                                 <input type="text" class="price-name-input" id="producto4-name-input" value="Lechugas">
                             </div>
-                            <input type="text" class="price-input" id="producto4-price-input" value="800">
-                            <span>$ por unidad</span>
-                            <label style="margin-left: 20px;">
-                                Disponible: 
-                                <label class="availability-toggle">
-                                    <input type="checkbox" id="producto4-available" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </label>
+                            <div class="price-controls">
+                                <input type="text" class="price-input" id="producto4-price-input" value="800">
+                                <span>$ por unidad</span>
+                                <div class="toggle-container">
+                                    <label>Disponible:</label>
+                                    <label class="availability-toggle">
+                                        <input type="checkbox" id="producto4-available" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                         
                         <button class="btn" id="save-prices" style="margin-top: 20px;">
@@ -1218,20 +1212,12 @@
                     </div>
                 </div>
                 
-                <!-- Producto 2 -->
+                <!-- Producto 2 (Papas - solo por kilos) -->
                 <div class="product-card">
                     <div class="product-name" id="admin-producto2-name">Papas</div>
-                    <div class="product-info" id="admin-producto2-info">Saco de 25 kilos o sueltas</div>
-                    <div class="form-group" id="admin-sacos-producto2-group">
-                        <label for="admin-sacos-producto2">Sacos:</label>
-                        <div class="product-quantity">
-                            <button type="button" class="quantity-btn" data-target="admin-sacos-producto2" data-action="decrease">-</button>
-                            <input type="number" id="admin-sacos-producto2" min="0" step="1" value="0" class="quantity-input">
-                            <button type="button" class="quantity-btn" data-target="admin-sacos-producto2" data-action="increase">+</button>
-                        </div>
-                    </div>
+                    <div class="product-info">Precio por kilo: $<span id="admin-producto2-price">1.500</span></div>
                     <div class="form-group">
-                        <label for="admin-kilos-producto2">Kilos sueltos:</label>
+                        <label for="admin-kilos-producto2">Kilos:</label>
                         <div class="product-quantity">
                             <button type="button" class="quantity-btn" data-target="admin-kilos-producto2" data-action="decrease">-</button>
                             <input type="number" id="admin-kilos-producto2" min="0" step="1" value="0" class="quantity-input">
@@ -1293,22 +1279,17 @@
                 </div>
                 
                 <div class="stat-card">
-                    <div class="stat-title" id="compras-title2">Sacos de Papas</div>
-                    <div class="stat-value" id="compras-sacos">0</div>
+                    <div class="stat-title" id="compras-title2">Papas</div>
+                    <div class="stat-value" id="compras-papas">0 kg</div>
                 </div>
                 
                 <div class="stat-card">
-                    <div class="stat-title" id="compras-title3">Papas Sueltas</div>
-                    <div class="stat-value" id="compras-papas-sueltas">0 kg</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-title" id="compras-title4">Limones</div>
+                    <div class="stat-title" id="compras-title3">Limones</div>
                     <div class="stat-value" id="compras-limones">0 kg</div>
                 </div>
                 
                 <div class="stat-card">
-                    <div class="stat-title" id="compras-title5">Lechugas</div>
+                    <div class="stat-title" id="compras-title4">Lechugas</div>
                     <div class="stat-value" id="compras-lechugas">0 unidades</div>
                 </div>
             </div>
@@ -1368,8 +1349,7 @@
                 precio: 1500,
                 disponible: true,
                 unidad: "kg",
-                tipo: "por peso",
-                ventaPorSaco: true
+                tipo: "por peso"
             },
             producto3: {
                 nombre: "Limones",
@@ -1404,7 +1384,6 @@
         const refreshBtn = document.getElementById('refresh-btn');
         const totalPedidosElement = document.getElementById('total-pedidos');
         const pedidosPendientesElement = document.getElementById('pedidos-pendientes');
-        const totalSacosElement = document.getElementById('total-sacos');
         const totalKilosPapasElement = document.getElementById('total-kilos-papas');
         const addOrderBtn = document.getElementById('add-order-btn');
         const addOrderModal = document.getElementById('add-order-modal');
@@ -1414,8 +1393,7 @@
         const comprasModal = document.getElementById('compras-modal');
         const closeComprasModal = document.getElementById('close-compras');
         const comprasProducto1 = document.getElementById('compras-producto1');
-        const comprasSacos = document.getElementById('compras-sacos');
-        const comprasPapasSueltas = document.getElementById('compras-papas-sueltas');
+        const comprasPapas = document.getElementById('compras-papas');
         const comprasProducto3 = document.getElementById('compras-limones');
         const comprasProducto4 = document.getElementById('compras-lechugas');
         const comprasBody = document.getElementById('compras-body');
@@ -1458,6 +1436,7 @@
             
             // Actualizar precios en formulario solicitante
             document.getElementById('producto1-price').textContent = '$' + productosConfig.producto1.precio.toLocaleString();
+            document.getElementById('producto2-price').textContent = '$' + productosConfig.producto2.precio.toLocaleString();
             document.getElementById('producto3-price').textContent = '$' + productosConfig.producto3.precio.toLocaleString();
             document.getElementById('producto4-price').textContent = '$' + productosConfig.producto4.precio.toLocaleString();
             
@@ -1468,6 +1447,7 @@
             document.getElementById('admin-producto4-name').textContent = productosConfig.producto4.nombre;
             
             document.getElementById('admin-producto1-price').textContent = productosConfig.producto1.precio.toLocaleString();
+            document.getElementById('admin-producto2-price').textContent = productosConfig.producto2.precio.toLocaleString();
             document.getElementById('admin-producto3-price').textContent = productosConfig.producto3.precio.toLocaleString();
             document.getElementById('admin-producto4-price').textContent = productosConfig.producto4.precio.toLocaleString();
             
@@ -1476,10 +1456,9 @@
             
             // Actualizar títulos en resumen de compras
             document.getElementById('compras-title1').textContent = productosConfig.producto1.nombre;
-            document.getElementById('compras-title2').textContent = "Sacos de " + productosConfig.producto2.nombre;
-            document.getElementById('compras-title3').textContent = productosConfig.producto2.nombre + " Sueltas";
-            document.getElementById('compras-title4').textContent = productosConfig.producto3.nombre;
-            document.getElementById('compras-title5').textContent = productosConfig.producto4.nombre;
+            document.getElementById('compras-title2').textContent = productosConfig.producto2.nombre;
+            document.getElementById('compras-title3').textContent = productosConfig.producto3.nombre;
+            document.getElementById('compras-title4').textContent = productosConfig.producto4.nombre;
         }
         
         // Actualizar disponibilidad de productos
@@ -1503,9 +1482,7 @@
             
             // Producto 2
             const producto2Card = document.getElementById('producto2-card');
-            const sacosGroup = document.getElementById('sacos-producto2-group');
             const producto2Info = document.getElementById('producto2-info');
-            const adminSacosGroup = document.getElementById('admin-sacos-producto2-group');
             const adminProducto2Info = document.getElementById('admin-producto2-info');
             
             if (productosConfig.producto2.disponible) {
@@ -1514,18 +1491,8 @@
                     producto2Card.querySelector('.unavailable-tag').remove();
                 }
                 
-                // Manejar venta por saco
-                if (productosConfig.producto2.ventaPorSaco) {
-                    sacosGroup.style.display = 'block';
-                    producto2Info.textContent = "Saco de 25 kilos o sueltas";
-                    if (adminSacosGroup) adminSacosGroup.style.display = 'block';
-                    if (adminProducto2Info) adminProducto2Info.textContent = "Saco de 25 kilos o sueltas";
-                } else {
-                    sacosGroup.style.display = 'none';
-                    producto2Info.textContent = "Precio por kilo: $" + productosConfig.producto2.precio.toLocaleString();
-                    if (adminSacosGroup) adminSacosGroup.style.display = 'none';
-                    if (adminProducto2Info) adminProducto2Info.textContent = "Precio por kilo: $" + productosConfig.producto2.precio.toLocaleString();
-                }
+                producto2Info.textContent = "Precio por kilo: $" + productosConfig.producto2.precio.toLocaleString();
+                if (adminProducto2Info) adminProducto2Info.textContent = "Precio por kilo: $" + productosConfig.producto2.precio.toLocaleString();
             } else {
                 producto2Card.classList.add('unavailable');
                 if (!producto2Card.querySelector('.unavailable-tag')) {
@@ -1584,10 +1551,9 @@
         }
         
         // Calcular total del pedido
-        function calcularTotalPedido(producto1, sacos, kilosProducto2, producto3, producto4) {
+        function calcularTotalPedido(producto1, kilosProducto2, producto3, producto4) {
             let total = 0;
             total += producto1 * productosConfig.producto1.precio;
-            total += sacos * 25 * productosConfig.producto2.precio;
             total += kilosProducto2 * productosConfig.producto2.precio;
             total += producto3 * productosConfig.producto3.precio;
             total += producto4 * productosConfig.producto4.precio;
@@ -1605,20 +1571,14 @@
             pedidosPendientesElement.textContent = totalPendientes;
             
             // Calcular estadísticas de productos
-            let totalSacos = 0;
             let totalKilosPapas = 0;
             let totalIngresos = 0;
             
             pedidos.forEach(pedido => {
-                totalSacos += pedido.sacosProducto2 || 0;
                 totalKilosPapas += pedido.kilosProducto2 || 0;
                 totalIngresos += pedido.total || 0;
             });
             
-            // Añadir kilos de los sacos
-            totalKilosPapas += totalSacos * 25;
-            
-            totalSacosElement.textContent = totalSacos;
             totalKilosPapasElement.textContent = totalKilosPapas;
             totalIngresosElement.textContent = totalIngresos.toLocaleString();
             
@@ -1651,8 +1611,7 @@
                 // Formatear productos
                 const productos = [];
                 if (pedido.producto1 > 0) productos.push(`${productosConfig.producto1.nombre}: ${pedido.producto1} kg`);
-                if (pedido.sacosProducto2 > 0) productos.push(`Sacos ${productosConfig.producto2.nombre}: ${pedido.sacosProducto2}`);
-                if (pedido.kilosProducto2 > 0) productos.push(`${productosConfig.producto2.nombre} sueltas: ${pedido.kilosProducto2} kg`);
+                if (pedido.kilosProducto2 > 0) productos.push(`${productosConfig.producto2.nombre}: ${pedido.kilosProducto2} kg`);
                 if (pedido.producto3 > 0) productos.push(`${productosConfig.producto3.nombre}: ${pedido.producto3} kg`);
                 if (pedido.producto4 > 0) productos.push(`${productosConfig.producto4.nombre}: ${pedido.producto4}`);
                 
@@ -1723,7 +1682,7 @@
                 
                 // Contar productos
                 if (pedido.producto1 > 0) productoVentas.producto1 += pedido.producto1;
-                if (pedido.sacosProducto2 > 0 || pedido.kilosProducto2 > 0) productoVentas.producto2 += (pedido.sacosProducto2 * 25) + pedido.kilosProducto2;
+                if (pedido.kilosProducto2 > 0) productoVentas.producto2 += pedido.kilosProducto2;
                 if (pedido.producto3 > 0) productoVentas.producto3 += pedido.producto3;
                 if (pedido.producto4 > 0) productoVentas.producto4 += pedido.producto4;
                 
@@ -1774,8 +1733,7 @@
         // Calcular resumen de compras
         function calcularResumenCompras() {
             let totalProducto1 = 0;
-            let totalSacos = 0;
-            let totalProducto2Sueltas = 0;
+            let totalProducto2 = 0;
             let totalProducto3 = 0;
             let totalProducto4 = 0;
             
@@ -1784,16 +1742,14 @@
             
             pedidosPendientes.forEach(pedido => {
                 totalProducto1 += pedido.producto1 || 0;
-                totalSacos += pedido.sacosProducto2 || 0;
-                totalProducto2Sueltas += pedido.kilosProducto2 || 0;
+                totalProducto2 += pedido.kilosProducto2 || 0;
                 totalProducto3 += pedido.producto3 || 0;
                 totalProducto4 += pedido.producto4 || 0;
             });
             
             // Actualizar valores en el modal
             comprasProducto1.textContent = totalProducto1 + ' kg';
-            comprasSacos.textContent = totalSacos;
-            comprasPapasSueltas.textContent = totalProducto2Sueltas + ' kg';
+            comprasPapas.textContent = totalProducto2 + ' kg';
             comprasProducto3.textContent = totalProducto3 + ' kg';
             comprasProducto4.textContent = totalProducto4 + ' unidades';
             
@@ -1802,8 +1758,7 @@
             
             const productos = [
                 { nombre: productosConfig.producto1.nombre, cantidad: totalProducto1, unidad: 'kg' },
-                { nombre: "Sacos de " + productosConfig.producto2.nombre, cantidad: totalSacos, unidad: 'unidades' },
-                { nombre: productosConfig.producto2.nombre + " Sueltas", cantidad: totalProducto2Sueltas, unidad: 'kg' },
+                { nombre: productosConfig.producto2.nombre, cantidad: totalProducto2, unidad: 'kg' },
                 { nombre: productosConfig.producto3.nombre, cantidad: totalProducto3, unidad: 'kg' },
                 { nombre: productosConfig.producto4.nombre, cantidad: totalProducto4, unidad: 'unidades' }
             ];
@@ -1839,7 +1794,6 @@
             
             productosConfig.producto2.precio = parseInt(document.getElementById('producto2-price-input').value) || 1500;
             productosConfig.producto2.disponible = document.getElementById('producto2-available').checked;
-            productosConfig.producto2.ventaPorSaco = document.getElementById('producto2-saco').checked;
             
             productosConfig.producto3.precio = parseInt(document.getElementById('producto3-price-input').value) || 1800;
             productosConfig.producto3.disponible = document.getElementById('producto3-available').checked;
@@ -1874,7 +1828,6 @@
             const nombre = document.getElementById('nombre').value;
             const telefono = document.getElementById('telefono').value;
             const producto1 = parseInt(document.getElementById('producto1').value) || 0;
-            const sacosProducto2 = parseInt(document.getElementById('sacos-producto2').value) || 0;
             const kilosProducto2 = parseInt(document.getElementById('kilos-producto2').value) || 0;
             const producto3 = parseInt(document.getElementById('producto3').value) || 0;
             const producto4 = parseInt(document.getElementById('producto4').value) || 0;
@@ -1885,7 +1838,7 @@
                 return;
             }
             
-            if (producto1 === 0 && sacosProducto2 === 0 && kilosProducto2 === 0 && producto3 === 0 && producto4 === 0) {
+            if (producto1 === 0 && kilosProducto2 === 0 && producto3 === 0 && producto4 === 0) {
                 showNotification('Por favor selecciona al menos un producto', true);
                 return;
             }
@@ -1896,7 +1849,7 @@
                 return;
             }
             
-            if ((sacosProducto2 > 0 || kilosProducto2 > 0) && !productosConfig.producto2.disponible) {
+            if (kilosProducto2 > 0 && !productosConfig.producto2.disponible) {
                 showNotification(`${productosConfig.producto2.nombre} no están disponibles actualmente`, true);
                 return;
             }
@@ -1917,14 +1870,13 @@
                 nombre, 
                 telefono,
                 producto1, 
-                sacosProducto2, 
                 kilosProducto2, 
                 producto3, 
                 producto4,
                 comentarios,
                 fecha: new Date().toLocaleString(),
                 estado: 'pendiente',
-                total: calcularTotalPedido(producto1, sacosProducto2, kilosProducto2, producto3, producto4)
+                total: calcularTotalPedido(producto1, kilosProducto2, producto3, producto4)
             };
             
             pedidos.push(nuevoPedido);
@@ -1936,7 +1888,6 @@
             document.getElementById('nombre').value = '';
             document.getElementById('telefono').value = '';
             document.getElementById('producto1').value = '0';
-            document.getElementById('sacos-producto2').value = '0';
             document.getElementById('kilos-producto2').value = '0';
             document.getElementById('producto3').value = '0';
             document.getElementById('producto4').value = '0';
@@ -2012,7 +1963,6 @@
             const nombre = document.getElementById('admin-nombre').value;
             const telefono = document.getElementById('admin-telefono').value;
             const producto1 = parseInt(document.getElementById('admin-producto1').value) || 0;
-            const sacosProducto2 = parseInt(document.getElementById('admin-sacos-producto2').value) || 0;
             const kilosProducto2 = parseInt(document.getElementById('admin-kilos-producto2').value) || 0;
             const producto3 = parseInt(document.getElementById('admin-producto3').value) || 0;
             const producto4 = parseInt(document.getElementById('admin-producto4').value) || 0;
@@ -2029,14 +1979,13 @@
                 nombre, 
                 telefono,
                 producto1, 
-                sacosProducto2, 
                 kilosProducto2, 
                 producto3, 
                 producto4,
                 comentarios,
                 fecha: new Date().toLocaleString(),
                 estado: 'pendiente',
-                total: calcularTotalPedido(producto1, sacosProducto2, kilosProducto2, producto3, producto4)
+                total: calcularTotalPedido(producto1, kilosProducto2, producto3, producto4)
             };
             
             pedidos.push(nuevoPedido);
@@ -2051,7 +2000,6 @@
             document.getElementById('admin-nombre').value = '';
             document.getElementById('admin-telefono').value = '';
             document.getElementById('admin-producto1').value = '0';
-            document.getElementById('admin-sacos-producto2').value = '0';
             document.getElementById('admin-kilos-producto2').value = '0';
             document.getElementById('admin-producto3').value = '0';
             document.getElementById('admin-producto4').value = '0';
@@ -2118,7 +2066,6 @@
             
             document.getElementById('producto1-available').checked = productosConfig.producto1.disponible;
             document.getElementById('producto2-available').checked = productosConfig.producto2.disponible;
-            document.getElementById('producto2-saco').checked = productosConfig.producto2.ventaPorSaco;
             document.getElementById('producto3-available').checked = productosConfig.producto3.disponible;
             document.getElementById('producto4-available').checked = productosConfig.producto4.disponible;
             
@@ -2131,7 +2078,6 @@
                 nombre: 'María González',
                 telefono: '+56987654321',
                 producto1: 3,
-                sacosProducto2: 1,
                 kilosProducto2: 2,
                 producto3: 1,
                 producto4: 3,
@@ -2146,7 +2092,6 @@
                 nombre: 'Carlos Rodríguez',
                 telefono: '+56912348765',
                 producto1: 2,
-                sacosProducto2: 0,
                 kilosProducto2: 7,
                 producto3: 2,
                 producto4: 2,
@@ -2161,7 +2106,6 @@
                 nombre: 'Ana Martínez',
                 telefono: '+56955443322',
                 producto1: 4,
-                sacosProducto2: 0,
                 kilosProducto2: 0,
                 producto3: 2,
                 producto4: 4,
