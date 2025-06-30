@@ -1444,10 +1444,10 @@
                 <i class="fas fa-exclamation-circle"></i> Credenciales incorrectas
             </p>
             
-            <div style="margin-top: 20px; text-align: center; color: #666; background: #f9f9f9; padding: 12px; border-radius: 8px;">
-                <p>Para probar la aplicación:</p>
-                <p style="font-weight: 500; margin-top: 8px;"><i class="fas fa-user"></i> <strong>Email:</strong> admin@valledor.com</p>
-                <p style="font-weight: 500;"><i class="fas fa-key"></i> <strong>Contraseña:</strong> admin123</p>
+            <div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; text-align: center;">
+                <p style="font-weight: 600; color: #1565c0;">Credenciales de prueba:</p>
+                <p><i class="fas fa-user"></i> Email: admin@valledor.com</p>
+                <p><i class="fas fa-key"></i> Contraseña: admin123</p>
             </div>
         </div>
     </div>
@@ -1931,7 +1931,7 @@
             });
         }
         
-        // Calcular estadísticas para la pestaña de finanzas
+        // Calcular estadísticas para la pestaña de finanzas - VERSIÓN CORREGIDA
         function actualizarFinanzas() {
             // Calcular ingresos totales (solo pedidos completados)
             let ingresosTotales = 0;
@@ -1941,7 +1941,7 @@
                 if (pedido.estado === 'completado') {
                     ingresosTotales += pedido.total;
                     
-                    // Calcular costos
+                    // Calcular costos usando los valores actualizados
                     costosTotales += (pedido.producto1 * costosProductos.producto1);
                     costosTotales += (pedido.producto2 * costosProductos.producto2);
                     costosTotales += (pedido.producto3 * costosProductos.producto3);
@@ -1950,33 +1950,35 @@
             });
             
             // Actualizar UI
-            totalIngresosElement.textContent = ingresosTotales.toLocaleString();
-            totalCostosElement.textContent = costosTotales.toLocaleString();
+            totalIngresosElement.textContent = ingresosTotales.toLocaleString('es-CL');
+            totalCostosElement.textContent = costosTotales.toLocaleString('es-CL');
             
-            // Calcular margen de ganancia
+            // Calcular margen de ganancia CORREGIDO
             let margenGanancia = 0;
             if (ingresosTotales > 0) {
                 margenGanancia = ((ingresosTotales - costosTotales) / ingresosTotales) * 100;
             }
             
-            margenGanancia = Math.round(margenGanancia);
-            margenGananciaElement.textContent = margenGanancia;
-            margenBar.style.width = `${margenGanancia}%`;
-            margenBar.textContent = `${margenGanancia}%`;
+            margenGanancia = Math.max(0, margenGanancia); // Evitar valores negativos
+            const margenDisplay = margenGanancia.toFixed(1); // Mostrar 1 decimal
             
-            // Actualizar resumen financiero
-            resumenIngresos.textContent = ingresosTotales.toLocaleString();
-            resumenCostos.textContent = costosTotales.toLocaleString();
-            resumenGanancias.textContent = (ingresosTotales - costosTotales).toLocaleString();
-            resumenMargen.textContent = margenGanancia;
+            margenGananciaElement.textContent = margenDisplay;
+            margenBar.style.width = `${Math.min(100, margenGanancia)}%`;
+            margenBar.textContent = `${margenDisplay}%`;
+            
+            // Actualizar resumen financiero CORREGIDO
+            resumenIngresos.textContent = ingresosTotales.toLocaleString('es-CL');
+            resumenCostos.textContent = costosTotales.toLocaleString('es-CL');
+            resumenGanancias.textContent = (ingresosTotales - costosTotales).toLocaleString('es-CL');
+            resumenMargen.textContent = margenDisplay;
             
             // Actualizar progreso de meta
             actualizarProgresoMeta();
         }
         
-        // Actualizar progreso hacia la meta de ventas
+        // Actualizar progreso hacia la meta de ventas - VERSIÓN MEJORADA
         function actualizarProgresoMeta() {
-            const ingresosTotales = parseFloat(totalIngresosElement.textContent.replace(/,/g, '')) || 0;
+            const ingresosTotales = parseFloat(totalIngresosElement.textContent.replace(/\./g, '')) || 0;
             let progreso = 0;
             
             if (metaVentas > 0) {
@@ -2007,7 +2009,7 @@
             
             // Actualizar valores en el modal
             comprasProducto1.textContent = totalProducto1 + ' kg';
-            comprasPapas.textContent = totalProducto2 + ' kg';
+            comprasProducto2.textContent = totalProducto2 + ' kg';
             comprasProducto3.textContent = totalProducto3 + ' kg';
             comprasProducto4.textContent = totalProducto4 + ' unidades';
             
@@ -2385,7 +2387,7 @@
             if (savedMeta) {
                 metaVentas = parseInt(savedMeta);
                 metaInput.value = metaVentas;
-                metaVentasElement.textContent = metaVentas.toLocaleString();
+                metaVentasElement.textContent = metaVentas.toLocaleString('es-CL');
                 actualizarProgresoMeta();
             }
             
@@ -2435,12 +2437,13 @@
             // Actualizar UI
             actualizarProductosUI();
             
-            // Evento para la meta de ventas
+            // Evento para la meta de ventas - VERSIÓN MEJORADA
             metaInput.addEventListener('change', () => {
                 metaVentas = parseInt(metaInput.value) || 0;
                 localStorage.setItem('metaVentas', metaVentas);
-                metaVentasElement.textContent = metaVentas.toLocaleString();
+                metaVentasElement.textContent = metaVentas.toLocaleString('es-CL');
                 actualizarProgresoMeta();
+                actualizarFinanzas(); // Actualizar también los márgenes
             });
             
             // Actualizar finanzas
