@@ -1674,7 +1674,7 @@
         const comprasModal = document.getElementById('compras-modal');
         const closeComprasModal = document.getElementById('close-compras');
         const comprasProducto1 = document.getElementById('compras-producto1');
-        const comprasPapas = document.getElementById('compras-papas');
+        const comprasProducto2 = document.getElementById('compras-papas');
         const comprasProducto3 = document.getElementById('compras-limones');
         const comprasProducto4 = document.getElementById('compras-lechugas');
         const comprasBody = document.getElementById('compras-body');
