@@ -1558,12 +1558,12 @@
                 
                 <div class="stat-card">
                     <div class="stat-title" id="compras-title3">Limones</div>
-                    <div class="stat-value" id="compras-limones">0 kg</div>
+                    <div class="stat-value" id="compras-producto3">0 kg</div>
                 </div>
                 
                 <div class="stat-card">
                     <div class="stat-title" id="compras-title4">Lechugas</div>
-                    <div class="stat-value" id="compras-lechugas">0 unidades</div>
+                    <div class="stat-value" id="compras-producto4">0 unidades</div>
                 </div>
             </div>
             
@@ -1675,8 +1675,8 @@
         const closeComprasModal = document.getElementById('close-compras');
         const comprasProducto1 = document.getElementById('compras-producto1');
         const comprasProducto2 = document.getElementById('compras-producto2');
-        const comprasProducto3 = document.getElementById('compras-limones');
-        const comprasProducto4 = document.getElementById('compras-lechugas');
+        const comprasProducto3 = document.getElementById('compras-producto3');
+        const comprasProducto4 = document.getElementById('compras-producto4');
         const comprasBody = document.getElementById('compras-body');
         const printComprasBtn = document.getElementById('print-compras');
         const savePricesBtn = document.getElementById('save-prices');
@@ -2009,7 +2009,7 @@
             
             // Actualizar valores en el modal
             comprasProducto1.textContent = totalProducto1 + ' kg';
-           .textContent = totalProducto2 + ' kg';
+            comprasProducto2.textContent = totalProducto2 + ' kg';
             comprasProducto3.textContent = totalProducto3 + ' kg';
             comprasProducto4.textContent = totalProducto4 + ' unidades';
             
