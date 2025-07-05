@@ -966,6 +966,22 @@
             gap: 5px;
         }
         
+        .loading-spinner {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         /* Media queries para móviles */
         @media (min-width: 576px) {
             .logo {
@@ -1144,6 +1160,7 @@
                 <button class="btn" id="enviar-pedido">
                     <i class="fas fa-paper-plane"></i> Enviar Pedido
                 </button>
+                <div class="loading-spinner" id="loading-spinner"></div>
             </div>
             
             <!-- Panel de administrador -->
@@ -1173,6 +1190,7 @@
                     <div class="admin-tab active" data-tab="pedidos">Pedidos</div>
                     <div class="admin-tab" data-tab="precios">Productos</div>
                     <div class="admin-tab" data-tab="finanzas">Finanzas</div>
+                    <div class="admin-tab" data-tab="config">Configuración</div>
                 </div>
                 
                 <!-- Pestaña de Pedidos -->
@@ -1197,6 +1215,16 @@
                             <div class="stat-title">Completados</div>
                             <div class="stat-value" id="pedidos-completados">0</div>
                         </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="search-input" placeholder="Buscar pedidos..." style="flex-grow: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                        <select id="status-filter" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                            <option value="all">Todos los estados</option>
+                            <option value="pendiente">Pendientes</option>
+                            <option value="entregado">Entregados</option>
+                            <option value="completado">Completados</option>
+                        </select>
                     </div>
                     
                     <h3 style="margin: 15px 0 10px;">
@@ -1418,6 +1446,47 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+                
+                <!-- Pestaña de Configuración -->
+                <div class="admin-tab-content" id="config-tab">
+                    <div class="price-manager">
+                        <h3><i class="fas fa-cogs"></i> Configuración del Sistema</h3>
+                        
+                        <div class="form-group">
+                            <label for="google-sheet-id"><i class="fab fa-google"></i> ID de Google Sheet</label>
+                            <input type="text" id="google-sheet-id" placeholder="Ingresa el ID de tu hoja de cálculo">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="google-api-key"><i class="fas fa-key"></i> Clave API de Google</label>
+                            <input type="password" id="google-api-key" placeholder="Ingresa tu clave API">
+                        </div>
+                        
+                        <div style="margin-top: 15px; padding: 15px; background-color: #f0f9ff; border-radius: 8px;">
+                            <h4><i class="fas fa-info-circle"></i> Instrucciones:</h4>
+                            <p>1. Crea una hoja de cálculo en Google Drive</p>
+                            <p>2. Comparte la hoja con acceso de edición a <code>tu-servicio@script.google.com</code></p>
+                            <p>3. Obtén el ID de la hoja de cálculo desde la URL</p>
+                            <p>4. Genera una clave API en Google Cloud Console</p>
+                        </div>
+                        
+                        <button class="btn" id="save-settings" style="margin-top: 15px;">
+                            <i class="fas fa-save"></i> Guardar Configuración
+                        </button>
+                        
+                        <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                            <h4><i class="fas fa-sync"></i> Sincronización con Google Sheets</h4>
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button class="btn" id="sync-google-sheets">
+                                    <i class="fas fa-cloud-upload-alt"></i> Subir a Google Sheets
+                                </button>
+                                <button class="btn btn-admin" id="download-google-sheets">
+                                    <i class="fas fa-cloud-download-alt"></i> Descargar desde Google Sheets
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1647,6 +1716,12 @@
             }
         };
         
+        // Configuración de Google Sheets
+        let googleSheetConfig = {
+            sheetId: '',
+            apiKey: ''
+        };
+        
         // Elementos DOM
         const solicitanteForm = document.getElementById('solicitante-form');
         const adminContainer = document.getElementById('admin-container');
@@ -1692,6 +1767,14 @@
         const resumenCostos = document.getElementById('resumen-costos');
         const resumenGanancias = document.getElementById('resumen-ganancias');
         const resumenMargen = document.getElementById('resumen-margen');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const searchInput = document.getElementById('search-input');
+        const statusFilter = document.getElementById('status-filter');
+        const googleSheetIdInput = document.getElementById('google-sheet-id');
+        const googleApiKeyInput = document.getElementById('google-api-key');
+        const saveSettingsBtn = document.getElementById('save-settings');
+        const syncGoogleSheetsBtn = document.getElementById('sync-google-sheets');
+        const downloadGoogleSheetsBtn = document.getElementById('download-google-sheets');
         
         // Inputs de costos
         const producto1CostInput = document.getElementById('producto1-cost-input');
@@ -1931,7 +2014,7 @@
             });
         }
         
-        // Calcular estadísticas para la pestaña de finanzas - VERSIÓN CORREGIDA
+        // Calcular estadísticas para la pestaña de finanzas
         function actualizarFinanzas() {
             // Calcular ingresos totales (solo pedidos completados)
             let ingresosTotales = 0;
@@ -1953,7 +2036,7 @@
             totalIngresosElement.textContent = ingresosTotales.toLocaleString('es-CL');
             totalCostosElement.textContent = costosTotales.toLocaleString('es-CL');
             
-            // Calcular margen de ganancia CORREGIDO
+            // Calcular margen de ganancia
             let margenGanancia = 0;
             if (ingresosTotales > 0) {
                 margenGanancia = ((ingresosTotales - costosTotales) / ingresosTotales) * 100;
@@ -1966,7 +2049,7 @@
             margenBar.style.width = `${Math.min(100, margenGanancia)}%`;
             margenBar.textContent = `${margenDisplay}%`;
             
-            // Actualizar resumen financiero CORREGIDO
+            // Actualizar resumen financiero
             resumenIngresos.textContent = ingresosTotales.toLocaleString('es-CL');
             resumenCostos.textContent = costosTotales.toLocaleString('es-CL');
             resumenGanancias.textContent = (ingresosTotales - costosTotales).toLocaleString('es-CL');
@@ -1976,7 +2059,7 @@
             actualizarProgresoMeta();
         }
         
-        // Actualizar progreso hacia la meta de ventas - VERSIÓN MEJORADA
+        // Actualizar progreso hacia la meta de ventas
         function actualizarProgresoMeta() {
             const ingresosTotales = parseFloat(totalIngresosElement.textContent.replace(/\./g, '')) || 0;
             let progreso = 0;
@@ -2151,25 +2234,97 @@
                 total: calcularTotalPedido(producto1, producto2, producto3, producto4)
             };
             
-            pedidos.push(nuevoPedido);
+            // Mostrar spinner de carga
+            loadingSpinner.style.display = 'block';
             
-            // Mostrar notificación
-            showNotification('Pedido registrado con éxito!');
-            
-            // Resetear formulario
-            document.getElementById('nombre').value = '';
-            document.getElementById('telefono').value = '';
-            document.getElementById('producto1').value = '0';
-            document.getElementById('producto2').value = '0';
-            document.getElementById('producto3').value = '0';
-            document.getElementById('producto4').value = '0';
-            document.getElementById('comentarios').value = '';
-            
-            // Actualizar panel de administrador si está visible
-            if (adminContainer.style.display === 'block') {
-                actualizarPanelAdmin();
+            // Guardar en Google Sheets si está configurado
+            if (googleSheetConfig.sheetId && googleSheetConfig.apiKey) {
+                guardarEnGoogleSheets(nuevoPedido)
+                    .then(() => {
+                        // Agregar al array local
+                        pedidos.push(nuevoPedido);
+                        showNotification('Pedido registrado con éxito!');
+                        
+                        // Resetear formulario
+                        document.getElementById('nombre').value = '';
+                        document.getElementById('telefono').value = '';
+                        document.getElementById('producto1').value = '0';
+                        document.getElementById('producto2').value = '0';
+                        document.getElementById('producto3').value = '0';
+                        document.getElementById('producto4').value = '0';
+                        document.getElementById('comentarios').value = '';
+                        
+                        // Actualizar panel de administrador si está visible
+                        if (adminContainer.style.display === 'block') {
+                            actualizarPanelAdmin();
+                        }
+                    })
+                    .catch(error => {
+                        showNotification('Error al guardar en Google Sheets: ' + error.message, true);
+                    })
+                    .finally(() => {
+                        loadingSpinner.style.display = 'none';
+                    });
+            } else {
+                // Agregar al array local
+                pedidos.push(nuevoPedido);
+                showNotification('Pedido registrado con éxito!');
+                
+                // Resetear formulario
+                document.getElementById('nombre').value = '';
+                document.getElementById('telefono').value = '';
+                document.getElementById('producto1').value = '0';
+                document.getElementById('producto2').value = '0';
+                document.getElementById('producto3').value = '0';
+                document.getElementById('producto4').value = '0';
+                document.getElementById('comentarios').value = '';
+                
+                // Actualizar panel de administrador si está visible
+                if (adminContainer.style.display === 'block') {
+                    actualizarPanelAdmin();
+                }
+                
+                loadingSpinner.style.display = 'none';
             }
         });
+        
+        // Guardar en Google Sheets
+        async function guardarEnGoogleSheets(pedido) {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetConfig.sheetId}/values/A:append?valueInputOption=USER_ENTERED`;
+            
+            const values = [
+                pedido.id,
+                pedido.nombre,
+                pedido.telefono,
+                pedido.producto1,
+                pedido.producto2,
+                pedido.producto3,
+                pedido.producto4,
+                pedido.comentarios,
+                pedido.fecha,
+                pedido.estado,
+                pedido.total
+            ];
+            
+            const body = {
+                values: [values]
+            };
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${googleSheetConfig.apiKey}`
+                },
+                body: JSON.stringify(body)
+            });
+            
+            if (!response.ok) {
+                throw new Error('Error al guardar en Google Sheets');
+            }
+            
+            return response.json();
+        }
         
         // Login de administrador
         loginBtn.addEventListener('click', () => {
@@ -2346,6 +2501,95 @@
             }
         });
         
+        // Guardar configuración de Google Sheets
+        saveSettingsBtn.addEventListener('click', () => {
+            googleSheetConfig.sheetId = googleSheetIdInput.value;
+            googleSheetConfig.apiKey = googleApiKeyInput.value;
+            
+            localStorage.setItem('googleSheetConfig', JSON.stringify(googleSheetConfig));
+            
+            showNotification('Configuración de Google Sheets guardada');
+        });
+        
+        // Sincronizar con Google Sheets
+        syncGoogleSheetsBtn.addEventListener('click', async () => {
+            if (!googleSheetConfig.sheetId || !googleSheetConfig.apiKey) {
+                showNotification('Por favor configura primero Google Sheets', true);
+                return;
+            }
+            
+            try {
+                // Guardar todos los pedidos en Google Sheets
+                for (const pedido of pedidos) {
+                    await guardarEnGoogleSheets(pedido);
+                }
+                
+                showNotification('Pedidos sincronizados con Google Sheets');
+            } catch (error) {
+                showNotification('Error al sincronizar: ' + error.message, true);
+            }
+        });
+        
+        // Descargar desde Google Sheets
+        downloadGoogleSheetsBtn.addEventListener('click', async () => {
+            if (!googleSheetConfig.sheetId || !googleSheetConfig.apiKey) {
+                showNotification('Por favor configura primero Google Sheets', true);
+                return;
+            }
+            
+            try {
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetConfig.sheetId}/values/A:K`;
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${googleSheetConfig.apiKey}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Error al obtener datos de Google Sheets');
+                }
+                
+                const data = await response.json();
+                const rows = data.values;
+                
+                if (!rows || rows.length === 0) {
+                    showNotification('No se encontraron datos en Google Sheets', true);
+                    return;
+                }
+                
+                // Eliminar la fila de encabezados
+                rows.shift();
+                
+                // Convertir filas a objetos pedido
+                const nuevosPedidos = rows.map(row => ({
+                    id: row[0],
+                    nombre: row[1],
+                    telefono: row[2],
+                    producto1: parseInt(row[3]) || 0,
+                    producto2: parseInt(row[4]) || 0,
+                    producto3: parseInt(row[5]) || 0,
+                    producto4: parseInt(row[6]) || 0,
+                    comentarios: row[7],
+                    fecha: row[8],
+                    estado: row[9],
+                    total: parseInt(row[10]) || 0
+                }));
+                
+                // Reemplazar los pedidos locales
+                pedidos = nuevosPedidos;
+                
+                // Actualizar UI
+                actualizarPanelAdmin();
+                actualizarFinanzas();
+                
+                showNotification('Pedidos descargados desde Google Sheets');
+            } catch (error) {
+                showNotification('Error al descargar: ' + error.message, true);
+            }
+        });
+        
         // Inicializar con datos de muestra
         document.addEventListener('DOMContentLoaded', () => {
             // Cargar configuración desde localStorage si existe
@@ -2358,6 +2602,14 @@
             const savedCostos = localStorage.getItem('costosProductos');
             if (savedCostos) {
                 costosProductos = JSON.parse(savedCostos);
+            }
+            
+            // Cargar configuración de Google Sheets
+            const savedGoogleSheetConfig = localStorage.getItem('googleSheetConfig');
+            if (savedGoogleSheetConfig) {
+                googleSheetConfig = JSON.parse(savedGoogleSheetConfig);
+                googleSheetIdInput.value = googleSheetConfig.sheetId;
+                googleApiKeyInput.value = googleSheetConfig.apiKey;
             }
             
             // Configurar inputs de productos
@@ -2437,14 +2689,17 @@
             // Actualizar UI
             actualizarProductosUI();
             
-            // Evento para la meta de ventas - VERSIÓN MEJORADA
+            // Evento para la meta de ventas
             metaInput.addEventListener('change', () => {
                 metaVentas = parseInt(metaInput.value) || 0;
                 localStorage.setItem('metaVentas', metaVentas);
                 metaVentasElement.textContent = metaVentas.toLocaleString('es-CL');
                 actualizarProgresoMeta();
-                actualizarFinanzas(); // Actualizar también los márgenes
             });
+            
+            // Eventos para filtros
+            searchInput.addEventListener('input', actualizarPanelAdmin);
+            statusFilter.addEventListener('change', actualizarPanelAdmin);
             
             // Actualizar finanzas
             actualizarFinanzas();
