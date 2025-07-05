@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Autenticación - Lazo Mercado</title>
+    <script>
+        function handleAuthResponse() {
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = hashParams.get('access_token');
+            
+            if(accessToken) {
+                // Almacena el token y cierra la ventana
+                window.opener.postMessage({ 
+                    type: 'google-auth-success', 
+                    accessToken: accessToken 
+                }, 'https://elbalta.github.io');
+                window.close();
+            } else {
+                window.opener.postMessage({ 
+                    type: 'google-auth-error',
+                    error: 'No se pudo obtener token de acceso'
+                }, 'https://elbalta.github.io');
+                window.close();
+            }
+        }
+        
+        window.onload = handleAuthResponse;
+    </script>
+</head>
+<body>
+    <p>Procesando autenticación...</p>
+</body>
+</html>
