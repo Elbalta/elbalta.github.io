@@ -1070,6 +1070,9 @@
         <button id="admin-login-link" class="admin-login-btn">
             <i class="fas fa-user-shield"></i> Administrador
         </button>
+        <button id="google-auth-btn" class="admin-login-btn" style="margin-top: 10px;">
+            <i class="fas fa-lock"></i> Autenticar con Google
+        </button>
     </header>
     
     <div class="container">
@@ -1674,6 +1677,10 @@
     </div>
 
     <script>
+        // ID de cliente proporcionado
+        const CLIENT_ID = '544898774388-b6stu7qkph32djdmc5kjjqo5a42sj7jf.apps.googleusercontent.com';
+        const REDIRECT_URI = 'https://elbalta.github.io/auth-callback.html';
+        
         // Datos iniciales
         let pedidos = [];
         let isAdmin = false;
@@ -1777,6 +1784,7 @@
         const saveSettingsBtn = document.getElementById('save-settings');
         const syncGoogleSheetsBtn = document.getElementById('sync-google-sheets');
         const downloadGoogleSheetsBtn = document.getElementById('download-google-sheets');
+        const googleAuthBtn = document.getElementById('google-auth-btn');
         
         // Inputs de costos
         const producto1CostInput = document.getElementById('producto1-cost-input');
@@ -2180,8 +2188,83 @@
             });
         });
         
+        // Función para iniciar autenticación
+        function iniciarAutenticacion() {
+            const SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+            
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${CLIENT_ID}` +
+                `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+                `&response_type=token` +
+                `&scope=${encodeURIComponent(SCOPE)}` +
+                `&prompt=consent`;
+            
+            // Abrir ventana de autenticación
+            const authWindow = window.open(authUrl, 'google-auth', 'width=500,height=600');
+            
+            // Escuchar mensaje de respuesta
+            window.addEventListener('message', (event) => {
+                if (event.origin !== 'https://elbalta.github.io') return;
+                
+                if (event.data.type === 'google-auth-success') {
+                    localStorage.setItem('google_access_token', event.data.accessToken);
+                    showNotification('Autenticación exitosa! Ahora puedes guardar pedidos.');
+                } else if (event.data.type === 'google-auth-error') {
+                    showNotification('Error de autenticación: ' + event.data.error, true);
+                }
+            });
+        }
+        
+        // Botón de autenticación
+        googleAuthBtn.addEventListener('click', iniciarAutenticacion);
+        
+        // Guardar en Google Sheets
+        async function guardarEnGoogleSheets(pedido) {
+            const token = localStorage.getItem('google_access_token');
+            if (!token) {
+                throw new Error('No autenticado. Por favor, inicia sesión con Google.');
+            }
+            
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetConfig.sheetId}/values/A:append?valueInputOption=USER_ENTERED`;
+            
+            const values = [
+                pedido.id,
+                pedido.nombre,
+                pedido.telefono,
+                pedido.producto1,
+                pedido.producto2,
+                pedido.producto3,
+                pedido.producto4,
+                pedido.comentarios,
+                pedido.fecha,
+                pedido.estado,
+                pedido.total
+            ];
+            
+            const body = {
+                values: [values]
+            };
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(body)
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('Error de Google Sheets:', error);
+                throw new Error('Error al guardar en Google Sheets: ' + (error.error?.message || ''));
+            }
+            
+            return response.json();
+        }
+        
         // Enviar pedido (solicitante)
-        enviarPedidoBtn.addEventListener('click', () => {
+        enviarPedidoBtn.addEventListener('click', async () => {
             const nombre = document.getElementById('nombre').value;
             const telefono = document.getElementById('telefono').value;
             const producto1 = parseInt(document.getElementById('producto1').value) || 0;
@@ -2239,35 +2322,14 @@
             // Mostrar spinner de carga
             loadingSpinner.style.display = 'block';
             
-            // Guardar en Google Sheets si está configurado
-            if (googleSheetConfig.sheetId && googleSheetConfig.apiKey) {
-                guardarEnGoogleSheets(nuevoPedido)
-                    .then(() => {
-                        // Agregar al array local
-                        pedidos.push(nuevoPedido);
-                        showNotification('Pedido registrado con éxito!');
-                        
-                        // Resetear formulario
-                        document.getElementById('nombre').value = '';
-                        document.getElementById('telefono').value = '';
-                        document.getElementById('producto1').value = '0';
-                        document.getElementById('producto2').value = '0';
-                        document.getElementById('producto3').value = '0';
-                        document.getElementById('producto4').value = '0';
-                        document.getElementById('comentarios').value = '';
-                        
-                        // Actualizar panel de administrador si está visible
-                        if (adminContainer.style.display === 'block') {
-                            actualizarPanelAdmin();
-                        }
-                    })
-                    .catch(error => {
-                        showNotification('Error al guardar en Google Sheets: ' + error.message, true);
-                    })
-                    .finally(() => {
-                        loadingSpinner.style.display = 'none';
-                    });
-            } else {
+            try {
+                // Guardar en Google Sheets si está configurado
+                if (googleSheetConfig.sheetId && googleSheetConfig.apiKey) {
+                    await guardarEnGoogleSheets(nuevoPedido);
+                } else {
+                    throw new Error('Configuración de Google Sheets incompleta');
+                }
+                
                 // Agregar al array local
                 pedidos.push(nuevoPedido);
                 showNotification('Pedido registrado con éxito!');
@@ -2285,48 +2347,12 @@
                 if (adminContainer.style.display === 'block') {
                     actualizarPanelAdmin();
                 }
-                
+            } catch (error) {
+                showNotification(error.message, true);
+            } finally {
                 loadingSpinner.style.display = 'none';
             }
         });
-        
-        // Guardar en Google Sheets
-        async function guardarEnGoogleSheets(pedido) {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetConfig.sheetId}/values/A:append?valueInputOption=USER_ENTERED`;
-            
-            const values = [
-                pedido.id,
-                pedido.nombre,
-                pedido.telefono,
-                pedido.producto1,
-                pedido.producto2,
-                pedido.producto3,
-                pedido.producto4,
-                pedido.comentarios,
-                pedido.fecha,
-                pedido.estado,
-                pedido.total
-            ];
-            
-            const body = {
-                values: [values]
-            };
-            
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${googleSheetConfig.apiKey}`
-                },
-                body: JSON.stringify(body)
-            });
-            
-            if (!response.ok) {
-                throw new Error('Error al guardar en Google Sheets');
-            }
-            
-            return response.json();
-        }
         
         // Login de administrador
         loginBtn.addEventListener('click', () => {
@@ -2520,6 +2546,12 @@
                 return;
             }
             
+            const token = localStorage.getItem('google_access_token');
+            if (!token) {
+                showNotification('Por favor autentícate con Google primero', true);
+                return;
+            }
+            
             try {
                 // Guardar todos los pedidos en Google Sheets
                 for (const pedido of pedidos) {
@@ -2539,13 +2571,19 @@
                 return;
             }
             
+            const token = localStorage.getItem('google_access_token');
+            if (!token) {
+                showNotification('Por favor autentícate con Google primero', true);
+                return;
+            }
+            
             try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetConfig.sheetId}/values/A:K`;
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetConfig.sheetId}/values/A:K?key=${googleSheetConfig.apiKey}`;
                 
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${googleSheetConfig.apiKey}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
                 
@@ -2562,22 +2600,26 @@
                 }
                 
                 // Eliminar la fila de encabezados
-                rows.shift();
+                const headers = rows[0];
+                const dataRows = rows.slice(1);
                 
                 // Convertir filas a objetos pedido
-                const nuevosPedidos = rows.map(row => ({
-                    id: row[0],
-                    nombre: row[1],
-                    telefono: row[2],
-                    producto1: parseInt(row[3]) || 0,
-                    producto2: parseInt(row[4]) || 0,
-                    producto3: parseInt(row[5]) || 0,
-                    producto4: parseInt(row[6]) || 0,
-                    comentarios: row[7],
-                    fecha: row[8],
-                    estado: row[9],
-                    total: parseInt(row[10]) || 0
-                }));
+                const nuevosPedidos = dataRows.map(row => {
+                    const pedido = {
+                        id: row[0],
+                        nombre: row[1],
+                        telefono: row[2],
+                        producto1: parseInt(row[3]) || 0,
+                        producto2: parseInt(row[4]) || 0,
+                        producto3: parseInt(row[5]) || 0,
+                        producto4: parseInt(row[6]) || 0,
+                        comentarios: row[7],
+                        fecha: row[8],
+                        estado: row[9],
+                        total: parseInt(row[10]) || 0
+                    };
+                    return pedido;
+                });
                 
                 // Reemplazar los pedidos locales
                 pedidos = nuevosPedidos;
