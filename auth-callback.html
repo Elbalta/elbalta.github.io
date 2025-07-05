@@ -6,21 +6,28 @@
         function handleAuthResponse() {
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
             const accessToken = hashParams.get('access_token');
+            const error = hashParams.get('error');
             
-            if(accessToken) {
-                // Almacena el token y cierra la ventana
-                window.opener.postMessage({ 
-                    type: 'google-auth-success', 
-                    accessToken: accessToken 
+            if (accessToken) {
+                // Enviar el token a la ventana principal
+                window.opener.postMessage({
+                    type: 'google-auth-success',
+                    accessToken: accessToken
                 }, 'https://elbalta.github.io');
-                window.close();
-            } else {
-                window.opener.postMessage({ 
+            } else if (error) {
+                // Enviar el error a la ventana principal
+                window.opener.postMessage({
                     type: 'google-auth-error',
-                    error: 'No se pudo obtener token de acceso'
+                    error: error
                 }, 'https://elbalta.github.io');
-                window.close();
+            } else {
+                window.opener.postMessage({
+                    type: 'google-auth-error',
+                    error: 'Error desconocido'
+                }, 'https://elbalta.github.io');
             }
+            
+            window.close();
         }
         
         window.onload = handleAuthResponse;
