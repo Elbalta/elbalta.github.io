@@ -1120,7 +1120,7 @@
                                 <th>Teléfono</th>
                                 <th>Productos</th>
                                 <th>Estado</th>
-                                <th>Acciones</th>
+                                <th>Fecha</th>
                             </tr>
                         </thead>
                         <tbody id="orders-body">
@@ -1334,7 +1334,12 @@
                 <!-- Pestaña de Configuración -->
                 <div class="admin-tab-content" id="config-tab">
                     <div class="price-manager">
-                        <h3><i class="fas fa-cogs"></i> Configuración de Google Sheets</h3>
+                        <h3><i class="fas fa-cogs"></i> Configuración del Sistema</h3>
+                        
+                        <div class="form-group">
+                            <label for="backend-url"><i class="fas fa-server"></i> URL de Backend</label>
+                            <input type="text" id="backend-url" placeholder="Ingresa la URL de tu backend">
+                        </div>
                         
                         <div class="form-group">
                             <label for="google-form-url"><i class="fab fa-google"></i> URL de Formulario de Google</label>
@@ -1348,6 +1353,7 @@
                                 <li>Haz clic en el botón de "Enviar" en tu formulario</li>
                                 <li>Selecciona el ícono de <strong>Google Sheets</strong> para crear una nueva hoja de cálculo</li>
                                 <li>Copia la URL del formulario y pégala arriba</li>
+                                <li>Para el backend, publica un Google Apps Script como aplicación web</li>
                             </ol>
                             <p><em>Nota: Los datos se enviarán automáticamente a tu hoja de cálculo de Google</em></p>
                         </div>
@@ -1633,6 +1639,7 @@
         const searchInput = document.getElementById('search-input');
         const statusFilter = document.getElementById('status-filter');
         const googleFormUrlInput = document.getElementById('google-form-url');
+        const backendUrlInput = document.getElementById('backend-url');
         const saveSettingsBtn = document.getElementById('save-settings');
         
         // Inputs de costos
@@ -1644,6 +1651,10 @@
         // Tabs de administrador
         const adminTabs = document.querySelectorAll('.admin-tab');
         const adminTabContents = document.querySelectorAll('.admin-tab-content');
+        
+        // URL base del backend de Google Apps Script
+        const BACKEND_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbyg7YxU9R0QfVU2sNp7n4gx8Q2X4WQZ7XqY4XqY4XqY4XqY4XqY4/exec";
+        let backendUrl = BACKEND_URL_DEFAULT;
         
         // Función para manejar botones de cantidad
         function handleQuantityBtnClick() {
@@ -1842,6 +1853,14 @@
                 if (pedido.producto3 > 0) productos.push(`${productosConfig.producto3.nombre}: ${pedido.producto3} kg`);
                 if (pedido.producto4 > 0) productos.push(`${productosConfig.producto4.nombre}: ${pedido.producto4}`);
                 
+                // Formatear fecha
+                let fecha = pedido.fecha;
+                if (typeof pedido.fecha === 'string') {
+                    fecha = new Date(pedido.fecha).toLocaleString();
+                } else if (pedido.fecha instanceof Date) {
+                    fecha = pedido.fecha.toLocaleString();
+                }
+                
                 row.innerHTML = `
                     <td>${pedido.nombre}</td>
                     <td>${pedido.telefono}</td>
@@ -1853,21 +1872,7 @@
                              'Completado'}
                         </span>
                     </td>
-                    <td>
-                        <div class="action-buttons">
-                            ${pedido.estado === 'pendiente' ? 
-                                `<button class="action-btn btn-complete" data-id="${pedido.id}" data-action="entregado">
-                                    <i class="fas fa-truck"></i> Entregar
-                                </button>` : ''}
-                            ${pedido.estado === 'entregado' ? 
-                                `<button class="action-btn btn-complete" data-id="${pedido.id}" data-action="completado">
-                                    <i class="fas fa-check-double"></i> Completar
-                                </button>` : ''}
-                            <button class="action-btn btn-delete" data-id="${pedido.id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
+                    <td>${fecha}</td>
                 `;
                 ordersBody.appendChild(row);
             });
@@ -2088,6 +2093,33 @@
             }
         }
         
+        // Guardar pedido en el backend
+        async function guardarPedidoBackend(pedido) {
+            try {
+                const response = await fetch(backendUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pedido)
+                });
+                
+                return await response.json();
+            } catch (error) {
+                console.error("Error al guardar pedido:", error);
+                throw new Error('Error de conexión con el backend');
+            }
+        }
+        
+        // Obtener pedidos desde el backend
+        async function obtenerPedidosBackend() {
+            try {
+                const response = await fetch(`${backendUrl}?t=${Date.now()}`);
+                return await response.json();
+            } catch (error) {
+                console.error("Error al obtener pedidos:", error);
+                return [];
+            }
+        }
+        
         // Enviar pedido (solicitante)
         enviarPedidoBtn.addEventListener('click', async () => {
             const nombre = document.getElementById('nombre').value;
@@ -2139,7 +2171,7 @@
                 producto3, 
                 producto4,
                 comentarios,
-                fecha: new Date().toLocaleString(),
+                fecha: new Date().toISOString(),
                 estado: 'pendiente',
                 total: calcularTotalPedido(producto1, producto2, producto3, producto4)
             };
@@ -2148,34 +2180,36 @@
             loadingSpinner.style.display = 'block';
             
             try {
-                // Guardar en Google Sheets si está configurado
-                if (googleFormUrlInput.value) {
-                    await guardarEnGoogleSheets(nuevoPedido);
-                    showNotification('Pedido registrado con éxito en Google Sheets!');
+                // Guardar en el backend
+                const resultadoBackend = await guardarPedidoBackend(nuevoPedido);
+                
+                if (resultadoBackend.success) {
+                    // Si está configurado el formulario de Google, también guardar allí
+                    if (googleFormUrlInput.value) {
+                        await guardarEnGoogleSheets(nuevoPedido);
+                    }
+                    
+                    // Agregar al array local
+                    pedidos.push(nuevoPedido);
+                    
+                    // Resetear formulario
+                    document.getElementById('nombre').value = '';
+                    document.getElementById('telefono').value = '';
+                    document.getElementById('producto1').value = '0';
+                    document.getElementById('producto2').value = '0';
+                    document.getElementById('producto3').value = '0';
+                    document.getElementById('producto4').value = '0';
+                    document.getElementById('comentarios').value = '';
+                    
+                    showNotification('Pedido registrado con éxito!');
+                    
+                    // Actualizar panel de administrador si está visible
+                    if (adminContainer.style.display === 'block') {
+                        actualizarPanelAdmin();
+                        actualizarFinanzas();
+                    }
                 } else {
-                    // Guardar localmente
-                    const pedidosGuardados = JSON.parse(localStorage.getItem('pedidos')) || [];
-                    pedidosGuardados.push(nuevoPedido);
-                    localStorage.setItem('pedidos', JSON.stringify(pedidosGuardados));
-                    showNotification('Pedido guardado localmente. Configura Google Sheets para sincronización.');
-                }
-                
-                // Agregar al array local
-                pedidos.push(nuevoPedido);
-                
-                // Resetear formulario
-                document.getElementById('nombre').value = '';
-                document.getElementById('telefono').value = '';
-                document.getElementById('producto1').value = '0';
-                document.getElementById('producto2').value = '0';
-                document.getElementById('producto3').value = '0';
-                document.getElementById('producto4').value = '0';
-                document.getElementById('comentarios').value = '';
-                
-                // Actualizar panel de administrador si está visible
-                if (adminContainer.style.display === 'block') {
-                    actualizarPanelAdmin();
-                    actualizarFinanzas();
+                    showNotification('Error al guardar en el backend', true);
                 }
             } catch (error) {
                 showNotification(error.message, true);
@@ -2185,7 +2219,7 @@
         });
         
         // Login de administrador
-        loginBtn.addEventListener('click', () => {
+        loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('admin-email').value;
             const password = document.getElementById('admin-password').value;
             
@@ -2201,11 +2235,18 @@
                 // Ocultar modal
                 loginModal.style.display = 'none';
                 
-                // Actualizar panel
-                actualizarPanelAdmin();
-                actualizarFinanzas();
-                
-                showNotification('Sesión de administrador iniciada');
+                // Obtener pedidos desde el backend
+                loadingSpinner.style.display = 'block';
+                try {
+                    pedidos = await obtenerPedidosBackend();
+                    actualizarPanelAdmin();
+                    actualizarFinanzas();
+                    showNotification('Sesión de administrador iniciada');
+                } catch (error) {
+                    showNotification('Error al cargar pedidos: ' + error.message, true);
+                } finally {
+                    loadingSpinner.style.display = 'none';
+                }
             } else {
                 loginError.style.display = 'block';
                 setTimeout(() => {
@@ -2245,7 +2286,7 @@
         });
         
         // Enviar pedido desde admin
-        adminEnviarPedidoBtn.addEventListener('click', () => {
+        adminEnviarPedidoBtn.addEventListener('click', async () => {
             const nombre = document.getElementById('admin-nombre').value;
             const telefono = document.getElementById('admin-telefono').value;
             const producto1 = parseInt(document.getElementById('admin-producto1').value) || 0;
@@ -2269,31 +2310,47 @@
                 producto3, 
                 producto4,
                 comentarios,
-                fecha: new Date().toLocaleString(),
+                fecha: new Date().toISOString(),
                 estado: 'pendiente',
                 total: calcularTotalPedido(producto1, producto2, producto3, producto4)
             };
             
-            pedidos.push(nuevoPedido);
+            loadingSpinner.style.display = 'block';
             
-            // Mostrar notificación
-            showNotification('Pedido agregado con éxito!');
-            
-            // Cerrar modal
-            addOrderModal.style.display = 'none';
-            
-            // Resetear formulario
-            document.getElementById('admin-nombre').value = '';
-            document.getElementById('admin-telefono').value = '';
-            document.getElementById('admin-producto1').value = '0';
-            document.getElementById('admin-producto2').value = '0';
-            document.getElementById('admin-producto3').value = '0';
-            document.getElementById('admin-producto4').value = '0';
-            document.getElementById('admin-comentarios').value = '';
-            
-            // Actualizar panel
-            actualizarPanelAdmin();
-            actualizarFinanzas();
+            try {
+                // Guardar en el backend
+                const resultado = await guardarPedidoBackend(nuevoPedido);
+                
+                if (resultado.success) {
+                    // Agregar al array local
+                    pedidos.push(nuevoPedido);
+                    
+                    // Mostrar notificación
+                    showNotification('Pedido agregado con éxito!');
+                    
+                    // Cerrar modal
+                    addOrderModal.style.display = 'none';
+                    
+                    // Resetear formulario
+                    document.getElementById('admin-nombre').value = '';
+                    document.getElementById('admin-telefono').value = '';
+                    document.getElementById('admin-producto1').value = '0';
+                    document.getElementById('admin-producto2').value = '0';
+                    document.getElementById('admin-producto3').value = '0';
+                    document.getElementById('admin-producto4').value = '0';
+                    document.getElementById('admin-comentarios').value = '';
+                    
+                    // Actualizar panel
+                    actualizarPanelAdmin();
+                    actualizarFinanzas();
+                } else {
+                    showNotification('Error al guardar en el backend', true);
+                }
+            } catch (error) {
+                showNotification('Error: ' + error.message, true);
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
         });
         
         // Abrir modal de resumen de compras
@@ -2327,47 +2384,30 @@
         });
         
         // Botón de actualizar
-        refreshBtn.addEventListener('click', () => {
-            actualizarPanelAdmin();
-            actualizarFinanzas();
-            showNotification('Datos actualizados');
-        });
-        
-        // Delegación de eventos para los botones de acción
-        ordersBody.addEventListener('click', function(event) {
-            const target = event.target.closest('.action-btn');
-            if (!target) return;
-            
-            const id = target.dataset.id;
-            const action = target.dataset.action;
-            const pedidoIndex = pedidos.findIndex(p => p.id === id);
-            
-            if (pedidoIndex === -1) return;
-            
-            if (target.classList.contains('btn-delete')) {
-                // Eliminar pedido
-                const nombre = pedidos[pedidoIndex].nombre;
-                pedidos.splice(pedidoIndex, 1);
-                showNotification(`Pedido de ${nombre} eliminado`);
+        refreshBtn.addEventListener('click', async () => {
+            loadingSpinner.style.display = 'block';
+            try {
+                pedidos = await obtenerPedidosBackend();
                 actualizarPanelAdmin();
                 actualizarFinanzas();
-            } else if (action) {
-                // Cambiar estado del pedido
-                pedidos[pedidoIndex].estado = action;
-                showNotification(`Pedido de ${pedidos[pedidoIndex].nombre} marcado como ${action}`);
-                actualizarPanelAdmin();
-                actualizarFinanzas();
+                showNotification('Datos actualizados desde el backend');
+            } catch (error) {
+                showNotification('Error al actualizar: ' + error.message, true);
+            } finally {
+                loadingSpinner.style.display = 'none';
             }
         });
         
         // Guardar configuración de Google Sheets
         saveSettingsBtn.addEventListener('click', () => {
             localStorage.setItem('googleFormUrl', googleFormUrlInput.value);
-            showNotification('Configuración de Google Sheets guardada');
+            localStorage.setItem('backendUrl', backendUrlInput.value);
+            backendUrl = backendUrlInput.value || BACKEND_URL_DEFAULT;
+            showNotification('Configuración guardada con éxito');
         });
         
         // Inicializar con datos de muestra
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             // Cargar configuración desde localStorage si existe
             const savedConfig = localStorage.getItem('productosConfig');
             if (savedConfig) {
@@ -2386,53 +2426,13 @@
                 googleFormUrlInput.value = savedGoogleFormUrl;
             }
             
-            // Cargar pedidos desde localStorage
-            const savedPedidos = localStorage.getItem('pedidos');
-            if (savedPedidos) {
-                pedidos = JSON.parse(savedPedidos);
+            // Cargar configuración de backend
+            const savedBackendUrl = localStorage.getItem('backendUrl');
+            if (savedBackendUrl) {
+                backendUrlInput.value = savedBackendUrl;
+                backendUrl = savedBackendUrl;
             } else {
-                // Agregar pedidos de muestra si no hay datos guardados
-                pedidos.push(
-                    {
-                        id: '1',
-                        nombre: 'María González',
-                        telefono: '+56987654321',
-                        producto1: 3,
-                        producto2: 2,
-                        producto3: 1,
-                        producto4: 3,
-                        comentarios: 'Por favor, que las paltas estén maduras',
-                        fecha: '2023-10-25 10:30',
-                        estado: 'completado',
-                        total: 15700
-                    },
-                    {
-                        id: '2',
-                        nombre: 'Carlos Rodríguez',
-                        telefono: '+56912348765',
-                        producto1: 2,
-                        producto2: 7,
-                        producto3: 2,
-                        producto4: 2,
-                        comentarios: 'Limones grandes por favor',
-                        fecha: '2023-10-24 15:45',
-                        estado: 'entregado',
-                        total: 11000
-                    },
-                    {
-                        id: '3',
-                        nombre: 'Ana Martínez',
-                        telefono: '+56955443322',
-                        producto1: 4,
-                        producto2: 0,
-                        producto3: 2,
-                        producto4: 4,
-                        comentarios: 'Entregar después de las 17:00 hrs',
-                        fecha: '2023-10-23 09:15',
-                        estado: 'pendiente',
-                        total: 18400
-                    }
-                );
+                backendUrlInput.value = BACKEND_URL_DEFAULT;
             }
             
             // Configurar inputs de productos
@@ -2481,8 +2481,13 @@
             searchInput.addEventListener('input', actualizarPanelAdmin);
             statusFilter.addEventListener('change', actualizarPanelAdmin);
             
-            // Actualizar finanzas
-            actualizarFinanzas();
+            // Cargar pedidos iniciales
+            try {
+                pedidos = await obtenerPedidosBackend();
+                actualizarFinanzas();
+            } catch (error) {
+                showNotification('Error al cargar pedidos iniciales: ' + error.message, true);
+            }
         });
     </script>
 </body>
