@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Estilos optimizados y mejorados */
+        /* Estilos optimizados */
         :root {
             --primary: #2e7d32;
             --primary-light: #4caf50;
@@ -864,115 +864,6 @@
             margin-top: 8px;
         }
         
-        .canvas-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            height: auto;
-        }
-        
-        .canvas-block {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            overflow: auto;
-            position: relative;
-            min-height: 150px;
-        }
-        
-        .canvas-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--primary-dark);
-            border-bottom: 2px solid var(--primary-light);
-            padding-bottom: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1rem;
-        }
-        
-        .canvas-content {
-            font-size: 0.85rem;
-            line-height: 1.5;
-            padding: 8px;
-            min-height: 100px;
-            outline: none;
-            border: 1px solid transparent;
-            transition: border-color 0.3s;
-        }
-        
-        .canvas-content:focus {
-            border-color: var(--primary);
-            border-radius: 6px;
-        }
-        
-        .edit-btn {
-            background: transparent;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            font-size: 0.85rem;
-            padding: 4px;
-            border-radius: 50%;
-            width: 26px;
-            height: 26px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .edit-btn:hover {
-            background: rgba(46, 125, 50, 0.1);
-        }
-        
-        .chart-container {
-            height: 200px;
-            position: relative;
-            margin-top: 15px;
-        }
-        
-        .canvas-actions {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .finance-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 15px;
-        }
-        
-        .cost-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 0.9rem;
-        }
-        
-        .cost-table th, .cost-table td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .cost-table th {
-            background-color: rgba(46, 125, 50, 0.1);
-            font-weight: 600;
-        }
-        
-        .action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-        
         .loading-spinner {
             display: none;
             width: 30px;
@@ -1012,10 +903,6 @@
             .product-grid {
                 grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             }
-            
-            .canvas-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
         
         @media (min-width: 768px) {
@@ -1043,21 +930,6 @@
             .admin-controls {
                 grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             }
-            
-            .canvas-container {
-                grid-template-columns: repeat(3, 1fr);
-                grid-template-rows: repeat(3, 1fr);
-                height: 500px;
-            }
-            
-            .canvas-block-1 { grid-area: 1 / 1 / 2 / 2; }
-            .canvas-block-2 { grid-area: 1 / 2 / 2 / 3; }
-            .canvas-block-3 { grid-area: 1 / 3 / 2 / 4; }
-            .canvas-block-4 { grid-area: 2 / 1 / 3 / 2; }
-            .canvas-block-5 { grid-area: 2 / 2 / 3 / 4; }
-            .canvas-block-6 { grid-area: 3 / 1 / 4 / 2; }
-            .canvas-block-7 { grid-area: 3 / 2 / 4 / 3; }
-            .canvas-block-8 { grid-area: 3 / 3 / 4 / 4; }
         }
         
         @keyframes fadeIn {
@@ -1078,9 +950,6 @@
         <div class="header-buttons">
             <button id="admin-login-link" class="admin-login-btn">
                 <i class="fas fa-user-shield"></i> Administrador
-            </button>
-            <button id="google-auth-btn" class="admin-login-btn">
-                <i class="fas fa-lock"></i> Autenticar con Google
             </button>
         </div>
     </header>
@@ -1465,55 +1334,27 @@
                 <!-- Pestaña de Configuración -->
                 <div class="admin-tab-content" id="config-tab">
                     <div class="price-manager">
-                        <h3><i class="fas fa-cogs"></i> Configuración del Sistema</h3>
+                        <h3><i class="fas fa-cogs"></i> Configuración de Google Sheets</h3>
                         
                         <div class="form-group">
-                            <label for="google-sheet-id"><i class="fab fa-google"></i> ID de Google Sheet</label>
-                            <input type="text" id="google-sheet-id" placeholder="Ingresa el ID de tu hoja de cálculo">
-                            <small>Ejemplo: <code>https://docs.google.com/spreadsheets/d/<strong>ABC123xyz</strong>/edit</code></small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="google-api-key"><i class="fas fa-key"></i> Clave API de Google</label>
-                            <input type="password" id="google-api-key" placeholder="Ingresa tu clave API">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="google-access-token"><i class="fas fa-user-lock"></i> Token de Acceso de Google</label>
-                            <input type="password" id="google-access-token" placeholder="Ingresa tu token de acceso">
+                            <label for="google-form-url"><i class="fab fa-google"></i> URL de Formulario de Google</label>
+                            <input type="text" id="google-form-url" placeholder="Ingresa la URL de tu formulario de Google">
                         </div>
                         
                         <div style="margin-top: 15px; padding: 15px; background-color: #f0f9ff; border-radius: 8px;">
-                            <h4><i class="fas fa-info-circle"></i> Instrucciones para Configurar Google Sheets:</h4>
+                            <h4><i class="fas fa-info-circle"></i> Instrucciones para Configurar:</h4>
                             <ol>
-                                <li><strong>Crea una hoja de cálculo</strong> en Google Drive</li>
-                                <li>En la primera fila, crea estas columnas: <code>ID, Nombre, Teléfono, Paltas (kg), Papas (kg), Limones (kg), Lechugas (unid), Comentarios, Fecha, Estado, Total</code></li>
-                                <li><strong>Comparte la hoja</strong> con acceso de edición a: <code>tu-servicio@script.google.com</code></li>
-                                <li><strong>Obtén el ID</strong> de la hoja de la URL</li>
-                                <li><strong>Genera una clave API</strong> en <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
-                                <li><strong>Obtén un token de acceso</strong> usando <a href="https://developers.google.com/oauthplayground/" target="_blank">OAuth Playground</a> (scope: <code>https://www.googleapis.com/auth/spreadsheets</code>)</li>
+                                <li><strong>Crea un formulario de Google</strong> con los campos necesarios</li>
+                                <li>Haz clic en el botón de "Enviar" en tu formulario</li>
+                                <li>Selecciona el ícono de <strong>Google Sheets</strong> para crear una nueva hoja de cálculo</li>
+                                <li>Copia la URL del formulario y pégala arriba</li>
                             </ol>
-                            <p><em>Nota: Si cambias los nombres de productos, actualiza los encabezados en tu hoja.</em></p>
+                            <p><em>Nota: Los datos se enviarán automáticamente a tu hoja de cálculo de Google</em></p>
                         </div>
                         
                         <button class="btn" id="save-settings" style="margin-top: 15px;">
                             <i class="fas fa-save"></i> Guardar Configuración
                         </button>
-                        
-                        <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-                            <h4><i class="fas fa-sync"></i> Sincronización con Google Sheets</h4>
-                            <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
-                                <button class="btn" id="sync-google-sheets">
-                                    <i class="fas fa-cloud-upload-alt"></i> Subir a Google Sheets
-                                </button>
-                                <button class="btn btn-admin" id="download-google-sheets">
-                                    <i class="fas fa-cloud-download-alt"></i> Descargar desde Google Sheets
-                                </button>
-                                <button class="btn btn-admin" id="test-google-sheets">
-                                    <i class="fas fa-check-circle"></i> Probar Conexión
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1791,14 +1632,8 @@
         const loadingSpinner = document.getElementById('loading-spinner');
         const searchInput = document.getElementById('search-input');
         const statusFilter = document.getElementById('status-filter');
-        const googleSheetIdInput = document.getElementById('google-sheet-id');
-        const googleApiKeyInput = document.getElementById('google-api-key');
-        const googleAccessTokenInput = document.getElementById('google-access-token');
+        const googleFormUrlInput = document.getElementById('google-form-url');
         const saveSettingsBtn = document.getElementById('save-settings');
-        const syncGoogleSheetsBtn = document.getElementById('sync-google-sheets');
-        const downloadGoogleSheetsBtn = document.getElementById('download-google-sheets');
-        const testGoogleSheetsBtn = document.getElementById('test-google-sheets');
-        const googleAuthBtn = document.getElementById('google-auth-btn');
         
         // Inputs de costos
         const producto1CostInput = document.getElementById('producto1-cost-input');
@@ -2202,59 +2037,54 @@
             });
         });
         
-        // Guardar en Google Sheets
+        // Guardar en Google Sheets usando Form
         async function guardarEnGoogleSheets(pedido) {
-            const sheetId = googleSheetIdInput.value;
-            const token = googleAccessTokenInput.value;
+            const formUrl = googleFormUrlInput.value;
             
-            if (!sheetId) {
-                throw new Error('ID de Google Sheet no configurado');
+            if (!formUrl) {
+                throw new Error('URL de formulario no configurada');
             }
-            
-            if (!token) {
-                throw new Error('Token de acceso no configurado');
-            }
-            
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A:append?valueInputOption=USER_ENTERED`;
-            
-            const values = [
-                pedido.id,
-                pedido.nombre,
-                pedido.telefono,
-                pedido.producto1,
-                pedido.producto2,
-                pedido.producto3,
-                pedido.producto4,
-                pedido.comentarios,
-                pedido.fecha,
-                pedido.estado,
-                pedido.total
-            ];
-            
-            const body = {
-                values: [values],
-                insertDataOption: 'INSERT_ROWS'
-            };
             
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(body)
-                });
+                // Crear un formulario oculto para enviar los datos
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = formUrl;
+                form.target = '_blank';
+                form.style.display = 'none';
                 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error.message || 'Error al guardar en Google Sheets');
+                // Crear campos para cada dato del pedido
+                const campos = {
+                    'entry.1': pedido.nombre,
+                    'entry.2': pedido.telefono,
+                    'entry.3': pedido.producto1,
+                    'entry.4': pedido.producto2,
+                    'entry.5': pedido.producto3,
+                    'entry.6': pedido.producto4,
+                    'entry.7': pedido.comentarios,
+                    'entry.8': pedido.total
+                };
+                
+                // Agregar campos al formulario
+                for (const [key, value] of Object.entries(campos)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = value;
+                    form.appendChild(input);
                 }
                 
-                return await response.json();
+                // Agregar formulario al DOM y enviar
+                document.body.appendChild(form);
+                form.submit();
+                
+                // Limpiar después de enviar
+                setTimeout(() => document.body.removeChild(form), 1000);
+                
+                return { success: true };
             } catch (error) {
                 console.error('Error al guardar en Google Sheets:', error);
-                throw new Error('Error de red: ' + error.message);
+                throw new Error('Error al enviar formulario: ' + error.message);
             }
         }
         
@@ -2319,7 +2149,7 @@
             
             try {
                 // Guardar en Google Sheets si está configurado
-                if (googleSheetIdInput.value && googleAccessTokenInput.value) {
+                if (googleFormUrlInput.value) {
                     await guardarEnGoogleSheets(nuevoPedido);
                     showNotification('Pedido registrado con éxito en Google Sheets!');
                 } else {
@@ -2532,65 +2362,8 @@
         
         // Guardar configuración de Google Sheets
         saveSettingsBtn.addEventListener('click', () => {
-            localStorage.setItem('googleSheetConfig', JSON.stringify({
-                sheetId: googleSheetIdInput.value,
-                apiKey: googleApiKeyInput.value,
-                accessToken: googleAccessTokenInput.value
-            }));
-            
+            localStorage.setItem('googleFormUrl', googleFormUrlInput.value);
             showNotification('Configuración de Google Sheets guardada');
-        });
-        
-        // Sincronizar con Google Sheets
-        syncGoogleSheetsBtn.addEventListener('click', async () => {
-            const sheetId = googleSheetIdInput.value;
-            const token = googleAccessTokenInput.value;
-            
-            if (!sheetId || !token) {
-                showNotification('Por favor configura el ID y token primero', true);
-                return;
-            }
-            
-            try {
-                // Guardar todos los pedidos en Google Sheets
-                for (const pedido of pedidos) {
-                    await guardarEnGoogleSheets(pedido);
-                }
-                
-                showNotification('Pedidos sincronizados con Google Sheets');
-            } catch (error) {
-                showNotification('Error al sincronizar: ' + error.message, true);
-            }
-        });
-        
-        // Probar conexión con Google Sheets
-        testGoogleSheetsBtn.addEventListener('click', async () => {
-            const sheetId = googleSheetIdInput.value;
-            const token = googleAccessTokenInput.value;
-            
-            if (!sheetId || !token) {
-                showNotification('Por favor configura el ID y token primero', true);
-                return;
-            }
-            
-            try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:Z1`;
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Error al conectar con Google Sheets');
-                }
-                
-                showNotification('Conexión con Google Sheets exitosa!');
-            } catch (error) {
-                showNotification('Error de conexión: ' + error.message, true);
-            }
         });
         
         // Inicializar con datos de muestra
@@ -2608,12 +2381,9 @@
             }
             
             // Cargar configuración de Google Sheets
-            const savedGoogleSheetConfig = localStorage.getItem('googleSheetConfig');
-            if (savedGoogleSheetConfig) {
-                const config = JSON.parse(savedGoogleSheetConfig);
-                googleSheetIdInput.value = config.sheetId || '';
-                googleApiKeyInput.value = config.apiKey || '';
-                googleAccessTokenInput.value = config.accessToken || '';
+            const savedGoogleFormUrl = localStorage.getItem('googleFormUrl');
+            if (savedGoogleFormUrl) {
+                googleFormUrlInput.value = savedGoogleFormUrl;
             }
             
             // Cargar pedidos desde localStorage
