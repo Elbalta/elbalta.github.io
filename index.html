@@ -227,6 +227,59 @@
     }
     .orders-table tr:hover { background: rgba(46,125,50,.05); }
 
+    .action-btn {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin: 2px;
+      transition: all 0.2s;
+    }
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+    .btn-pay {
+      background: linear-gradient(to right, #4caf50, #388e3c);
+    }
+    .btn-pay:hover {
+      background: linear-gradient(to right, #66bb6a, #4caf50);
+    }
+    .action-btn.btn-gray {
+      background: linear-gradient(to right, #607d8b, #455a64);
+    }
+    .action-btn.btn-gray:hover {
+      background: linear-gradient(to right, #78909c, #607d8b);
+    }
+    .btn-del {
+      background: linear-gradient(to right, #f44336, #d32f2f);
+    }
+    .btn-del:hover {
+      background: linear-gradient(to right, #e57373, #f44336);
+    }
+    
+    .payment-status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .payment-pagado {
+      background: #c8e6c9;
+      color: #2e7d32;
+    }
+    .payment-pendiente {
+      background: #ffcdd2;
+      color: #c62828;
+    }
+
     .notification {
       position: fixed;
       top: 18px;
@@ -415,7 +468,7 @@
             <input type="number" id="frutillas-input" class="quantity-input" min="0" step="100" value="0" />
             <button type="button" class="quantity-btn" data-target="frutillas-input" data-action="increase">+</button>
           </div>
-          <div style="margin-top: 8px; color:#666; font-size:.85rem;">Paso recomendado: bloque (ej. 100g)</div>
+          <div style="margin-top: 8px; color:#666; font-size:.85rem;">Incrementos de 100g</div>
         </div>
       </div>
 
@@ -879,10 +932,19 @@ function loadAll(){
   productos.champi = { ...DEFAULT_PRODUCTOS.champi, ...(productos.champi || {}) };
   productos.frutillas = { ...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas || {}) };
 
+  // Asegurar que pedidos antiguos tengan el flag _synced
+  pedidos.forEach(p => {
+    if (p._synced === undefined) {
+      p._synced = true; // Los pedidos existentes se consideran sincronizados
+    }
+  });
+
   // intentar cargar desde backend si está configurado
   try {
     if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
       cargarPedidosDesdeSheets();
+      // Reintentar sincronización de pedidos pendientes después de un pequeño delay
+      setTimeout(() => reintentarSincronizacionPendiente(), 2000);
     }
   } catch (e) {
     console.error('Error iniciando carga desde backend:', e);
@@ -984,7 +1046,7 @@ function calcTotalFromItems(items) {
   return Math.round(total);
 }
 
-// Crear pedido local y (opcional) backend
+// Crear pedido local y (opcional) backend - implementación robusta
 async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin=false }) {
   const pedido = {
     id: String(Date.now()) + Math.random().toString(36).slice(2,8),
@@ -997,35 +1059,97 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
     comentarios: comentarios || '',
     deudaPendiente: calcTotalFromItems(items),
     pagos: [],
-    creadoPorAdmin: creadoPorAdmin
+    creadoPorAdmin: creadoPorAdmin,
+    _synced: false // Flag para indicar si está sincronizado con backend
   };
+  
+  // Guardar localmente primero para garantizar persistencia inmediata
   pedidos.push(pedido);
   rebuildClientesFromPedidos();
   saveAll();
   renderAll();
 
-  // Intentar enviar al backend si está configurado
+  // Intentar sincronizar con backend si está configurado
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
-    try {
-      const payload = { action: 'crear_pedido', pedido };
-      const resp = await fetch(backendUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const r = await resp.json();
-      if (r && r.success) {
-        notify('Pedido creado y sincronizado', false);
-      } else {
-        notify('Pedido creado (no sincronizado)', true);
-        console.warn('Respuesta backend crear_pedido:', r);
-      }
-    } catch (err) {
-      console.error('Error al enviar pedido al backend:', err);
-      notify('Pedido creado (error al sincronizar)', true);
+    const syncSuccess = await sincronizarPedidoConBackend(pedido);
+    if (syncSuccess) {
+      // Actualizar flag de sincronización
+      pedido._synced = true;
+      saveAll();
+      notify('Pedido creado y sincronizado', false);
+    } else {
+      notify('Pedido creado (se reintentará sincronizar)', true);
     }
   } else {
     notify('Pedido creado (modo local)', false);
+  }
+}
+
+// Función auxiliar para sincronizar pedido con backend
+async function sincronizarPedidoConBackend(pedido) {
+  try {
+    // Intentar primero con application/x-www-form-urlencoded (compatible con Google Apps Script)
+    const formData = new URLSearchParams();
+    formData.append('action', 'crear_pedido');
+    formData.append('pedido', JSON.stringify(pedido));
+    
+    let resp = await fetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString()
+    });
+    
+    let r = await resp.json();
+    if (r && r.success) {
+      return true;
+    }
+    
+    // Si falla, intentar con application/json como fallback
+    console.warn('Reintentando con application/json...');
+    const payload = { action: 'crear_pedido', pedido };
+    resp = await fetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    r = await resp.json();
+    if (r && r.success) {
+      return true;
+    }
+    
+    console.warn('Respuesta backend crear_pedido:', r);
+    return false;
+  } catch (err) {
+    console.error('Error al enviar pedido al backend:', err);
+    return false;
+  }
+}
+
+// Reintentar sincronización de pedidos pendientes
+async function reintentarSincronizacionPendiente() {
+  if (!backendUrl || !/^https?:\/\//i.test(backendUrl)) {
+    return;
+  }
+  
+  const pedidosPendientes = pedidos.filter(p => !p._synced);
+  if (pedidosPendientes.length === 0) {
+    return;
+  }
+  
+  console.log(`Reintentando sincronización de ${pedidosPendientes.length} pedidos pendientes...`);
+  let sincronizados = 0;
+  
+  for (const pedido of pedidosPendientes) {
+    const success = await sincronizarPedidoConBackend(pedido);
+    if (success) {
+      pedido._synced = true;
+      sincronizados++;
+    }
+  }
+  
+  if (sincronizados > 0) {
+    saveAll();
+    console.log(`Se sincronizaron ${sincronizados} pedidos con el backend`);
   }
 }
 
@@ -1086,6 +1210,11 @@ function renderOrders(filterText='', paymentFilter='all') {
       if (paymentFilter === 'pendiente') return p.estadoPago === 'pendiente';
       if (paymentFilter === 'parcial') return p.estadoPago === 'parcial';
       if (paymentFilter === 'pagado') return p.estadoPago === 'pagado';
+      if (paymentFilter === 'moroso') {
+        // Morosos: tienen deuda pendiente y más de 30 días desde el pedido
+        const daysSinceOrder = Math.floor((Date.now() - new Date(p.fecha).getTime()) / (1000*60*60*24));
+        return p.deudaPendiente > 0 && daysSinceOrder > DIAS_MOROSIDAD;
+      }
       return true;
     });
 
@@ -1107,9 +1236,9 @@ function renderOrders(filterText='', paymentFilter='all') {
       <td>${money(p.total)}</td>
       <td><span class="payment-status ${p.estadoPago==='pagado'?'payment-pagado':'payment-pendiente'}">${escapeHTML(p.estadoPago)}</span></td>
       <td>${new Date(p.fecha).toLocaleString()}</td>
-      <td>
-        <button class="action-btn btn-pay" data-action="open-payment" data-id="${p.id}"><i class="fas fa-money-bill-wave"></i> Pagar</button>
-        <button class="action-btn btn-gray" data-action="view" data-id="${p.id}"><i class="fas fa-eye"></i> Ver</button>
+      <td style="white-space: nowrap;">
+        <button class="action-btn btn-pay" data-action="open-payment" data-id="${p.id}"><i class="fas fa-money-bill-wave"></i> Pagar</button><br>
+        <button class="action-btn btn-gray" data-action="view" data-id="${p.id}"><i class="fas fa-eye"></i> Ver</button><br>
         <button class="action-btn btn-del" data-action="delete" data-id="${p.id}"><i class="fas fa-trash"></i> Eliminar</button>
       </td>
     `;
