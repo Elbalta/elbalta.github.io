@@ -921,7 +921,8 @@ async function cargarPedidosDesdeSheets() {
         fecha: p.Fecha ?? p.fecha ?? new Date().toISOString(),
         comentarios: p.Comentarios ?? p.comentarios ?? '',
         deudaPendiente: parseFloat(p.Total ?? 0) || 0,
-        pagos: p.pagos ?? []
+        pagos: p.pagos ?? [],
+        _synced: true
       }));
       pedidosSheets.forEach(ps => {
         if (!pedidos.some(p => p.id === ps.id)) pedidos.push(ps);
@@ -986,6 +987,7 @@ function calcTotalFromItems(items) {
 
 // Crear pedido local y (opcional) backend
 async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin=false }) {
+  // Crear pedido localmente con campo _synced:false
   const pedido = {
     id: String(Date.now()) + Math.random().toString(36).slice(2,8),
     nombre: nombre || '',
@@ -997,24 +999,36 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
     comentarios: comentarios || '',
     deudaPendiente: calcTotalFromItems(items),
     pagos: [],
-    creadoPorAdmin: creadoPorAdmin
+    creadoPorAdmin: creadoPorAdmin,
+    _synced: false
   };
+  
+  // Guardar localmente y renderizar UI inmediatamente
   pedidos.push(pedido);
   rebuildClientesFromPedidos();
   saveAll();
   renderAll();
 
-  // Intentar enviar al backend si está configurado
+  // Intentar sincronizar con el backend si está configurado
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
     try {
-      const payload = { action: 'crear_pedido', pedido };
-      const resp = await fetch(backendUrl, {
+      // Construir URL con query parameter
+      const url = `${backendUrl}?action=crear_pedido`;
+      
+      // Construir body con formato application/x-www-form-urlencoded
+      const body = `action=crear_pedido&pedido=${encodeURIComponent(JSON.stringify(pedido))}`;
+      
+      const resp = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body
       });
+      
       const r = await resp.json();
       if (r && r.success) {
+        // Marcar como sincronizado
+        pedido._synced = true;
+        saveAll();
         notify('Pedido creado y sincronizado', false);
       } else {
         notify('Pedido creado (no sincronizado)', true);
