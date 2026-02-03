@@ -814,6 +814,8 @@
 =========================================================== */
 
 const DIAS_MOROSIDAD = 30;
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const SYNC_RETRY_DELAY_MS = 1000;
 const BACKEND_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev";
 
 // Estado
@@ -998,7 +1000,7 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
     deudaPendiente: calcTotalFromItems(items),
     pagos: [],
     creadoPorAdmin: creadoPorAdmin,
-    _synced: false
+    synced: false
   };
   
   // Guardar localmente primero
@@ -1019,7 +1021,7 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
       const r = await resp.json();
       if (r && r.success) {
         // Actualizar el pedido como sincronizado
-        pedido._synced = true;
+        pedido.synced = true;
         if (r.id) pedido.backendId = r.id;
         saveAll();
         notify('Pedido creado y sincronizado ✓', false);
@@ -1094,7 +1096,7 @@ function renderOrders(filterText='', paymentFilter='all') {
       if (paymentFilter === 'parcial') return p.estadoPago === 'parcial';
       if (paymentFilter === 'pagado') return p.estadoPago === 'pagado';
       if (paymentFilter === 'moroso') {
-        const days = Math.floor((Date.now() - new Date(p.fecha).getTime())/(1000*60*60*24));
+        const days = Math.floor((Date.now() - new Date(p.fecha).getTime()) / MS_PER_DAY);
         return p.estadoPago !== 'pagado' && days > DIAS_MOROSIDAD;
       }
       return true;
@@ -1141,7 +1143,7 @@ function renderDebtors() {
   $('global-debt').textContent = money(list.reduce((s,c)=>s+c.deudaTotal,0));
   $('global-debtors').textContent = list.length;
   $('global-morosos').textContent = list.filter(c => {
-    const days = Math.floor((Date.now() - new Date(c.ultimoPedido).getTime())/(1000*60*60*24));
+    const days = Math.floor((Date.now() - new Date(c.ultimoPedido).getTime()) / MS_PER_DAY);
     return days > DIAS_MOROSIDAD;
   }).length;
 
@@ -1573,7 +1575,7 @@ function renderAll(){
 async function retrySyncPendingOrders() {
   if (!backendUrl || !/^https?:\/\//i.test(backendUrl)) return;
   
-  const pendingOrders = pedidos.filter(p => !p._synced);
+  const pendingOrders = pedidos.filter(p => !p.synced);
   if (pendingOrders.length === 0) return;
   
   console.log(`Reintentando sincronizar ${pendingOrders.length} pedidos pendientes...`);
@@ -1588,7 +1590,7 @@ async function retrySyncPendingOrders() {
       });
       const r = await resp.json();
       if (r && r.success) {
-        pedido._synced = true;
+        pedido.synced = true;
         if (r.id) pedido.backendId = r.id;
         console.log(`Pedido ${pedido.id} sincronizado exitosamente`);
       }
@@ -1607,7 +1609,7 @@ async function retrySyncPendingOrders() {
   initListeners();
   renderAll();
   // Reintentar sincronizar pedidos pendientes después de cargar
-  setTimeout(() => retrySyncPendingOrders(), 1000);
+  setTimeout(() => retrySyncPendingOrders(), SYNC_RETRY_DELAY_MS);
 })();
 </script>
 
