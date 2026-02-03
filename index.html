@@ -639,7 +639,7 @@
           </div>
           <div class="form-group">
             <label for="backend-token"><i class="fas fa-key"></i> Token de Backend (opcional)</label>
-            <input type="password" id="backend-token" placeholder="Token de autorización">
+            <input type="text" id="backend-token" placeholder="Token de autorización" autocomplete="off">
             <div style="color:#666; font-size:.9rem; margin-top: 6px;">
               Si tu backend requiere autenticación, ingresa el token aquí. Se enviará como Authorization: Bearer.
             </div>
@@ -1097,7 +1097,8 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
       if (r && r.success) {
         // Actualizar estado de sincronización
         pedido.syncStatus = 'synced';
-        // Si el backend devuelve un ID, actualizarlo
+        // Si el backend devuelve un ID, guardarlo además del ID local
+        // Mantenemos ambos IDs: el local para referencias en la app, el backend para sincronización
         if (r.id && r.id !== pedido.id) {
           pedido.backendId = r.id;
           console.log(`Backend asignó ID: ${r.id} al pedido local ${pedido.id}`);
@@ -1115,8 +1116,9 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
       notify('✓ Pedido guardado localmente. Se sincronizará cuando el backend esté disponible', true);
     }
   } else {
-    // Modo local, marcar como sincronizado ya que no hay backend
-    pedido.syncStatus = 'synced';
+    // Modo local sin backend configurado - marcar como local_only
+    // No tiene sentido marcar como "synced" si no hay backend
+    pedido.syncStatus = 'local_only';
     saveAll();
     notify('✓ Pedido creado correctamente (modo local)', false);
   }
