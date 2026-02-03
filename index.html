@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Compras Grupales - Lazo Mercado</title>
 
-  <!-- Fuentes e íconos (CORRECTO) -->
+  <!-- Fuentes e íconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -227,39 +227,6 @@
     }
     .orders-table tr:hover { background: rgba(46,125,50,.05); }
 
-    .payment-status {
-      display:inline-block;
-      padding: 4px 10px;
-      border-radius: 16px;
-      font-size: .78rem;
-      font-weight: 900;
-      letter-spacing: .4px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-    .payment-pendiente { background: #fff3e0; color:#ef6c00; border:1px solid #ffb74d; }
-    .payment-pagado { background: #e3f2fd; color:#1565c0; border:1px solid #64b5f6; }
-    .payment-parcial { background: #fff8e1; color:#ff8f00; border:1px solid #ffd54f; }
-    .payment-moroso { background: #ffebee; color:#c62828; border:1px solid #ef9a9a; }
-
-    .action-btn {
-      padding: 7px 10px;
-      border:0;
-      border-radius: 10px;
-      cursor:pointer;
-      font-weight: 800;
-      font-size: .82rem;
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      margin: 2px 0;
-      white-space: nowrap;
-      transition:.15s;
-    }
-    .action-btn:hover { transform: translateY(-1px); }
-    .btn-pay { background: linear-gradient(to right, var(--primary), var(--primary-dark)); color:#fff; }
-    .btn-del { background: linear-gradient(to right, #d32f2f, #b71c1c); color:#fff; }
-
     .notification {
       position: fixed;
       top: 18px;
@@ -294,7 +261,7 @@
       background:#fff;
       border-radius: 14px;
       width:100%;
-      max-width: 560px;
+      max-width: 720px;
       padding: 18px;
       position:relative;
       max-height: 90vh;
@@ -667,7 +634,7 @@
             <label for="backend-url"><i class="fas fa-server"></i> URL Backend (opcional)</label>
             <input type="text" id="backend-url" placeholder="Si no usas backend, deja vacío">
             <div style="color:#666; font-size:.9rem; margin-top: 6px;">
-              Si no configuras backend, funciona solo con localStorage (modo simple).
+              Si configuras backend, los pedidos / clientes se sincronizarán con ese endpoint.
             </div>
           </div>
           <button class="btn" id="save-settings-btn"><i class="fas fa-save"></i> Guardar configuración</button>
@@ -684,7 +651,7 @@
   </div>
 </div>
 
-<!-- MODAL LOGIN -->
+<!-- MODALES -->
 <div class="modal" id="login-modal">
   <div class="modal-box">
     <span class="close-modal" id="close-login">&times;</span>
@@ -713,7 +680,6 @@
   </div>
 </div>
 
-<!-- MODAL AGREGAR PEDIDO ADMIN -->
 <div class="modal" id="add-order-modal">
   <div class="modal-box">
     <span class="close-modal" id="close-add-order">&times;</span>
@@ -774,7 +740,6 @@
   </div>
 </div>
 
-<!-- MODAL RESUMEN COMPRA -->
 <div class="modal" id="compras-modal">
   <div class="modal-box">
     <span class="close-modal" id="close-compras">&times;</span>
@@ -790,7 +755,6 @@
   </div>
 </div>
 
-<!-- MODAL PAGOS -->
 <div class="modal" id="payment-modal">
   <div class="modal-box">
     <span class="close-modal" id="close-payment">&times;</span>
@@ -845,26 +809,22 @@
 
 <script>
 /* ===========================================================
-   Lazo Mercado - Pedido + Admin + Pagos + Productos (LocalStorage)
-   - Evita duplicación de deuda (recalcula clientes desde pedidos)
-   - Botones +/- robustos con closest()
-   - Exportación CSV (pedidos/pagos/deudores)
+   Lazo Mercado - Pedido + Admin + Pagos + Productos (LocalStorage + optional backend)
+   Correcciones: sintaxis arreglada, carga desde backend opcional, listeners funcionando.
 =========================================================== */
 
 const DIAS_MOROSIDAD = 30;
+const BACKEND_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev";
 
-// ---------- Estado ----------
+// Estado
 let pedidos = [];
 let pagos = [];
 let clientes = {};
 let isAdmin = false;
 let adminEmail = "";
+let backendUrl = BACKEND_URL_DEFAULT;
 
-// Backend opcional (si quieres Apps Script después)
-const BACKEND_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev";
-let backendUrl = "https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev";
-
-// ---------- Productos ----------
+// Productos por defecto (se guardan/leen en localStorage)
 const DEFAULT_PRODUCTOS = {
   paltas: { key:"paltas", nombre:"Paltas", precio:3500, unidad:"kg", step:1, disponible:true },
   champi: { key:"champi", nombre:"Champiñones", precio:2500, unidad:"caja", step:1, packGramos:250, disponible:true },
@@ -872,20 +832,16 @@ const DEFAULT_PRODUCTOS = {
 };
 let productos = structuredClone(DEFAULT_PRODUCTOS);
 
-// ---------- DOM helpers ----------
-const $ = (id) => document.getElementById(id);
-const money = (n) => `$${(Number(n)||0).toLocaleString('es-CL')}`;
+// Utilidades DOM y formato
+const $ = id => document.getElementById(id);
+const money = n => `$${(Number(n)||0).toLocaleString('es-CL')}`;
 const nowISO = () => new Date().toISOString();
-const normPhone = (t) => (t||"").replace(/\s|-/g,"").trim();
+const normPhone = t => (t||'').replace(/\s|-/g,'').trim();
 
-// Evitar inyección si usas innerHTML con datos del usuario:
 function escapeHTML(str="") {
-  return String(str).replace(/[&<>"']/g, m => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  }[m]));
+  return String(str).replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }
 
-// ---------- Notificación ----------
 function notify(msg, isError=false){
   const n = $("notification");
   const txt = $("notification-text");
@@ -896,7 +852,7 @@ function notify(msg, isError=false){
   setTimeout(()=>n.classList.remove("show"), 3200);
 }
 
-// ---------- Persistencia ----------
+// Persistencia
 function saveAll(){
   localStorage.setItem("pedidos", JSON.stringify(pedidos));
   localStorage.setItem("pagos", JSON.stringify(pagos));
@@ -916,1092 +872,686 @@ function loadAll(){
   if (g) pagos = JSON.parse(g);
   if (c) clientes = JSON.parse(c);
   if (pr) productos = JSON.parse(pr);
-  if (bu !== null) backendUrl = bu;
+  if (bu !== null && bu !== "") backendUrl = bu;
 
-  // Si faltan campos por versión antigua, asegurar defaults:
-  productos.paltas = { ...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas||{}) };
-  productos.champi = { ...DEFAULT_PRODUCTOS.champi, ...(productos.champi||{}) };
-  productos.frutillas = { ...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas||{}) };
-}
-  // Intentar cargar desde Google Sheets
-  cargarPedidosDesdeSheets();
-}
+  // asegurar defaults
+  productos.paltas = { ...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas || {}) };
+  productos.champi = { ...DEFAULT_PRODUCTOS.champi, ...(productos.champi || {}) };
+  productos.frutillas = { ...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas || {}) };
 
-async function cargarPedidosDesdeSheets() {
+  // intentar cargar desde backend si está configurado
   try {
-    const SCRIPT_URL = 'Thttps://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/devU_URL_DEL_SCRIPT'; // Reemplaza con la URL que copiaste en el paso 3
-    const response = await fetch(SCRIPT_URL + '?action=obtener_pedidos');
-    const result = await response.json();
-    
-    if (result.success && result.pedidos) {
-      // Convertir los pedidos de Sheets a nuestro formato
-      const pedidosSheets = result.pedidos.map(p => {
-        // Asegúrate de que los nombres de las columnas coincidan
-        return {
-          id: p.ID || String(Date.now()),
-          nombre: p.Nombre,
-          telefono: p.Teléfono,
-          items: {
-            paltasKg: parseFloat(p['Paltas (kg)']) || 0,
-            champiCajas: parseFloat(p['Champiñones (cajas)']) || 0,
-            frutillasGramos: parseFloat(p['Frutillas (g)']) || 0
-          },
-          total: parseFloat(p.Total) || 0,
-          estadoPago: p['Estado Pago'] || 'pendiente',
-          fecha: p.Fecha || new Date().toISOString(),
-          comentarios: p.Comentarios || '',
-          deudaPendiente: parseFloat(p.Total) || 0,
-          pagos: []
-        };
-      });
-      
-      // Combinar con los pedidos locales (evitando duplicados)
-      pedidosSheets.forEach(pedidoSheet => {
-        const existe = pedidos.some(p => p.id === pedidoSheet.id);
-        if (!existe) {
-          pedidos.push(pedidoSheet);
-        }
-      });
-      
-      rebuildClientesFromPedidos();
-      saveAll();
+    if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
+      cargarPedidosDesdeSheets();
     }
-  } catch (error) {
-    console.error('Error cargando desde Google Sheets:', error);
+  } catch (e) {
+    console.error('Error iniciando carga desde backend:', e);
   }
 }
 
-// Recalcular clientes desde pedidos (evita duplicaciones y errores)
+// Cargar pedidos desde backend (Google Apps Script u otro endpoint)
+// El backend debe aceptar queries como ?action=obtener_pedidos o endpoints POST para crear pedidos/pagos.
+// Ajusta los nombres de acción a tu backend.
+async function cargarPedidosDesdeSheets() {
+  const SCRIPT_URL = (backendUrl && backendUrl.trim()) ? backendUrl.trim() : BACKEND_URL_DEFAULT;
+  if (!SCRIPT_URL || !/^https?:\/\//i.test(SCRIPT_URL)) {
+    console.warn('No hay backendUrl válido para cargar pedidos:', SCRIPT_URL);
+    return;
+  }
+
+  try {
+    const response = await fetch(SCRIPT_URL + '?action=obtener_pedidos', { method: 'GET' });
+    if (!response.ok) {
+      console.warn('Backend respondió con error:', response.status);
+      return;
+    }
+    const result = await response.json();
+    if (result && result.success && Array.isArray(result.pedidos)) {
+      const pedidosSheets = result.pedidos.map(p => ({
+        id: p.ID || String(Date.now()) + Math.random().toString(36).slice(2,8),
+        nombre: p.Nombre ?? p.nombre ?? '',
+        telefono: p.Telefono ?? p.telefono ?? '',
+        items: {
+          paltasKg: parseFloat(p['Paltas (kg)'] ?? p.paltasKg ?? 0) || 0,
+          champiCajas: parseFloat(p['Champiñones (cajas)'] ?? p.champiCajas ?? 0) || 0,
+          frutillasGramos: parseFloat(p['Frutillas (g)'] ?? p.frutillasGramos ?? 0) || 0
+        },
+        total: parseFloat(p.Total ?? 0) || 0,
+        estadoPago: p['Estado Pago'] ?? p.estadoPago ?? 'pendiente',
+        fecha: p.Fecha ?? p.fecha ?? new Date().toISOString(),
+        comentarios: p.Comentarios ?? p.comentarios ?? '',
+        deudaPendiente: parseFloat(p.Total ?? 0) || 0,
+        pagos: p.pagos ?? []
+      }));
+      pedidosSheets.forEach(ps => {
+        if (!pedidos.some(p => p.id === ps.id)) pedidos.push(ps);
+      });
+      rebuildClientesFromPedidos();
+      saveAll();
+      renderAll();
+      console.info('Pedidos cargados desde backend:', pedidosSheets.length);
+    } else {
+      console.info('No pedidos recibidos desde backend o estructura inesperada.', result);
+    }
+  } catch (err) {
+    console.error('Error cargando pedidos desde backend:', err);
+  }
+}
+
+// Reconstruir clientes desde pedidos
 function rebuildClientesFromPedidos(){
   const nuevo = {};
   pedidos.forEach(p => {
-    if (!nuevo[p.telefono]){
-      nuevo[p.telefono] = {
-        nombre: p.nombre,
-        telefono: p.telefono,
-        pedidos: [],
-        deudaTotal: 0,
-        primerPedido: p.fecha,
-        ultimoPedido: p.fecha
-      };
+    const tel = normPhone(p.telefono || '');
+    if (!nuevo[tel]) {
+      nuevo[tel] = { nombre: p.nombre || '', telefono: tel, pedidos: [], deudaTotal: 0, primerPedido: p.fecha, ultimoPedido: p.fecha };
     }
-    nuevo[p.telefono].pedidos.push(p.id);
-    nuevo[p.telefono].ultimoPedido = p.fecha;
+    nuevo[tel].pedidos.push(p.id);
+    nuevo[tel].ultimoPedido = p.fecha;
     const deuda = (p.estadoPago === "pagado") ? 0 : (p.deudaPendiente ?? p.total ?? 0);
-    nuevo[p.telefono].deudaTotal += deuda;
+    nuevo[tel].deudaTotal += Number(deuda) || 0;
   });
   clientes = nuevo;
   saveAll();
 }
 
-// ---------- UI Productos ----------
+// UI: aplicar disponibilidad visual
 function applyAvailability(cardId, disponible){
   const card = $(cardId);
   if (!card) return;
-  card.classList.toggle("unavailable", !disponible);
-  const tag = card.querySelector(".unavailable-tag");
-  if (!disponible && !tag){
-    const t = document.createElement("div");
-    t.className = "unavailable-tag";
-    t.textContent = "NO DISP.";
-    card.appendChild(t);
-  }
-  if (disponible && tag) tag.remove();
-}
-
-function syncProductosUI(){
-  // Form cliente
-  $("paltas-name").textContent = productos.paltas.nombre;
-  $("paltas-price").textContent = money(productos.paltas.precio);
-  $("paltas-input").step = productos.paltas.step || 1;
-
-  $("champi-name").textContent = productos.champi.nombre;
-  $("champi-price").textContent = money(productos.champi.precio);
-  $("champi-pack").textContent = String(productos.champi.packGramos || 250);
-  $("champi-input").step = productos.champi.step || 1;
-
-  $("frutillas-name").textContent = productos.frutillas.nombre;
-  $("frutillas-price").textContent = money(productos.frutillas.precio);
-  $("frutillas-block").textContent = String(productos.frutillas.bloqueGramos || 100);
-  $("frutillas-input").step = String(productos.frutillas.bloqueGramos || 100);
-
-  applyAvailability("paltas-card", productos.paltas.disponible);
-  applyAvailability("champi-card", productos.champi.disponible);
-  applyAvailability("frutillas-card", productos.frutillas.disponible);
-
-  // Admin modal
-  $("admin-paltas-name").textContent = productos.paltas.nombre;
-  $("admin-paltas-price").textContent = money(productos.paltas.precio);
-  $("admin-paltas-input").step = productos.paltas.step || 1;
-
-  $("admin-champi-name").textContent = productos.champi.nombre;
-  $("admin-champi-price").textContent = money(productos.champi.precio);
-  $("admin-champi-pack").textContent = String(productos.champi.packGramos || 250);
-
-  $("admin-frutillas-name").textContent = productos.frutillas.nombre;
-  $("admin-frutillas-price").textContent = money(productos.frutillas.precio);
-  $("admin-frutillas-block").textContent = String(productos.frutillas.bloqueGramos || 100);
-  $("admin-frutillas-input").step = String(productos.frutillas.bloqueGramos || 100);
-
-  // Productos config
-  $("cfg-paltas-name").value = productos.paltas.nombre;
-  $("cfg-paltas-price").value = productos.paltas.precio;
-  $("cfg-paltas-avail").value = String(productos.paltas.disponible);
-
-  $("cfg-champi-name").value = productos.champi.nombre;
-  $("cfg-champi-price").value = productos.champi.precio;
-  $("cfg-champi-pack").value = productos.champi.packGramos || 250;
-  $("cfg-champi-avail").value = String(productos.champi.disponible);
-
-  $("cfg-frut-name").value = productos.frutillas.nombre;
-  $("cfg-frut-price").value = productos.frutillas.precio;
-  $("cfg-frut-block").value = productos.frutillas.bloqueGramos || 100;
-  $("cfg-frut-avail").value = String(productos.frutillas.disponible);
-
-  // Resumen compra
-  $("sum-paltas-title").textContent = productos.paltas.nombre;
-  $("sum-champi-title").textContent = productos.champi.nombre;
-  $("sum-frutillas-title").textContent = productos.frutillas.nombre;
-}
-
-// ---------- Botones +/- (ROBUSTO) ----------
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".quantity-btn");
-  if (!btn) return;
-
-  const targetId = btn.dataset.target;
-  const action = btn.dataset.action;
-  const input = $(targetId);
-  if (!input) return;
-
-  const step = parseFloat(input.step) || 1;
-  let value = parseFloat(input.value) || 0;
-
-  if (action === "increase") value += step;
-  if (action === "decrease") value = Math.max(0, value - step);
-
-  input.value = value;
-});
-
-// ---------- Cálculo totales ----------
-function calcTotal(items){
-  const paltas = (items.paltasKg||0) * (productos.paltas.precio||0);
-  const champi = (items.champiCajas||0) * (productos.champi.precio||0);
-
-  const bloque = productos.frutillas.bloqueGramos || 100;
-  const bloques = Math.round((items.frutillasGramos||0) / bloque);
-  const frut = bloques * (productos.frutillas.precio||0);
-
-  return paltas + champi + frut;
-}
-
-// ---------- Deuda cliente ----------
-function deudaCliente(telefono){
-  const c = clientes[telefono];
-  if (!c) return { tieneDeuda:false, deudaTotal:0, pedidosPendientes:[] };
-
-  let deudaTotal = 0;
-  const pendientes = [];
-  c.pedidos.forEach(id => {
-    const p = pedidos.find(x => x.id === id);
-    if (p && p.estadoPago !== "pagado"){
-      const d = (p.deudaPendiente ?? p.total ?? 0);
-      deudaTotal += d;
-      pendientes.push(p);
+  card.classList.toggle('unavailable', !disponible);
+  const tag = card.querySelector('.unavailable-tag');
+  if (!disponible) {
+    if (!tag) {
+      const span = document.createElement('span');
+      span.className = 'unavailable-tag';
+      span.textContent = 'No disponible';
+      card.appendChild(span);
     }
-  });
-  return { tieneDeuda: deudaTotal>0, deudaTotal, pedidosPendientes:pendientes, cliente:c };
+  } else {
+    if (tag) tag.remove();
+  }
 }
 
-// ---------- Historial cliente (form) ----------
-function showClientHistory(telefono){
-  const c = clientes[telefono];
-  if (!c) return;
+// Calcular total de pedido desde items
+function calcTotalFromItems(items) {
+  let total = 0;
+  total += (Number(items.paltasKg)||0) * (productos.paltas.precio || DEFAULT_PRODUCTOS.paltas.precio);
+  total += (Number(items.champiCajas)||0) * (productos.champi.precio || DEFAULT_PRODUCTOS.champi.precio);
+  // frutillas precio por bloque: precio * (gramos / bloqueGramos)
+  const bloque = productos.frutillas.bloqueGramos || DEFAULT_PRODUCTOS.frutillas.bloqueGramos;
+  total += ( (Number(items.frutillasGramos)||0) / bloque ) * (productos.frutillas.precio || DEFAULT_PRODUCTOS.frutillas.precio);
+  return Math.round(total);
+}
 
-  $("client-info-container").style.display = "block";
-  $("client-debt-total").textContent = money(c.deudaTotal || 0);
+// Crear pedido local y (opcional) backend
+async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin=false }) {
+  const pedido = {
+    id: String(Date.now()) + Math.random().toString(36).slice(2,8),
+    nombre: nombre || '',
+    telefono: telefono || '',
+    items,
+    total: calcTotalFromItems(items),
+    estadoPago: 'pendiente',
+    fecha: nowISO(),
+    comentarios: comentarios || '',
+    deudaPendiente: calcTotalFromItems(items),
+    pagos: [],
+    creadoPorAdmin: creadoPorAdmin
+  };
+  pedidos.push(pedido);
+  rebuildClientesFromPedidos();
+  saveAll();
+  renderAll();
 
-  const last = pagos.filter(p => p.telefono === telefono)
-    .sort((a,b)=> new Date(b.fecha)-new Date(a.fecha))
-    .slice(0,5);
+  // Intentar enviar al backend si está configurado
+  if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
+    try {
+      const payload = { action: 'crear_pedido', pedido };
+      const resp = await fetch(backendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const r = await resp.json();
+      if (r && r.success) {
+        notify('Pedido creado y sincronizado', false);
+      } else {
+        notify('Pedido creado (no sincronizado)', true);
+        console.warn('Respuesta backend crear_pedido:', r);
+      }
+    } catch (err) {
+      console.error('Error al enviar pedido al backend:', err);
+      notify('Pedido creado (error al sincronizar)', true);
+    }
+  } else {
+    notify('Pedido creado (modo local)', false);
+  }
+}
 
-  if (last.length === 0){
-    $("client-payment-history").innerHTML = `<p style="text-align:center; color:#666;">No hay pagos registrados</p>`;
+// Enviar pedido desde formulario cliente
+async function handleEnviarPedido(e){
+  const nombre = $('nombre').value.trim();
+  const telefono = normPhone($('telefono').value);
+  if (!nombre || !telefono) {
+    notify('Nombre y teléfono son requeridos', true);
     return;
   }
-
-  $("client-payment-history").innerHTML = last.map(p =>
-    `<div class="payment-item">
-      <span>${new Date(p.fecha).toLocaleDateString()}</span>
-      <span class="payment-amount">+${money(p.monto)}</span>
-      <span>${escapeHTML(p.metodo)}</span>
-    </div>`
-  ).join("");
-}
-
-function showDebtAlert(telefono){
-  const r = deudaCliente(telefono);
-  if (r.tieneDeuda){
-    $("debt-alert-container").style.display = "block";
-    $("debt-alert-container").innerHTML = `
-      <div class="debt-alert">
-        <i class="fas fa-exclamation-triangle"></i>
-        <b>¡ALERTA DE DEUDA!</b><br>
-        Deuda pendiente: <b>${money(r.deudaTotal)}</b> | Pedidos sin pagar: <b>${r.pedidosPendientes.length}</b>
-      </div>
-    `;
-    showClientHistory(telefono);
-  } else {
-    $("debt-alert-container").style.display = "none";
-    $("client-info-container").style.display = "none";
+  const items = {
+    paltasKg: Number($('paltas-input').value) || 0,
+    champiCajas: Number($('champi-input').value) || 0,
+    frutillasGramos: Number($('frutillas-input').value) || 0
+  };
+  if (items.paltasKg===0 && items.champiCajas===0 && items.frutillasGramos===0) {
+    notify('Agrega al menos un producto', true);
+    return;
   }
-}
+  const comentarios = $('comentarios').value.trim();
+  await crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin:false });
 
-// ---------- Crear pedido ----------
-async function crearPedido({nombre, telefono, items, comentarios}, esAdmin=false){
-  telefono = normPhone(telefono);
-
-  // Validaciones
-  if (!nombre || !telefono) throw new Error("Nombre y teléfono son obligatorios");
-  const sum = (items.paltasKg||0) + (items.champiCajas||0) + (items.frutillasGramos||0);
-  if (sum <= 0) throw new Error("Debes seleccionar al menos un producto");
-
-  if (items.paltasKg > 0 && !productos.paltas.disponible) throw new Error(`${productos.paltas.nombre} no está disponible`);
-  if (items.champiCajas > 0 && !productos.champi.disponible) throw new Error(`${productos.champi.nombre} no está disponible`);
-  if (items.frutillasGramos > 0 && !productos.frutillas.disponible) throw new Error(`${productos.frutillas.nombre} no está disponible`);
-
-  const ver = deudaCliente(telefono);
-  if (ver.tieneDeuda && !esAdmin){
-    const ok = confirm(`⚠️ Este cliente tiene deuda ${money(ver.deudaTotal)}. ¿Continuar?`);
-    if (!ok) return null;
+  // Si backend se usa también registrar cliente (opcional)
+  if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
+    try {
+      const clientPayload = { action: 'crear_actualizar_cliente', cliente: { nombre, telefono } };
+      await fetch(backendUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(clientPayload) });
+    } catch (err) {
+      console.warn('No se pudo sincronizar cliente al backend:', err);
+    }
   }
 
-  const total = calcTotal(items);
-  const id = String(Date.now());
+  // Limpiar formulario
+  $('nombre').value = '';
+  $('telefono').value = '';
+  $('paltas-input').value = 0;
+  $('champi-input').value = 0;
+  $('frutillas-input').value = 0;
+  $('comentarios').value = '';
+  $('client-info-container').style.display = 'none';
+}
 
-  // Guardar en Google Sheets
-  try {
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev'; // Reemplaza con la URL que copiaste en el paso 3
-    
-    const params = new URLSearchParams({
-      action: 'guardar_pedido',
-      nombre: nombre,
-      telefono: telefono,
-      paltasKg: items.paltasKg || 0,
-      champiCajas: items.champiCajas || 0,
-      frutillasGramos: items.frutillasGramos || 0,
-      total: total,
-      comentarios: comentarios || ''
+// Renders orders table and stats
+function renderOrders(filterText='', paymentFilter='all') {
+  const tbody = $('orders-body');
+  tbody.innerHTML = '';
+  let total = 0, pendientes = 0, pagados = 0, deudaTotal = 0;
+
+  const rows = pedidos
+    .filter(p => {
+      if (!filterText) return true;
+      const ft = filterText.toLowerCase();
+      return (p.nombre||'').toLowerCase().includes(ft) || (p.telefono||'').toLowerCase().includes(ft);
+    })
+    .filter(p => {
+      if (paymentFilter === 'all') return true;
+      if (paymentFilter === 'pendiente') return p.estadoPago === 'pendiente';
+      if (paymentFilter === 'parcial') return p.estadoPago === 'parcial';
+      if (paymentFilter === 'pagado') return p.estadoPago === 'pagado';
+      return true;
     });
 
-    const response = await fetch(SCRIPT_URL + '?' + params.toString());
-    const result = await response.json();
-    
-    if (!result.success) {
-      throw new Error('Error al guardar en la base de datos');
-    }
-  } catch (error) {
-    // Si falla, guardamos en localStorage como respaldo
-    console.error('Error al guardar en Google Sheets:', error);
-    notify('No se pudo conectar con el servidor. Guardando localmente.', true);
-  }
+  rows.forEach(p => {
+    total++;
+    if (p.estadoPago === 'pagado') pagados++; else pendientes++;
+    deudaTotal += Number(p.deudaPendiente || 0);
 
-  // Guardar en localStorage también
-  const nuevo = {
-    id,
-    nombre,
-    telefono,
-    items,
-    comentarios: comentarios || "",
-    fecha: nowISO(),
-    estado: "pendiente",
-    estadoPago: "pendiente",
-    total,
-    deudaPendiente: total,
-    pagos: []
-  };
+    const tr = document.createElement('tr');
+    const products = [];
+    if ((p.items.paltasKg||0)>0) products.push(`${p.items.paltasKg} kg paltas`);
+    if ((p.items.champiCajas||0)>0) products.push(`${p.items.champiCajas} cajas champi`);
+    if ((p.items.frutillasGramos||0)>0) products.push(`${p.items.frutillasGramos} g frutillas`);
 
-  pedidos.push(nuevo);
-  rebuildClientesFromPedidos();
-  saveAll();
-  return nuevo;
-}
-
-// ---------- Registrar pago ----------
-function registrarPago(pedidoId, monto, metodo, notas=""){
-  const pedido = pedidos.find(p=>p.id===pedidoId);
-  if (!pedido) return false;
-
-  const deuda = (pedido.deudaPendiente ?? pedido.total ?? 0);
-  const m = Math.min(Number(monto)||0, deuda);
-  if (m <= 0) return false;
-
-  const pago = {
-    id: String(Date.now()),
-    pedidoId,
-    telefono: pedido.telefono,
-    nombre: pedido.nombre,
-    monto: m,
-    metodo,
-    notas,
-    fecha: nowISO(),
-    usuario: adminEmail || "admin"
-  };
-
-  pagos.push(pago);
-  pedido.pagos = pedido.pagos || [];
-  pedido.pagos.push(pago.id);
-
-  pedido.deudaPendiente = Math.max(0, deuda - m);
-
-  if (pedido.deudaPendiente <= 0){
-    pedido.estadoPago = "pagado";
-    pedido.fechaPago = nowISO();
-  } else if (pedido.deudaPendiente < (pedido.total||0)){
-    pedido.estadoPago = "parcial";
-  } else {
-    pedido.estadoPago = "pendiente";
-  }
-
-  rebuildClientesFromPedidos();
-  saveAll();
-  return true;
-}
-
-// ---------- Admin: render pedidos ----------
-function renderPedidos(){
-  const body = $("orders-body");
-  body.innerHTML = "";
-
-  const q = ($("search-input").value || "").toLowerCase();
-  const filtro = $("payment-filter").value;
-
-  const filtrados = pedidos.filter(p=>{
-    if (q && !p.nombre.toLowerCase().includes(q) && !p.telefono.includes(q)) return false;
-    if (filtro === "all") return true;
-    if (filtro === "pendiente") return p.estadoPago === "pendiente";
-    if (filtro === "parcial") return p.estadoPago === "parcial";
-    if (filtro === "pagado") return p.estadoPago === "pagado";
-    if (filtro === "moroso"){
-      const dias = Math.floor((new Date() - new Date(p.fecha)) / (1000*60*60*24));
-      return p.estadoPago !== "pagado" && dias > DIAS_MOROSIDAD;
-    }
-    return true;
-  });
-
-  const ordenados = [...filtrados].sort((a,b)=>{
-    const rank = {pendiente:1, parcial:2, pagado:3};
-    const r = (rank[a.estadoPago]||9) - (rank[b.estadoPago]||9);
-    if (r !== 0) return r;
-    return new Date(b.fecha) - new Date(a.fecha);
-  });
-
-  if (ordenados.length === 0){
-    body.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 18px; color:#666;">Sin pedidos</td></tr>`;
-    return;
-  }
-
-  ordenados.forEach(p=>{
-    const it = p.items || {};
-    const prod = [];
-
-    if (it.paltasKg > 0) prod.push(`${escapeHTML(productos.paltas.nombre)}: ${it.paltasKg} kg`);
-    if (it.champiCajas > 0) {
-      const g = it.champiCajas * (productos.champi.packGramos || 250);
-      prod.push(`${escapeHTML(productos.champi.nombre)}: ${it.champiCajas} caja(s) (${g} g)`);
-    }
-    if (it.frutillasGramos > 0) prod.push(`${escapeHTML(productos.frutillas.nombre)}: ${it.frutillasGramos} g`);
-
-    let badge = "";
-    if (p.estadoPago === "pagado") badge = `<span class="payment-status payment-pagado">PAGADO</span>`;
-    else if (p.estadoPago === "parcial") badge = `<span class="payment-status payment-parcial">PARCIAL</span>`;
-    else {
-      const dias = Math.floor((new Date() - new Date(p.fecha)) / (1000*60*60*24));
-      badge = (dias > DIAS_MOROSIDAD)
-        ? `<span class="payment-status payment-moroso">MOROSO</span>`
-        : `<span class="payment-status payment-pendiente">PENDIENTE</span>`;
-    }
-
-    const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${escapeHTML(p.nombre)}</td>
       <td>${escapeHTML(p.telefono)}</td>
-      <td>${prod.join("<br>")}</td>
+      <td>${escapeHTML(products.join(', '))}</td>
       <td>${money(p.total)}</td>
-      <td>
-        ${badge}<br>
-        ${p.estadoPago !== "pagado" ? `<small>Pendiente: <b>${money(p.deudaPendiente ?? p.total)}</b></small>` : ""}
-      </td>
+      <td><span class="payment-status ${p.estadoPago==='pagado'?'payment-pagado':'payment-pendiente'}">${escapeHTML(p.estadoPago)}</span></td>
       <td>${new Date(p.fecha).toLocaleString()}</td>
       <td>
-        <button class="action-btn btn-pay" data-action="pay" data-phone="${escapeHTML(p.telefono)}">
-          <i class="fas fa-money-bill"></i> Pagar
-        </button>
-        <button class="action-btn btn-del" data-action="delete" data-id="${escapeHTML(p.id)}">
-          <i class="fas fa-trash"></i>
-        </button>
+        <button class="action-btn btn-pay" data-action="open-payment" data-id="${p.id}"><i class="fas fa-money-bill-wave"></i> Pagar</button>
+        <button class="action-btn btn-gray" data-action="view" data-id="${p.id}"><i class="fas fa-eye"></i> Ver</button>
+        <button class="action-btn btn-del" data-action="delete" data-id="${p.id}"><i class="fas fa-trash"></i> Eliminar</button>
       </td>
     `;
-    body.appendChild(tr);
+    tbody.appendChild(tr);
   });
 
-  updateStats();
+  $('stat-total-pedidos').textContent = total;
+  $('stat-pendientes').textContent = pendientes;
+  $('stat-pagados').textContent = pagados;
+  $('stat-deuda').textContent = money(deudaTotal);
 }
 
-// ---------- Estadísticas / finanzas ----------
-function updateStats(){
-  const total = pedidos.length;
-  const pend = pedidos.filter(p=>p.estadoPago==="pendiente" || p.estadoPago==="parcial").length;
-  const pag = pedidos.filter(p=>p.estadoPago==="pagado").length;
-  const deuda = pedidos.reduce((acc,p)=> acc + (p.estadoPago==="pagado" ? 0 : (p.deudaPendiente ?? p.total ?? 0)), 0);
+// Render deudores
+function renderDebtors() {
+  const container = $('debtors-list');
+  container.innerHTML = '';
+  const list = Object.values(clientes).filter(c => c.deudaTotal > 0);
+  $('global-debt').textContent = money(list.reduce((s,c)=>s+c.deudaTotal,0));
+  $('global-debtors').textContent = list.length;
+  $('global-morosos').textContent = list.filter(c => {
+    const days = Math.floor((Date.now() - new Date(c.ultimoPedido).getTime())/(1000*60*60*24));
+    return days > DIAS_MOROSIDAD;
+  }).length;
 
-  $("stat-total-pedidos").textContent = total;
-  $("stat-pendientes").textContent = pend;
-  $("stat-pagados").textContent = pag;
-  $("stat-deuda").textContent = money(deuda);
-
-  // Pagos tab stats
-  const mes = new Date().getMonth();
-  const anio = new Date().getFullYear();
-
-  let recMes = 0;
-  pagos.forEach(pg=>{
-    const f = new Date(pg.fecha);
-    if (f.getMonth()===mes && f.getFullYear()===anio) recMes += (pg.monto||0);
+  list.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.style.marginBottom = '8px';
+    div.style.padding = '10px';
+    div.innerHTML = `<strong>${escapeHTML(c.nombre)} — ${escapeHTML(c.telefono)}</strong>
+      <div>Deuda: <span style="font-weight:900; color:#d32f2f">${money(c.deudaTotal)}</span></div>
+      <div style="font-size:.9rem;color:#666">Último pedido: ${new Date(c.ultimoPedido).toLocaleString()}</div>
+      <div style="margin-top:6px"><button class="btn btn-blue" data-action="open-client-pay" data-tel="${escapeHTML(c.telefono)}">Gestionar pago</button></div>`;
+    container.appendChild(div);
   });
-
-  let debtors = 0, morosos = 0;
-  Object.values(clientes).forEach(c=>{
-    if ((c.deudaTotal||0) > 0){
-      debtors++;
-      const lastId = (c.pedidos||[])[(c.pedidos||[]).length-1];
-      const last = pedidos.find(p=>p.id===lastId);
-      if (last){
-        const dias = Math.floor((new Date() - new Date(last.fecha)) / (1000*60*60*24));
-        if (dias > DIAS_MOROSIDAD) morosos++;
-      }
-    }
-  });
-
-  $("global-debt").textContent = money(deuda);
-  $("global-paid-month").textContent = money(recMes);
-  $("global-debtors").textContent = debtors;
-  $("global-morosos").textContent = morosos;
-
-  // Finanzas
-  const ventas = pedidos.reduce((acc,p)=> acc + (p.total||0), 0);
-  const recHist = pagos.reduce((acc,p)=> acc + (p.monto||0), 0);
-
-  $("fin-ventas").textContent = money(ventas);
-  $("fin-recaudado").textContent = money(recHist);
-  $("fin-deuda").textContent = money(deuda);
-  $("fin-clientes-deuda").textContent = String(debtors);
 }
 
-// ---------- Deudores (tab pagos) ----------
-function renderDeudores(filtro="all", busq=""){
-  const cont = $("debtors-list");
-  cont.innerHTML = "";
-
-  const arr = Object.values(clientes)
-    .filter(c=>{
-      if (!busq) return true;
-      const b = busq.toLowerCase();
-      return c.nombre.toLowerCase().includes(b) || c.telefono.includes(busq);
-    })
-    .filter(c=>{
-      const dt = c.deudaTotal || 0;
-      if (filtro==="con-deuda") return dt > 0;
-      if (filtro==="al-dia") return dt <= 0;
-      if (filtro==="morosos"){
-        if (dt <= 0) return false;
-        const lastId = (c.pedidos||[])[(c.pedidos||[]).length-1];
-        const last = pedidos.find(p=>p.id===lastId);
-        if (!last) return false;
-        const dias = Math.floor((new Date() - new Date(last.fecha)) / (1000*60*60*24));
-        return dias > DIAS_MOROSIDAD;
-      }
-      return true;
-    })
-    .sort((a,b)=> (b.deudaTotal||0) - (a.deudaTotal||0));
-
-  if (arr.length === 0){
-    cont.innerHTML = `<p style="text-align:center; padding: 18px; color:#666;">No hay resultados</p>`;
+// Mostrar info cliente cuando escriben teléfono en formulario
+async function checkClientByPhone(rawPhone) {
+  const tel = normPhone(rawPhone);
+  if (!tel) {
+    $('client-info-container').style.display = 'none';
     return;
   }
-
-  arr.forEach(c=>{
-    const lastId = (c.pedidos||[])[(c.pedidos||[]).length-1];
-    const last = pedidos.find(p=>p.id===lastId);
-    let dias = null;
-    let esMoroso = false;
-    if (last){
-      dias = Math.floor((new Date() - new Date(last.fecha)) / (1000*60*60*24));
-      esMoroso = dias > DIAS_MOROSIDAD && (c.deudaTotal||0)>0;
-    }
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.boxShadow = "none";
-    card.style.border = "1px solid #eee";
-    card.style.margin = "10px 0";
-    card.style.cursor = "pointer";
-    card.addEventListener("click", ()=> openPaymentModal(c.telefono));
-
-    card.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <b>${escapeHTML(c.nombre)}</b><br>
-          <small>${escapeHTML(c.telefono)}</small><br>
-          <small>${(c.pedidos||[]).length} pedido(s)</small>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-weight:900; font-size: 1.2rem; color:${(c.deudaTotal||0)>0 ? "#f44336" : "#388e3c"};">
-            ${money(c.deudaTotal||0)}
-          </div>
-          ${esMoroso ? `<span class="payment-status payment-moroso">MOROSO</span>`
-            : ((c.deudaTotal||0)>0 ? `<span class="payment-status payment-pendiente">PENDIENTE</span>`
-            : `<span class="payment-status payment-pagado">AL DÍA</span>`)
-          }
-        </div>
-      </div>
-      ${dias!==null ? `<div style="margin-top: 8px; color:#666; font-size:.88rem;">Último pedido: ${dias} días</div>` : ""}
-    `;
-    cont.appendChild(card);
-  });
-
-  updateStats();
-}
-
-// ---------- Modal pagos ----------
-let currentPaymentClient = null;
-let currentPaymentOrder = null;
-
-function openPaymentModal(telefono){
-  const pedidosCliente = pedidos.filter(p=>p.telefono === telefono);
-  if (pedidosCliente.length === 0) return;
-
-  currentPaymentClient = telefono;
-  currentPaymentOrder = null;
-
-  const nombre = pedidosCliente[0].nombre;
-  let deudaTotal = 0;
-  const pendientes = [];
-
-  pedidosCliente.forEach(p=>{
-    if (p.estadoPago !== "pagado"){
-      const d = (p.deudaPendiente ?? p.total ?? 0);
-      deudaTotal += d;
-      pendientes.push(p);
-    }
-  });
-
-  $("payment-client-info").innerHTML = `
-    <div class="card" style="box-shadow:none; border:1px solid #eee;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div>
-          <div style="font-weight:900; font-size: 1.1rem;">${escapeHTML(nombre)}</div>
-          <div style="color:#666;"><i class="fas fa-phone"></i> ${escapeHTML(telefono)}</div>
-          <div style="color:#666;"><i class="fas fa-shopping-cart"></i> ${pedidosCliente.length} pedido(s)</div>
-        </div>
-        <div class="pill">${pendientes.length} pendiente(s)</div>
-      </div>
-      <div style="margin-top: 10px;">
-        ${pendientes.length > 0 ? `
-          <div style="font-weight:900; margin-bottom: 6px;"><i class="fas fa-list"></i> Pedidos pendientes</div>
-          ${pendientes.map(p=>{
-            const it = p.items||{};
-            const lines = [];
-            if (it.paltasKg>0) lines.push(`${it.paltasKg}kg ${escapeHTML(productos.paltas.nombre)}`);
-            if (it.champiCajas>0) lines.push(`${it.champiCajas} caja(s) ${escapeHTML(productos.champi.nombre)}`);
-            if (it.frutillasGramos>0) lines.push(`${it.frutillasGramos}g ${escapeHTML(productos.frutillas.nombre)}`);
-            return `
-              <div style="display:flex; justify-content:space-between; gap:10px; padding: 10px 0; border-bottom:1px solid #eee;">
-                <div style="flex:2;">
-                  <small>${new Date(p.fecha).toLocaleDateString()}</small><br>
-                  ${lines.join("<br>")}<br>
-                  <small>Total: <b>${money(p.total)}</b></small>
-                </div>
-                <div style="text-align:right; flex:1;">
-                  <span class="payment-status ${p.estadoPago==="parcial" ? "payment-parcial":"payment-pendiente"}">
-                    ${money(p.deudaPendiente ?? p.total)} pendiente
-                  </span><br>
-                  <button class="action-btn btn-pay" style="margin-top: 8px;" onclick="selectOrderForPay('${escapeHTML(p.id)}')">
-                    <i class="fas fa-money-bill"></i> Pagar
-                  </button>
-                </div>
-              </div>
-            `;
-          }).join("")}
-        ` : `<p style="color:#666;">No hay pedidos pendientes.</p>`}
-      </div>
-    </div>
-  `;
-
-  $("modal-debt-amount").textContent = money(deudaTotal);
-  $("payment-amount").value = deudaTotal;
-  $("payment-notes").value = "";
-  $("payment-history-container").style.display = "none";
-  $("payment-modal").style.display = "flex";
-}
-
-window.selectOrderForPay = function(pedidoId){
-  currentPaymentOrder = pedidoId;
-  const p = pedidos.find(x=>x.id===pedidoId);
-  if (!p) return;
-  $("payment-amount").value = (p.deudaPendiente ?? p.total ?? 0);
-};
-
-// Historial pagos modal
-function renderPaymentHistory(telefono){
-  const cont = $("modal-payment-history");
-  const list = pagos.filter(p=>p.telefono===telefono).sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
-
-  if (list.length===0){
-    cont.innerHTML = `<p style="text-align:center; color:#666;">Sin historial</p>`;
+  const c = clientes[tel];
+  if (c) {
+    $('phone-warning').style.display = 'block';
+    $('client-info-container').style.display = 'block';
+    $('client-debt-total').textContent = money(c.deudaTotal || 0);
+    const ph = $('client-payment-history');
+    ph.innerHTML = `<div>Pedidos: ${c.pedidos.length}</div>`;
     return;
+  } else {
+    $('phone-warning').style.display = 'none';
+    $('client-info-container').style.display = 'none';
   }
-  cont.innerHTML = list.map(p=>`
-    <div class="payment-item">
-      <div>
-        <b>${new Date(p.fecha).toLocaleDateString()}</b><br>
-        <small>${escapeHTML(p.notas || "Sin notas")}</small>
-      </div>
-      <div style="text-align:right;">
-        <div class="payment-amount">${money(p.monto)}</div>
-        <small>${escapeHTML(p.metodo)}</small>
-      </div>
-    </div>
-  `).join("");
+
+  // Intentar buscar en backend si está configurado
+  if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
+    try {
+      const resp = await fetch(backendUrl + `?action=buscar_cliente&telefono=${encodeURIComponent(tel)}`, { method: 'GET' });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data && data.success && data.cliente) {
+        const cliente = data.cliente;
+        $('phone-warning').style.display = 'block';
+        $('client-info-container').style.display = 'block';
+        $('client-debt-total').textContent = money(cliente.deudaTotal || 0);
+        $('client-payment-history').innerHTML = `<div>Último: ${cliente.ultimoPedido || ''}</div>`;
+      }
+    } catch (err) {
+      console.warn('Error buscando cliente en backend:', err);
+    }
+  }
 }
 
-// ---------- Resumen compra ----------
-function calcResumenCompra(){
-  let kilos = 0, cajas = 0, gramos = 0;
-  pedidos.forEach(p=>{
-    const it = p.items || {};
-    kilos += (it.paltasKg || 0);
-    cajas += (it.champiCajas || 0);
-    gramos += (it.frutillasGramos || 0);
+// Helpers para mostrar/ocultar modales
+function showModal(id) {
+  const m = $(id);
+  if (m) m.style.display = 'flex';
+}
+function hideModal(id) {
+  const m = $(id);
+  if (m) m.style.display = 'none';
+}
+
+// Inicializar listeners
+function initListeners() {
+  // quantity buttons (delegación)
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.quantity-btn');
+    if (btn) {
+      const targetId = btn.dataset.target;
+      const action = btn.dataset.action;
+      const input = $(targetId);
+      if (!input) return;
+      let val = Number(input.value) || 0;
+      const step = Number(input.step) || 1;
+      if (action === 'increase') val += step;
+      else if (action === 'decrease') val = Math.max(0, val - step);
+      input.value = val;
+      return;
+    }
+
+    // admin open login
+    if (ev.target.closest('#admin-login-link')) {
+      showModal('login-modal');
+      return;
+    }
+
+    // close modals
+    const closeLogin = ev.target.closest('#close-login');
+    if (closeLogin) hideModal('login-modal');
+    const closeAdd = ev.target.closest('#close-add-order');
+    if (closeAdd) hideModal('add-order-modal');
+    const closeCompras = ev.target.closest('#close-compras');
+    if (closeCompras) hideModal('compras-modal');
+    const closePayment = ev.target.closest('#close-payment');
+    if (closePayment) hideModal('payment-modal');
+
+    // admin controls
+    if (ev.target.closest('#add-order-btn')) { showModal('add-order-modal'); return; }
+    if (ev.target.closest('#compras-btn')) { updateSummary(); showModal('compras-modal'); return; }
+    if (ev.target.closest('#export-btn')) { exportCSV(); return; }
+    if (ev.target.closest('#refresh-btn')) { renderAll(); notify('Actualizado', false); return; }
+    if (ev.target.closest('#logout-btn')) { doLogout(); return; }
+
+    if (ev.target.closest('#save-products-btn')) { saveProductConfigs(); return; }
+    if (ev.target.closest('#reset-products-btn')) { resetProductConfigs(); return; }
+
+    if (ev.target.closest('#save-settings-btn')) { saveSettings(); return; }
+    if (ev.target.closest('#clear-local-btn')) {
+      if (confirm('Borrar datos locales?')) {
+        localStorage.clear();
+        pedidos = []; pagos = []; clientes = {}; productos = structuredClone(DEFAULT_PRODUCTOS);
+        saveAll();
+        renderAll();
+        notify('Datos locales borrados', false);
+      }
+      return;
+    }
+
+    if (ev.target.closest('#enviar-pedido')) { handleEnviarPedido(); return; }
+    if (ev.target.closest('#admin-enviar-pedido')) { handleAdminCreateOrder(); return; }
+    if (ev.target.closest('#print-compras')) { window.print(); return; }
+
+    // orders table actions (delegación)
+    const actionBtn = ev.target.closest('[data-action]');
+    if (actionBtn) {
+      const action = actionBtn.dataset.action;
+      const id = actionBtn.dataset.id;
+      if (action === 'open-payment') openPaymentModal(id);
+      else if (action === 'delete') {
+        if (confirm('Eliminar pedido?')) {
+          pedidos = pedidos.filter(p => p.id !== id);
+          rebuildClientesFromPedidos();
+          saveAll();
+          renderAll();
+        }
+      } else if (action === 'view') {
+        const p = pedidos.find(x => x.id === id);
+        if (p) {
+          alert(`Pedido de ${p.nombre}\nTel: ${p.telefono}\nTotal: ${money(p.total)}\nProductos: ${JSON.stringify(p.items)}`);
+        }
+      } else if (action === 'open-client-pay') {
+        const tel = actionBtn.dataset.tel;
+        openPaymentModalForPhone(tel);
+      }
+      return;
+    }
+
+    // export deudores
+    if (ev.target.closest('#export-debt-btn')) { exportDebtorsCSV(); return; }
   });
 
-  $("sum-paltas").textContent = `${kilos} kg`;
-  const gChampi = cajas * (productos.champi.packGramos || 250);
-  $("sum-champi").textContent = `${cajas} cajas (${gChampi} g)`;
-  $("sum-frutillas").textContent = `${gramos} g`;
+  // login modal
+  $('login-btn').addEventListener('click', () => {
+    const email = $('admin-email').value.trim();
+    const pwd = $('admin-password').value;
+    if (email === 'admin@valledor.com' && pwd === 'admin123') {
+      isAdmin = true; adminEmail = email;
+      hideModal('login-modal');
+      $('admin-container').style.display = 'block';
+      $('solicitante-form').style.display = 'none';
+      notify('Bienvenido administrador', false);
+      renderAll();
+    } else {
+      $('login-error').style.display = 'block';
+      setTimeout(()=> $('login-error').style.display = 'none', 3000);
+    }
+  });
+
+  // telefono blur para chequear cliente
+  $('telefono').addEventListener('blur', (e) => checkClientByPhone(e.target.value));
+
+  // admin tabs
+  document.querySelectorAll('.admin-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const tabName = tab.dataset.tab;
+      document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+      const cont = $(`${tabName}-tab`);
+      if (cont) cont.classList.add('active');
+    });
+  });
+
+  // search / filters
+  $('search-input').addEventListener('input', e => renderOrders(e.target.value, $('payment-filter').value));
+  $('payment-filter').addEventListener('change', e => renderOrders($('search-input').value, e.target.value));
 }
 
-// ---------- Export CSV ----------
-function downloadCSV(filename, rows){
-  const csv = rows.map(r=> r.map(v => {
-    const s = String(v ?? "");
-    // escapar comillas
-    const escaped = s.replace(/"/g, '""');
-    return `"${escaped}"`;
-  }).join(",")).join("\n");
+// Admin create order (using modal fields)
+async function handleAdminCreateOrder() {
+  const nombre = $('admin-nombre').value.trim();
+  const telefono = normPhone($('admin-telefono').value);
+  if (!nombre || !telefono) { notify('Nombre y teléfono son requeridos', true); return; }
+  const items = {
+    paltasKg: Number($('admin-paltas-input').value) || 0,
+    champiCajas: Number($('admin-champi-input').value) || 0,
+    frutillasGramos: Number($('admin-frutillas-input').value) || 0
+  };
+  const comentarios = $('admin-comentarios').value.trim();
+  await crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin:true });
+  hideModal('add-order-modal');
+  $('admin-nombre').value = ''; $('admin-telefono').value = ''; $('admin-paltas-input').value = 0; $('admin-champi-input').value = 0; $('admin-frutillas-input').value = 0; $('admin-comentarios').value = '';
+}
 
-  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+// Payment modal management
+let currentPaymentTargetId = null; // pedido id or telefono
+function openPaymentModal(pedidoId) {
+  const p = pedidos.find(x => x.id === pedidoId);
+  if (!p) { notify('Pedido no encontrado', true); return; }
+  currentPaymentTargetId = pedidoId;
+  $('payment-client-info').innerHTML = `<strong>${escapeHTML(p.nombre)}</strong> — ${escapeHTML(p.telefono)}<div style="margin-top:6px">Deuda: ${money(p.deudaPendiente)}</div>`;
+  $('modal-debt-amount').textContent = money(p.deudaPendiente || 0);
+  $('payment-amount').value = '';
+  $('payment-notes').value = '';
+  $('payment-history-container').style.display = 'none';
+  showModal('payment-modal');
+}
+
+function openPaymentModalForPhone(telefono) {
+  // buscar primer pedido con deuda para ese telefono
+  const p = pedidos.find(x => normPhone(x.telefono) === normPhone(telefono) && (Number(x.deudaPendiente)||0) > 0);
+  if (p) openPaymentModal(p.id);
+  else notify('No se encontró pedido con deuda para este teléfono', true);
+}
+
+$('register-payment').addEventListener('click', async () => {
+  const amt = Number($('payment-amount').value) || 0;
+  if (amt <= 0) { notify('Monto inválido', true); return; }
+  if (!currentPaymentTargetId) { notify('No hay pedido seleccionado', true); return; }
+  const pedido = pedidos.find(p => p.id === currentPaymentTargetId);
+  if (!pedido) { notify('Pedido no encontrado', true); return; }
+  // registrar pago local
+  const pago = { id: String(Date.now()) + Math.random().toString(36).slice(2,8), pedidoId: pedido.id, monto: amt, metodo: $('payment-method').value, notas: $('payment-notes').value, fecha: nowISO() };
+  pagos.push(pago);
+  pedido.pagos = pedido.pagos || [];
+  pedido.pagos.push(pago);
+  pedido.deudaPendiente = Math.max(0, (pedido.deudaPendiente || pedido.total) - amt);
+  if (pedido.deudaPendiente === 0) pedido.estadoPago = 'pagado'; else pedido.estadoPago = 'parcial';
+  rebuildClientesFromPedidos();
+  saveAll();
+  renderAll();
+  notify('Pago registrado', false);
+  hideModal('payment-modal');
+
+  // intentar enviar pago al backend
+  if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
+    try {
+      await fetch(backendUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'registrar_pago', pago })});
+    } catch (err) {
+      console.warn('No se pudo sincronizar pago al backend:', err);
+    }
+  }
+});
+
+$('mark-as-paid').addEventListener('click', async () => {
+  if (!currentPaymentTargetId) return notify('No hay pedido seleccionado', true);
+  const pedido = pedidos.find(p => p.id === currentPaymentTargetId);
+  if (!pedido) return;
+  pedido.estadoPago = 'pagado';
+  pedido.deudaPendiente = 0;
+  saveAll();
+  rebuildClientesFromPedidos();
+  renderAll();
+  hideModal('payment-modal');
+  notify('Pedido marcado como pagado', false);
+});
+
+// Export CSV (pedidos)
+function exportCSV(){
+  const rows = [['id','nombre','telefono','total','estadoPago','fecha','comentarios']];
+  pedidos.forEach(p => rows.push([p.id, p.nombre, p.telefono, p.total, p.estadoPago, p.fecha, p.comentarios]));
+  const csv = rows.map(r => r.map(cell => `"${String(cell||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
+  const a = document.createElement('a');
+  a.href = url; a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
-  a.remove();
   URL.revokeObjectURL(url);
 }
 
-function exportPedidosCSV(){
-  const rows = [["id","nombre","telefono","fecha","estadoPago","total","deudaPendiente","paltasKg","champiCajas","frutillasGramos","comentarios"]];
-  pedidos.forEach(p=>{
-    const it = p.items || {};
-    rows.push([
-      p.id, p.nombre, p.telefono, p.fecha, p.estadoPago, p.total, p.deudaPendiente ?? 0,
-      it.paltasKg||0, it.champiCajas||0, it.frutillasGramos||0, p.comentarios||""
-    ]);
+// Export deudores CSV
+function exportDebtorsCSV(){
+  const rows = [['telefono','nombre','deudaTotal','pedidos']];
+  Object.values(clientes).filter(c=>c.deudaTotal>0).forEach(c =>{
+    rows.push([c.telefono, c.nombre, c.deudaTotal, c.pedidos.join(';')]);
   });
-  downloadCSV("pedidos.csv", rows);
+  const csv = rows.map(r => r.map(cell => `"${String(cell||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `deudores_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-function exportPagosCSV(){
-  const rows = [["id","pedidoId","nombre","telefono","fecha","monto","metodo","notas","usuario"]];
-  pagos.forEach(p=>{
-    rows.push([p.id, p.pedidoId, p.nombre, p.telefono, p.fecha, p.monto, p.metodo, p.notas||"", p.usuario||""]);
-  });
-  downloadCSV("pagos.csv", rows);
+// Update summary modal
+function updateSummary(){
+  const sumPaltas = pedidos.reduce((s,p)=>s + (Number(p.items.paltasKg)||0), 0);
+  const sumChampi = pedidos.reduce((s,p)=>s + (Number(p.items.champiCajas)||0), 0);
+  const sumFrut = pedidos.reduce((s,p)=>s + (Number(p.items.frutillasGramos)||0), 0);
+  $('sum-paltas').textContent = `${sumPaltas} kg`;
+  $('sum-champi').textContent = `${sumChampi} cajas`;
+  $('sum-frutillas').textContent = `${sumFrut} g`;
 }
 
-function exportDeudoresCSV(){
-  const rows = [["telefono","nombre","deudaTotal","pedidos"]];
-  Object.values(clientes).forEach(c=>{
-    rows.push([c.telefono, c.nombre, c.deudaTotal||0, (c.pedidos||[]).length]);
-  });
-  downloadCSV("deudores.csv", rows);
+// Productos config save/reset
+function saveProductConfigs(){
+  productos.paltas.nombre = $('cfg-paltas-name').value || productos.paltas.nombre;
+  productos.paltas.precio = Number($('cfg-paltas-price').value) || productos.paltas.precio;
+  productos.paltas.disponible = $('cfg-paltas-avail').value === 'true';
+
+  productos.champi.nombre = $('cfg-champi-name').value || productos.champi.nombre;
+  productos.champi.precio = Number($('cfg-champi-price').value) || productos.champi.precio;
+  productos.champi.packGramos = Number($('cfg-champi-pack').value) || productos.champi.packGramos;
+  productos.champi.disponible = $('cfg-champi-avail').value === 'true';
+
+  productos.frutillas.nombre = $('cfg-frut-name').value || productos.frutillas.nombre;
+  productos.frutillas.precio = Number($('cfg-frut-price').value) || productos.frutillas.precio;
+  productos.frutillas.bloqueGramos = Number($('cfg-frut-block').value) || productos.frutillas.bloqueGramos;
+  productos.frutillas.disponible = $('cfg-frut-avail').value === 'true';
+
+  // Aplicar visual
+  applyAvailability('paltas-card', productos.paltas.disponible);
+  applyAvailability('champi-card', productos.champi.disponible);
+  applyAvailability('frutillas-card', productos.frutillas.disponible);
+
+  // actualizar textos de precios
+  $('paltas-price').textContent = money(productos.paltas.precio);
+  $('champi-price').textContent = money(productos.champi.precio);
+  $('champi-pack').textContent = productos.champi.packGramos;
+  $('frutillas-price').textContent = money(productos.frutillas.precio);
+  $('frutillas-block').textContent = productos.frutillas.bloqueGramos;
+
+  saveAll();
+  notify('Productos guardados', false);
 }
 
-// ---------- Eventos principales ----------
-$("telefono").addEventListener("input", function(){
-  const tel = normPhone(this.value);
-  this.value = tel;
+function resetProductConfigs(){
+  productos = structuredClone(DEFAULT_PRODUCTOS);
+  saveAll();
+  // recargar inputs
+  $('cfg-paltas-name').value = productos.paltas.nombre;
+  $('cfg-paltas-price').value = productos.paltas.precio;
+  $('cfg-paltas-avail').value = productos.paltas.disponible ? 'true' : 'false';
+  $('cfg-champi-name').value = productos.champi.nombre;
+  $('cfg-champi-price').value = productos.champi.precio;
+  $('cfg-champi-pack').value = productos.champi.packGramos;
+  $('cfg-champi-avail').value = productos.champi.disponible ? 'true' : 'false';
+  $('cfg-frut-name').value = productos.frutillas.nombre;
+  $('cfg-frut-price').value = productos.frutillas.precio;
+  $('cfg-frut-block').value = productos.frutillas.bloqueGramos;
+  $('cfg-frut-avail').value = productos.frutillas.disponible ? 'true' : 'false';
+  saveProductConfigs();
+  notify('Productos reseteados', false);
+}
 
-  if (tel.length >= 8 && clientes[tel]){
-    $("phone-warning").style.display = "block";
-    showDebtAlert(tel);
-  } else {
-    $("phone-warning").style.display = "none";
-    $("debt-alert-container").style.display = "none";
-    $("client-info-container").style.display = "none";
+// Guardar settings (backend url)
+function saveSettings(){
+  const url = $('backend-url').value.trim();
+  if (url && !/^https?:\/\//i.test(url)) {
+    notify('La URL debe comenzar con http o https', true);
+    return;
   }
-});
+  backendUrl = url || BACKEND_URL_DEFAULT;
+  saveAll();
+  notify('Configuración guardada', false);
+  // intentar cargar pedidos inmediatamente
+  if (backendUrl) cargarPedidosDesdeSheets();
+}
 
-// Enviar pedido (cliente)
-$("enviar-pedido").addEventListener("click", async ()=>{
-  try{
-    const nombre = $("nombre").value.trim();
-    const telefono = normPhone($("telefono").value);
-    const items = {
-      paltasKg: parseFloat($("paltas-input").value) || 0,
-      champiCajas: parseFloat($("champi-input").value) || 0,
-      frutillasGramos: parseFloat($("frutillas-input").value) || 0
-    };
-    const comentarios = $("comentarios").value.trim();
-
-    const nuevo = await crearPedido({nombre, telefono, items, comentarios}, false);
-    if (!nuevo) return;
-
-    $("nombre").value = "";
-    $("telefono").value = "";
-    $("paltas-input").value = "0";
-    $("champi-input").value = "0";
-    $("frutillas-input").value = "0";
-    $("comentarios").value = "";
-
-    $("phone-warning").style.display = "none";
-    $("debt-alert-container").style.display = "none";
-    $("client-info-container").style.display = "none";
-
-    saveAll();
-    if ($("admin-container").style.display==="block"){
-      renderPedidos();
-      renderDeudores($("debt-filter").value, $("search-debt").value);
-    }
-    notify("Pedido registrado con éxito ✅");
-  }catch(err){
-    notify(err.message || "Error al crear pedido", true);
-  }
-});
-
-// Acceso admin
-$("admin-login-link").addEventListener("click", ()=>{
-  $("login-modal").style.display = "flex";
-});
-$("close-login").addEventListener("click", ()=> $("login-modal").style.display="none");
-
-$("login-btn").addEventListener("click", ()=>{
-  const email = $("admin-email").value.trim();
-  const pass = $("admin-password").value.trim();
-
-  if (email === "admin@valledor.com" && pass === "admin123"){
-    isAdmin = true;
-    adminEmail = email;
-
-    $("login-error").style.display = "none";
-    $("login-modal").style.display = "none";
-
-    $("admin-container").style.display = "block";
-    $("solicitante-form").style.display = "none";
-
-    renderPedidos();
-    renderDeudores("all","");
-    updateStats();
-    notify("Sesión admin iniciada ✅");
-  } else {
-    $("login-error").style.display = "block";
-    notify("Credenciales incorrectas", true);
-  }
-});
-
-$("logout-btn").addEventListener("click", ()=>{
+// Logout admin
+function doLogout(){
   isAdmin = false;
-  adminEmail = "";
-  $("admin-container").style.display = "none";
-  $("solicitante-form").style.display = "block";
-  notify("Sesión cerrada");
-});
+  adminEmail = '';
+  $('admin-container').style.display = 'none';
+  $('solicitante-form').style.display = 'block';
+  notify('Sesión cerrada', false);
+}
 
-// Tabs admin
-document.querySelectorAll(".admin-tab").forEach(tab=>{
-  tab.addEventListener("click", ()=>{
-    document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));
-    document.querySelectorAll(".admin-tab-content").forEach(c=>c.classList.remove("active"));
-    tab.classList.add("active");
-    $(tab.dataset.tab + "-tab").classList.add("active");
+// Render everything
+function renderAll(){
+  // set inputs from productos
+  $('cfg-paltas-name').value = productos.paltas.nombre;
+  $('cfg-paltas-price').value = productos.paltas.precio;
+  $('cfg-paltas-avail').value = productos.paltas.disponible ? 'true' : 'false';
+  $('cfg-champi-name').value = productos.champi.nombre;
+  $('cfg-champi-price').value = productos.champi.precio;
+  $('cfg-champi-pack').value = productos.champi.packGramos;
+  $('cfg-champi-avail').value = productos.champi.disponible ? 'true' : 'false';
+  $('cfg-frut-name').value = productos.frutillas.nombre;
+  $('cfg-frut-price').value = productos.frutillas.precio;
+  $('cfg-frut-block').value = productos.frutillas.bloqueGramos;
+  $('cfg-frut-avail').value = productos.frutillas.disponible ? 'true' : 'false';
+  // price labels
+  $('paltas-price').textContent = money(productos.paltas.precio);
+  $('champi-price').textContent = money(productos.champi.precio);
+  $('champi-pack').textContent = productos.champi.packGramos;
+  $('frutillas-price').textContent = money(productos.frutillas.precio);
+  $('frutillas-block').textContent = productos.frutillas.bloqueGramos;
+  applyAvailability('paltas-card', productos.paltas.disponible);
+  applyAvailability('champi-card', productos.champi.disponible);
+  applyAvailability('frutillas-card', productos.frutillas.disponible);
 
-    if (tab.dataset.tab === "pagos"){
-      renderDeudores($("debt-filter").value, $("search-debt").value);
-    }
-    if (tab.dataset.tab === "pedidos"){
-      renderPedidos();
-    }
-    updateStats();
-  });
-});
+  // backend url input
+  $('backend-url').value = backendUrl || '';
 
-// Pedidos acciones (pagar/eliminar)
-$("orders-body").addEventListener("click", (e)=>{
-  const btn = e.target.closest("button");
-  if (!btn) return;
-  const action = btn.dataset.action;
+  renderOrders();
+  renderDebtors();
+  updateSummary();
+}
 
-  if (action === "pay"){
-    openPaymentModal(btn.dataset.phone);
-  }
-
-  if (action === "delete"){
-    const id = btn.dataset.id;
-    if (!confirm("¿Eliminar este pedido?")) return;
-
-    // borrar pagos asociados
-    pagos = pagos.filter(pg => pg.pedidoId !== id);
-    pedidos = pedidos.filter(p => p.id !== id);
-    rebuildClientesFromPedidos();
-    saveAll();
-    renderPedidos();
-    renderDeudores($("debt-filter").value, $("search-debt").value);
-    notify("Pedido eliminado ✅");
-  }
-});
-
-// Filtros pedidos
-$("search-input").addEventListener("input", renderPedidos);
-$("payment-filter").addEventListener("change", renderPedidos);
-
-// Abrir/cerrar modal agregar pedido
-$("add-order-btn").addEventListener("click", ()=> $("add-order-modal").style.display="flex");
-$("close-add-order").addEventListener("click", ()=> $("add-order-modal").style.display="none");
-
-// Crear pedido admin
-$("admin-enviar-pedido").addEventListener("click", async ()=>{
-  try{
-    const nombre = $("admin-nombre").value.trim();
-    const telefono = normPhone($("admin-telefono").value);
-    const items = {
-      paltasKg: parseFloat($("admin-paltas-input").value) || 0,
-      champiCajas: parseFloat($("admin-champi-input").value) || 0,
-      frutillasGramos: parseFloat($("admin-frutillas-input").value) || 0
-    };
-    const comentarios = $("admin-comentarios").value.trim();
-
-    const nuevo = await crearPedido({nombre, telefono, items, comentarios}, true);
-    if (!nuevo) return;
-
-    $("admin-nombre").value = "";
-    $("admin-telefono").value = "";
-    $("admin-paltas-input").value = "0";
-    $("admin-champi-input").value = "0";
-    $("admin-frutillas-input").value = "0";
-    $("admin-comentarios").value = "";
-    $("add-order-modal").style.display="none";
-
-    saveAll();
-    renderPedidos();
-    renderDeudores($("debt-filter").value, $("search-debt").value);
-    notify("Pedido agregado desde admin ✅");
-  }catch(err){
-    notify(err.message || "Error al crear pedido", true);
-  }
-});
-
-// Resumen compra
-$("compras-btn").addEventListener("click", ()=>{
-  calcResumenCompra();
-  $("compras-modal").style.display="flex";
-});
-$("close-compras").addEventListener("click", ()=> $("compras-modal").style.display="none");
-$("print-compras").addEventListener("click", ()=> window.print());
-
-// Exportar
-$("export-btn").addEventListener("click", ()=>{
-  // Exporta todo: pedidos + pagos (2 descargas)
-  exportPedidosCSV();
-  exportPagosCSV();
-  notify("Exportación CSV iniciada");
-});
-$("export-debt-btn").addEventListener("click", ()=>{
-  exportDeudoresCSV();
-  notify("Deudores exportados");
-});
-
-// Pagos modal
-$("close-payment").addEventListener("click", ()=> $("payment-modal").style.display="none");
-
-$("register-payment").addEventListener("click", ()=>{
-  const monto = parseFloat($("payment-amount").value);
-  const metodo = $("payment-method").value;
-  const notas = $("payment-notes").value.trim();
-
-  if (!monto || monto <= 0){
-    notify("Ingresa un monto válido", true);
-    return;
-  }
-
-  if (!currentPaymentClient){
-    notify("No hay cliente seleccionado", true);
-    return;
-  }
-
-  // Si no se eligió un pedido, distribuir por pedidos pendientes (más antiguos primero)
-  if (!currentPaymentOrder){
-    const pendientes = pedidos
-      .filter(p=>p.telefono===currentPaymentClient && p.estadoPago!=="pagado")
-      .sort((a,b)=> new Date(a.fecha)-new Date(b.fecha));
-
-    let restante = monto;
-    pendientes.forEach(p=>{
-      if (restante <= 0) return;
-      const deuda = (p.deudaPendiente ?? p.total ?? 0);
-      const pagar = Math.min(deuda, restante);
-      if (pagar > 0){
-        registrarPago(p.id, pagar, metodo, notas ? `${notas} (distribuido)` : "Pago distribuido");
-        restante -= pagar;
-      }
-    });
-
-    if (restante > 0){
-      notify(`Pago registrado. Sobrante: ${money(restante)}`, false);
-    } else {
-      notify("Pago registrado con éxito ✅");
-    }
-  } else {
-    const pedido = pedidos.find(p=>p.id===currentPaymentOrder);
-    if (!pedido){
-      notify("Pedido no encontrado", true);
-      return;
-    }
-    const deuda = (pedido.deudaPendiente ?? pedido.total ?? 0);
-    if (monto > deuda){
-      notify(`El monto excede la deuda: ${money(deuda)}`, true);
-      return;
-    }
-    registrarPago(currentPaymentOrder, monto, metodo, notas);
-    notify("Pago registrado con éxito ✅");
-  }
-
-  $("payment-modal").style.display="none";
-  currentPaymentClient = null;
-  currentPaymentOrder = null;
-  renderPedidos();
-  renderDeudores($("debt-filter").value, $("search-debt").value);
-  updateStats();
-});
-
-$("mark-as-paid").addEventListener("click", ()=>{
-  if (!currentPaymentClient) return;
-
-  const pendientes = pedidos.filter(p=>p.telefono===currentPaymentClient && p.estadoPago!=="pagado");
-  pendientes.forEach(p=>{
-    const deuda = (p.deudaPendiente ?? p.total ?? 0);
-    if (deuda > 0) registrarPago(p.id, deuda, "efectivo", "Pago completo (marcar todo pagado)");
-  });
-
-  $("payment-modal").style.display="none";
-  currentPaymentClient = null;
-  currentPaymentOrder = null;
-
-  renderPedidos();
-  renderDeudores($("debt-filter").value, $("search-debt").value);
-  updateStats();
-  notify("Deuda marcada como pagada ✅");
-});
-
-$("toggle-payment-history").addEventListener("click", ()=>{
-  const c = $("payment-history-container");
-  const visible = c.style.display === "block";
-  c.style.display = visible ? "none" : "block";
-  if (!visible && currentPaymentClient){
-    renderPaymentHistory(currentPaymentClient);
-  }
-});
-
-// Filtros deudores
-$("search-debt").addEventListener("input", ()=> renderDeudores($("debt-filter").value, $("search-debt").value));
-$("debt-filter").addEventListener("change", ()=> renderDeudores($("debt-filter").value, $("search-debt").value));
-
-// Guardar productos
-$("save-products-btn").addEventListener("click", ()=>{
-  productos.paltas.nombre = $("cfg-paltas-name").value.trim() || DEFAULT_PRODUCTOS.paltas.nombre;
-  productos.paltas.precio = parseInt($("cfg-paltas-price").value) || DEFAULT_PRODUCTOS.paltas.precio;
-  productos.paltas.disponible = $("cfg-paltas-avail").value === "true";
-  productos.paltas.step = 1;
-
-  productos.champi.nombre = $("cfg-champi-name").value.trim() || DEFAULT_PRODUCTOS.champi.nombre;
-  productos.champi.precio = parseInt($("cfg-champi-price").value) || DEFAULT_PRODUCTOS.champi.precio;
-  productos.champi.packGramos = parseInt($("cfg-champi-pack").value) || DEFAULT_PRODUCTOS.champi.packGramos;
-  productos.champi.disponible = $("cfg-champi-avail").value === "true";
-  productos.champi.step = 1;
-
-  productos.frutillas.nombre = $("cfg-frut-name").value.trim() || DEFAULT_PRODUCTOS.frutillas.nombre;
-  productos.frutillas.precio = parseInt($("cfg-frut-price").value) || DEFAULT_PRODUCTOS.frutillas.precio;
-  productos.frutillas.bloqueGramos = parseInt($("cfg-frut-block").value) || DEFAULT_PRODUCTOS.frutillas.bloqueGramos;
-  productos.frutillas.step = productos.frutillas.bloqueGramos; // el input avanza por bloque
-  productos.frutillas.disponible = $("cfg-frut-avail").value === "true";
-
-  saveAll();
-  syncProductosUI();
-  renderPedidos();
-  renderDeudores($("debt-filter").value, $("search-debt").value);
-  updateStats();
-  notify("Productos guardados ✅");
-});
-
-// Reset productos
-$("reset-products-btn").addEventListener("click", ()=>{
-  if (!confirm("¿Resetear productos a valores por defecto?")) return;
-  productos = structuredClone(DEFAULT_PRODUCTOS);
-  saveAll();
-  syncProductosUI();
-  notify("Productos reseteados ✅");
-});
-
-// Configuración
-$("save-settings-btn").addEventListener("click", ()=>{
-  backendUrl = ($("backend-url").value || "").trim();
-  saveAll();
-  notify("Configuración guardada ✅");
-});
-
-// Limpiar localStorage
-$("clear-local-btn").addEventListener("click", ()=>{
-  if (!confirm("Esto borrará pedidos, pagos, clientes y productos del navegador. ¿Continuar?")) return;
-  localStorage.clear();
-  pedidos = [];
-  pagos = [];
-  clientes = {};
-  productos = structuredClone(DEFAULT_PRODUCTOS);
-  backendUrl = "";
-  $("backend-url").value = "";
-  syncProductosUI();
-  notify("Datos locales borrados ✅");
-});
-
-// Refresh
-$("refresh-btn").addEventListener("click", ()=>{
-  // modo local: refresca vistas
-  renderPedidos();
-  renderDeudores($("debt-filter").value, $("search-debt").value);
-  updateStats();
-  notify("Actualizado ✅");
-});
-
-// ---------- INIT ----------
-document.addEventListener("DOMContentLoaded", ()=>{
+// Boot
+(function init(){
   loadAll();
-  rebuildClientesFromPedidos(); // asegura coherencia
-  $("backend-url").value = backendUrl || "";
-
-  syncProductosUI();
-  updateStats();
-});
+  initListeners();
+  renderAll();
+})();
 </script>
+
 </body>
 </html>
