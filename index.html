@@ -1335,11 +1335,13 @@ function initListeners() {
   // Direct listeners como fallback para botones de enviar pedido
   $('enviar-pedido').addEventListener('click', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     handleEnviarPedido();
   });
   
   $('admin-enviar-pedido').addEventListener('click', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     handleAdminCreateOrder();
   });
 }
