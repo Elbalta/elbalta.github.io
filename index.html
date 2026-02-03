@@ -1006,23 +1006,67 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
 
   // Intentar enviar al backend si está configurado
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
+    let sincronizado = false;
+    let backendId = null;
+
+    // Intento 1: form-urlencoded (compatible con Google Apps Script)
     try {
-      const payload = { action: 'crear_pedido', pedido };
-      const resp = await fetch(backendUrl, {
+      const url = new URL(backendUrl);
+      url.searchParams.set('action', 'crear_pedido');
+      
+      const formData = new URLSearchParams();
+      formData.append('action', 'crear_pedido');
+      formData.append('pedido', JSON.stringify(pedido));
+
+      const resp = await fetch(url.toString(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
       });
+      
       const r = await resp.json();
       if (r && r.success) {
+        sincronizado = true;
+        if (r.id) backendId = r.id;
         notify('Pedido creado y sincronizado', false);
       } else {
-        notify('Pedido creado (no sincronizado)', true);
-        console.warn('Respuesta backend crear_pedido:', r);
+        console.warn('Respuesta backend crear_pedido (form-urlencoded):', r);
       }
     } catch (err) {
-      console.error('Error al enviar pedido al backend:', err);
-      notify('Pedido creado (error al sincronizar)', true);
+      console.warn('Error al enviar pedido como form-urlencoded, intentando JSON fallback:', err);
+      
+      // Intento 2: JSON fallback
+      try {
+        const payload = { action: 'crear_pedido', pedido };
+        const resp = await fetch(backendUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const r = await resp.json();
+        if (r && r.success) {
+          sincronizado = true;
+          if (r.id) backendId = r.id;
+          notify('Pedido creado y sincronizado (JSON)', false);
+        } else {
+          console.warn('Respuesta backend crear_pedido (JSON):', r);
+        }
+      } catch (jsonErr) {
+        console.error('Error al enviar pedido al backend (JSON fallback):', jsonErr);
+      }
+    }
+
+    // Actualizar el pedido local con el ID del backend si se proporcionó
+    if (backendId) {
+      const pedidoIndex = pedidos.findIndex(p => p.id === pedido.id);
+      if (pedidoIndex !== -1) {
+        pedidos[pedidoIndex].backendId = backendId;
+        saveAll();
+      }
+    }
+
+    if (!sincronizado) {
+      notify('Pedido creado (no sincronizado con backend)', true);
     }
   } else {
     notify('Pedido creado (modo local)', false);
@@ -1320,6 +1364,25 @@ function initListeners() {
   // search / filters
   $('search-input').addEventListener('input', e => renderOrders(e.target.value, $('payment-filter').value));
   $('payment-filter').addEventListener('change', e => renderOrders($('search-input').value, e.target.value));
+
+  // Direct listeners para botones de enviar pedido (fallback adicional)
+  const enviarPedidoBtn = $('enviar-pedido');
+  if (enviarPedidoBtn && !enviarPedidoBtn.dataset.listenerAdded) {
+    enviarPedidoBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleEnviarPedido();
+    });
+    enviarPedidoBtn.dataset.listenerAdded = 'true';
+  }
+  
+  const adminEnviarPedidoBtn = $('admin-enviar-pedido');
+  if (adminEnviarPedidoBtn && !adminEnviarPedidoBtn.dataset.listenerAdded) {
+    adminEnviarPedidoBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleAdminCreateOrder();
+    });
+    adminEnviarPedidoBtn.dataset.listenerAdded = 'true';
+  }
 }
 
 // Admin create order (using modal fields)
