@@ -815,6 +815,8 @@
 
 const DIAS_MOROSIDAD = 30;
 const BACKEND_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev";
+const INITIAL_SYNC_DELAY_MS = 2000; // 2 seconds delay before first sync attempt
+const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes between sync attempts
 
 // Estado
 let pedidos = [];
@@ -1388,11 +1390,11 @@ function initListeners() {
   $('search-input').addEventListener('input', e => renderOrders(e.target.value, $('payment-filter').value));
   $('payment-filter').addEventListener('change', e => renderOrders($('search-input').value, e.target.value));
 
-  // Direct event listeners for order submission buttons (fallback to delegation)
+  // Direct event listeners for order submission buttons (provides direct fallback)
   const enviarPedidoBtn = $('enviar-pedido');
   if (enviarPedidoBtn) {
     enviarPedidoBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // Prevent delegation handler from also firing
+      e.stopPropagation(); // Prevent global click handler below from also triggering
       handleEnviarPedido();
     });
   }
@@ -1400,7 +1402,7 @@ function initListeners() {
   const adminEnviarPedidoBtn = $('admin-enviar-pedido');
   if (adminEnviarPedidoBtn) {
     adminEnviarPedidoBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // Prevent delegation handler from also firing
+      e.stopPropagation(); // Prevent global click handler below from also triggering
       handleAdminCreateOrder();
     });
   }
@@ -1642,11 +1644,11 @@ function renderAll(){
   
   // Intentar sincronizar pedidos pendientes al iniciar
   if (pendingSyncQueue.length > 0) {
-    setTimeout(() => syncPendingOrders(), 2000);
+    setTimeout(() => syncPendingOrders(), INITIAL_SYNC_DELAY_MS);
   }
   
-  // Configurar sincronización periódica cada 5 minutos
-  setInterval(() => syncPendingOrders(), 5 * 60 * 1000);
+  // Configurar sincronización periódica
+  setInterval(() => syncPendingOrders(), SYNC_INTERVAL_MS);
 })();
 </script>
 
