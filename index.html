@@ -1575,7 +1575,7 @@ function renderAll(){
       const btn = document.getElementById('enviar-pedido');
       if (btn) {
         btn.addEventListener('click', function(ev){
-          if (ev) ev.preventDefault();
+          ev.preventDefault();
           if (typeof handleEnviarPedido === 'function') safeCall(handleEnviarPedido, ev);
           else console.warn('handleEnviarPedido no está definido al momento del click');
         });
@@ -1584,7 +1584,7 @@ function renderAll(){
       const btnAdmin = document.getElementById('admin-enviar-pedido');
       if (btnAdmin) {
         btnAdmin.addEventListener('click', function(ev){
-          if (ev) ev.preventDefault();
+          ev.preventDefault();
           if (typeof handleAdminCreateOrder === 'function') safeCall(handleAdminCreateOrder, ev);
           else console.warn('handleAdminCreateOrder no está definido al momento del click');
         });
