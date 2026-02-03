@@ -637,6 +637,13 @@
               Si configuras backend, los pedidos / clientes se sincronizarán con ese endpoint.
             </div>
           </div>
+          <div class="form-group">
+            <label for="backend-token"><i class="fas fa-key"></i> Token de Backend (opcional)</label>
+            <input type="text" id="backend-token" placeholder="Token de autorización" autocomplete="off">
+            <div style="color:#666; font-size:.9rem; margin-top: 6px;">
+              Si tu backend requiere autenticación, ingresa el token aquí. Se enviará como Authorization: Bearer.
+            </div>
+          </div>
           <button class="btn" id="save-settings-btn"><i class="fas fa-save"></i> Guardar configuración</button>
 
           <div style="margin-top: 12px;">
@@ -823,6 +830,7 @@ let clientes = {};
 let isAdmin = false;
 let adminEmail = "";
 let backendUrl = BACKEND_URL_DEFAULT;
+let backendToken = "";
 
 // Productos por defecto (se guardan/leen en localStorage)
 const DEFAULT_PRODUCTOS = {
@@ -852,6 +860,15 @@ function notify(msg, isError=false){
   setTimeout(()=>n.classList.remove("show"), 3200);
 }
 
+// Helper para crear headers con token si está configurado
+function getHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  if (backendToken && backendToken.trim()) {
+    headers['Authorization'] = `Bearer ${backendToken.trim()}`;
+  }
+  return headers;
+}
+
 // Persistencia
 function saveAll(){
   localStorage.setItem("pedidos", JSON.stringify(pedidos));
@@ -859,6 +876,7 @@ function saveAll(){
   localStorage.setItem("clientes", JSON.stringify(clientes));
   localStorage.setItem("productos", JSON.stringify(productos));
   localStorage.setItem("backendUrl", backendUrl);
+  localStorage.setItem("backendToken", backendToken);
 }
 
 function loadAll(){
@@ -867,12 +885,14 @@ function loadAll(){
   const c = localStorage.getItem("clientes");
   const pr = localStorage.getItem("productos");
   const bu = localStorage.getItem("backendUrl");
+  const bt = localStorage.getItem("backendToken");
 
   if (p) pedidos = JSON.parse(p);
   if (g) pagos = JSON.parse(g);
   if (c) clientes = JSON.parse(c);
   if (pr) productos = JSON.parse(pr);
   if (bu !== null && bu !== "") backendUrl = bu;
+  if (bt !== null) backendToken = bt;
 
   // asegurar defaults
   productos.paltas = { ...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas || {}) };
@@ -887,6 +907,9 @@ function loadAll(){
   } catch (e) {
     console.error('Error iniciando carga desde backend:', e);
   }
+
+  // Sincronizar pedidos pendientes al iniciar
+  syncPendingOrders();
 }
 
 // Cargar pedidos desde backend (Google Apps Script u otro endpoint)
@@ -900,7 +923,10 @@ async function cargarPedidosDesdeSheets() {
   }
 
   try {
-    const response = await fetch(SCRIPT_URL + '?action=obtener_pedidos', { method: 'GET' });
+    const response = await fetch(SCRIPT_URL + '?action=obtener_pedidos', { 
+      method: 'GET',
+      headers: getHeaders()
+    });
     if (!response.ok) {
       console.warn('Backend respondió con error:', response.status);
       return;
@@ -935,6 +961,57 @@ async function cargarPedidosDesdeSheets() {
     }
   } catch (err) {
     console.error('Error cargando pedidos desde backend:', err);
+  }
+}
+
+// Sincronizar pedidos pendientes con el backend
+async function syncPendingOrders() {
+  if (!backendUrl || !/^https?:\/\//i.test(backendUrl)) {
+    console.log('No hay backend configurado, saltando sincronización de pedidos pendientes');
+    return;
+  }
+
+  const pendientes = pedidos.filter(p => p.syncStatus === 'pending');
+  if (pendientes.length === 0) {
+    console.log('No hay pedidos pendientes de sincronización');
+    return;
+  }
+
+  console.log(`Intentando sincronizar ${pendientes.length} pedidos pendientes...`);
+  let syncedCount = 0;
+
+  for (const pedido of pendientes) {
+    try {
+      const payload = { action: 'crear_pedido', pedido };
+      const resp = await fetch(backendUrl, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload)
+      });
+      const r = await resp.json();
+      
+      if (r && r.success) {
+        // Actualizar estado de sincronización
+        pedido.syncStatus = 'synced';
+        // Si el backend devuelve un ID, actualizarlo
+        if (r.id && r.id !== pedido.id) {
+          console.log(`Actualizando ID local ${pedido.id} a ID backend ${r.id}`);
+          pedido.backendId = r.id;
+        }
+        syncedCount++;
+      } else {
+        console.warn(`No se pudo sincronizar pedido ${pedido.id}:`, r);
+      }
+    } catch (err) {
+      console.error(`Error sincronizando pedido ${pedido.id}:`, err);
+    }
+  }
+
+  if (syncedCount > 0) {
+    saveAll();
+    renderAll();
+    console.log(`${syncedCount} pedidos sincronizados exitosamente`);
+    notify(`${syncedCount} pedidos sincronizados`, false);
   }
 }
 
@@ -997,8 +1074,11 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
     comentarios: comentarios || '',
     deudaPendiente: calcTotalFromItems(items),
     pagos: [],
-    creadoPorAdmin: creadoPorAdmin
+    creadoPorAdmin: creadoPorAdmin,
+    syncStatus: 'pending' // Estado de sincronización: pending, synced
   };
+  
+  // SIEMPRE guardar localmente primero
   pedidos.push(pedido);
   rebuildClientesFromPedidos();
   saveAll();
@@ -1010,22 +1090,37 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
       const payload = { action: 'crear_pedido', pedido };
       const resp = await fetch(backendUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(payload)
       });
       const r = await resp.json();
       if (r && r.success) {
-        notify('Pedido creado y sincronizado', false);
+        // Actualizar estado de sincronización
+        pedido.syncStatus = 'synced';
+        // Si el backend devuelve un ID, guardarlo además del ID local
+        // Mantenemos ambos IDs: el local para referencias en la app, el backend para sincronización
+        if (r.id && r.id !== pedido.id) {
+          pedido.backendId = r.id;
+          console.log(`Backend asignó ID: ${r.id} al pedido local ${pedido.id}`);
+        }
+        saveAll();
+        notify('✓ Pedido creado y sincronizado correctamente', false);
       } else {
-        notify('Pedido creado (no sincronizado)', true);
+        // Quedó pendiente pero guardado localmente
+        notify('✓ Pedido guardado. Sincronización pendiente', true);
         console.warn('Respuesta backend crear_pedido:', r);
       }
     } catch (err) {
       console.error('Error al enviar pedido al backend:', err);
-      notify('Pedido creado (error al sincronizar)', true);
+      // Quedó pendiente pero guardado localmente
+      notify('✓ Pedido guardado localmente. Se sincronizará cuando el backend esté disponible', true);
     }
   } else {
-    notify('Pedido creado (modo local)', false);
+    // Modo local sin backend configurado - marcar como local_only
+    // No tiene sentido marcar como "synced" si no hay backend
+    pedido.syncStatus = 'local_only';
+    saveAll();
+    notify('✓ Pedido creado correctamente (modo local)', false);
   }
 }
 
@@ -1053,7 +1148,7 @@ async function handleEnviarPedido(e){
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
     try {
       const clientPayload = { action: 'crear_actualizar_cliente', cliente: { nombre, telefono } };
-      await fetch(backendUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(clientPayload) });
+      await fetch(backendUrl, { method:'POST', headers: getHeaders(), body: JSON.stringify(clientPayload) });
     } catch (err) {
       console.warn('No se pudo sincronizar cliente al backend:', err);
     }
@@ -1170,7 +1265,10 @@ async function checkClientByPhone(rawPhone) {
   // Intentar buscar en backend si está configurado
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
     try {
-      const resp = await fetch(backendUrl + `?action=buscar_cliente&telefono=${encodeURIComponent(tel)}`, { method: 'GET' });
+      const resp = await fetch(backendUrl + `?action=buscar_cliente&telefono=${encodeURIComponent(tel)}`, { 
+        method: 'GET',
+        headers: getHeaders()
+      });
       if (!resp.ok) return;
       const data = await resp.json();
       if (data && data.success && data.cliente) {
@@ -1381,7 +1479,7 @@ $('register-payment').addEventListener('click', async () => {
   // intentar enviar pago al backend
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
     try {
-      await fetch(backendUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'registrar_pago', pago })});
+      await fetch(backendUrl, { method:'POST', headers: getHeaders(), body: JSON.stringify({ action:'registrar_pago', pago })});
     } catch (err) {
       console.warn('No se pudo sincronizar pago al backend:', err);
     }
@@ -1490,18 +1588,25 @@ function resetProductConfigs(){
   notify('Productos reseteados', false);
 }
 
-// Guardar settings (backend url)
+// Guardar settings (backend url y token)
 function saveSettings(){
   const url = $('backend-url').value.trim();
   if (url && !/^https?:\/\//i.test(url)) {
     notify('La URL debe comenzar con http o https', true);
     return;
   }
+  const token = $('backend-token').value.trim();
+  
   backendUrl = url || BACKEND_URL_DEFAULT;
+  backendToken = token;
   saveAll();
   notify('Configuración guardada', false);
   // intentar cargar pedidos inmediatamente
-  if (backendUrl) cargarPedidosDesdeSheets();
+  if (backendUrl) {
+    cargarPedidosDesdeSheets();
+    // También sincronizar pedidos pendientes
+    syncPendingOrders();
+  }
 }
 
 // Logout admin
@@ -1537,8 +1642,9 @@ function renderAll(){
   applyAvailability('champi-card', productos.champi.disponible);
   applyAvailability('frutillas-card', productos.frutillas.disponible);
 
-  // backend url input
+  // backend url and token inputs
   $('backend-url').value = backendUrl || '';
+  $('backend-token').value = backendToken || '';
 
   renderOrders();
   renderDebtors();
