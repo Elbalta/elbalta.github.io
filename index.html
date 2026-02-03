@@ -1558,23 +1558,24 @@ function renderAll(){
   (function(){
     let fallbacksAttached = false; // Guard flag to prevent multiple attachments
     
+    // Safe call wrapper to handle errors
+    const safeCall = (fn, ev) => {
+      try {
+        if (typeof fn === 'function') fn(ev);
+      } catch (err) {
+        console.error('Error ejecutando handler:', err);
+      }
+    };
+    
     // Esperar al DOM por si acaso
     function attachFallbacks() {
       if (fallbacksAttached) return; // Already attached, skip
       fallbacksAttached = true;
-      
-      const safeCall = (fn, ev) => {
-        try {
-          if (typeof fn === 'function') fn(ev);
-        } catch (err) {
-          console.error('Error ejecutando handler:', err);
-        }
-      };
 
       const btn = document.getElementById('enviar-pedido');
       if (btn) {
         btn.addEventListener('click', function(ev){
-          if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+          if (ev) ev.preventDefault();
           if (typeof handleEnviarPedido === 'function') safeCall(handleEnviarPedido, ev);
           else console.warn('handleEnviarPedido no está definido al momento del click');
         });
@@ -1583,7 +1584,7 @@ function renderAll(){
       const btnAdmin = document.getElementById('admin-enviar-pedido');
       if (btnAdmin) {
         btnAdmin.addEventListener('click', function(ev){
-          if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+          if (ev) ev.preventDefault();
           if (typeof handleAdminCreateOrder === 'function') safeCall(handleAdminCreateOrder, ev);
           else console.warn('handleAdminCreateOrder no está definido al momento del click');
         });
