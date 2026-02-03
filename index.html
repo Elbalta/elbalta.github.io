@@ -1391,12 +1391,18 @@ function initListeners() {
   // Direct event listeners for order submission buttons (fallback to delegation)
   const enviarPedidoBtn = $('enviar-pedido');
   if (enviarPedidoBtn) {
-    enviarPedidoBtn.addEventListener('click', handleEnviarPedido);
+    enviarPedidoBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent delegation handler from also firing
+      handleEnviarPedido();
+    });
   }
   
   const adminEnviarPedidoBtn = $('admin-enviar-pedido');
   if (adminEnviarPedidoBtn) {
-    adminEnviarPedidoBtn.addEventListener('click', handleAdminCreateOrder);
+    adminEnviarPedidoBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent delegation handler from also firing
+      handleAdminCreateOrder();
+    });
   }
 }
 
