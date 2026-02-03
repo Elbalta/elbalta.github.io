@@ -1556,8 +1556,13 @@ function renderAll(){
 <script>
   // Fallback directo para los botones de crear pedidos en caso de que falle la delegación global
   (function(){
+    let fallbacksAttached = false; // Guard flag to prevent multiple attachments
+    
     // Esperar al DOM por si acaso
     function attachFallbacks() {
+      if (fallbacksAttached) return; // Already attached, skip
+      fallbacksAttached = true;
+      
       const safeCall = (fn, ev) => {
         try {
           if (typeof fn === 'function') fn(ev);
