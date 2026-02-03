@@ -815,6 +815,8 @@
 
 const DIAS_MOROSIDAD = 30;
 const BACKEND_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev";
+const INITIAL_SYNC_DELAY_MS = 2000; // 2 seconds delay before first sync attempt
+const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes between sync attempts
 
 // Estado
 let pedidos = [];
@@ -853,12 +855,15 @@ function notify(msg, isError=false){
 }
 
 // Persistencia
+let pendingSyncQueue = [];
+
 function saveAll(){
   localStorage.setItem("pedidos", JSON.stringify(pedidos));
   localStorage.setItem("pagos", JSON.stringify(pagos));
   localStorage.setItem("clientes", JSON.stringify(clientes));
   localStorage.setItem("productos", JSON.stringify(productos));
   localStorage.setItem("backendUrl", backendUrl);
+  localStorage.setItem("pendingSyncQueue", JSON.stringify(pendingSyncQueue));
 }
 
 function loadAll(){
@@ -867,12 +872,14 @@ function loadAll(){
   const c = localStorage.getItem("clientes");
   const pr = localStorage.getItem("productos");
   const bu = localStorage.getItem("backendUrl");
+  const psq = localStorage.getItem("pendingSyncQueue");
 
   if (p) pedidos = JSON.parse(p);
   if (g) pagos = JSON.parse(g);
   if (c) clientes = JSON.parse(c);
   if (pr) productos = JSON.parse(pr);
   if (bu !== null && bu !== "") backendUrl = bu;
+  if (psq) pendingSyncQueue = JSON.parse(psq);
 
   // asegurar defaults
   productos.paltas = { ...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas || {}) };
@@ -1005,27 +1012,89 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
   renderAll();
 
   // Intentar enviar al backend si está configurado
-  if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
+  await syncPedidoToBackend(pedido);
+}
+
+// Sincronizar pedido con backend usando form-urlencoded
+async function syncPedidoToBackend(pedido) {
+  if (!backendUrl || !/^https?:\/\//i.test(backendUrl)) {
+    notify('Pedido creado (modo local)', false);
+    return;
+  }
+
+  try {
+    // Formato form-urlencoded: action=crear_pedido&pedido=JSON
+    const formData = new URLSearchParams();
+    formData.append('action', 'crear_pedido');
+    formData.append('pedido', JSON.stringify(pedido));
+
+    const resp = await fetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString()
+    });
+    
+    const r = await resp.json();
+    if (r && r.success) {
+      notify('Pedido creado y sincronizado', false);
+      // Remover de la cola de pendientes si estaba ahí
+      pendingSyncQueue = pendingSyncQueue.filter(p => p.id !== pedido.id);
+      saveAll();
+    } else {
+      notify('Pedido creado (no sincronizado)', true);
+      console.warn('Respuesta backend crear_pedido:', r);
+      addToPendingSyncQueue(pedido);
+    }
+  } catch (err) {
+    console.error('Error al enviar pedido al backend:', err);
+    notify('Pedido creado (error al sincronizar)', true);
+    addToPendingSyncQueue(pedido);
+  }
+}
+
+// Agregar pedido a la cola de sincronización pendiente
+function addToPendingSyncQueue(pedido) {
+  // Evitar duplicados
+  if (!pendingSyncQueue.find(p => p.id === pedido.id)) {
+    pendingSyncQueue.push(pedido);
+    saveAll();
+  }
+}
+
+// Intentar sincronizar pedidos pendientes
+async function syncPendingOrders() {
+  if (pendingSyncQueue.length === 0 || !backendUrl || !/^https?:\/\//i.test(backendUrl)) {
+    return;
+  }
+
+  console.log(`Intentando sincronizar ${pendingSyncQueue.length} pedidos pendientes...`);
+  const toSync = [...pendingSyncQueue];
+  
+  for (const pedido of toSync) {
     try {
-      const payload = { action: 'crear_pedido', pedido };
+      const formData = new URLSearchParams();
+      formData.append('action', 'crear_pedido');
+      formData.append('pedido', JSON.stringify(pedido));
+
       const resp = await fetch(backendUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
       });
+      
       const r = await resp.json();
       if (r && r.success) {
-        notify('Pedido creado y sincronizado', false);
-      } else {
-        notify('Pedido creado (no sincronizado)', true);
-        console.warn('Respuesta backend crear_pedido:', r);
+        console.log(`Pedido ${pedido.id} sincronizado exitosamente`);
+        pendingSyncQueue = pendingSyncQueue.filter(p => p.id !== pedido.id);
+        saveAll();
       }
     } catch (err) {
-      console.error('Error al enviar pedido al backend:', err);
-      notify('Pedido creado (error al sincronizar)', true);
+      console.warn(`Error al sincronizar pedido ${pedido.id}:`, err);
     }
-  } else {
-    notify('Pedido creado (modo local)', false);
+  }
+  
+  if (pendingSyncQueue.length < toSync.length) {
+    notify(`${toSync.length - pendingSyncQueue.length} pedido(s) sincronizado(s)`, false);
   }
 }
 
@@ -1320,6 +1389,23 @@ function initListeners() {
   // search / filters
   $('search-input').addEventListener('input', e => renderOrders(e.target.value, $('payment-filter').value));
   $('payment-filter').addEventListener('change', e => renderOrders($('search-input').value, e.target.value));
+
+  // Direct event listeners for order submission buttons (provides direct fallback)
+  const enviarPedidoBtn = $('enviar-pedido');
+  if (enviarPedidoBtn) {
+    enviarPedidoBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent global click handler below from also triggering
+      handleEnviarPedido();
+    });
+  }
+  
+  const adminEnviarPedidoBtn = $('admin-enviar-pedido');
+  if (adminEnviarPedidoBtn) {
+    adminEnviarPedidoBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent global click handler below from also triggering
+      handleAdminCreateOrder();
+    });
+  }
 }
 
 // Admin create order (using modal fields)
@@ -1540,6 +1626,11 @@ function renderAll(){
   // backend url input
   $('backend-url').value = backendUrl || '';
 
+  // Show pending sync count
+  if (pendingSyncQueue.length > 0) {
+    console.log(`${pendingSyncQueue.length} pedido(s) pendiente(s) de sincronizar`);
+  }
+
   renderOrders();
   renderDebtors();
   updateSummary();
@@ -1550,6 +1641,14 @@ function renderAll(){
   loadAll();
   initListeners();
   renderAll();
+  
+  // Intentar sincronizar pedidos pendientes al iniciar
+  if (pendingSyncQueue.length > 0) {
+    setTimeout(() => syncPendingOrders(), INITIAL_SYNC_DELAY_MS);
+  }
+  
+  // Configurar sincronización periódica
+  setInterval(() => syncPendingOrders(), SYNC_INTERVAL_MS);
 })();
 </script>
 
