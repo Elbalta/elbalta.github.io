@@ -1006,9 +1006,6 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
   rebuildClientesFromPedidos();
   saveAll();
   renderAll();
-  
-  // Mostrar notificación inmediata de creación local
-  notify('Pedido creado localmente', false);
 
   // b) Si backendUrl está configurado y es una URL válida, intentar sincronizar
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
@@ -1017,7 +1014,7 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
       const pedidoJson = JSON.stringify(pedido);
       const formBody = `action=crear_pedido&pedido=${encodeURIComponent(pedidoJson)}`;
       
-      const resp = await fetch(backendUrl + '?action=crear_pedido', {
+      const resp = await fetch(backendUrl, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
@@ -1030,15 +1027,17 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
         // Marcar pedido como sincronizado
         pedido._synced = true;
         saveAll();
-        notify('Pedido sincronizado con backend', false);
+        notify('Pedido creado y sincronizado', false);
       } else {
         console.warn('Respuesta backend crear_pedido:', r);
-        notify('Pedido guardado (sincronización pendiente)', true);
+        notify('Pedido creado (sincronización pendiente)', true);
       }
     } catch (err) {
       console.error('Error al sincronizar pedido con backend:', err);
-      notify('Pedido guardado (error de sincronización)', true);
+      notify('Pedido creado (error de sincronización)', true);
     }
+  } else {
+    notify('Pedido creado (modo local)', false);
   }
 }
 
@@ -1565,6 +1564,8 @@ function renderAll(){
   renderAll();
   
   // Agregar listeners directos como fallback para asegurar que los botones siempre funcionen
+  // NOTA: Estos listeners son adicionales a los delegados en initListeners() como mecanismo de fallback.
+  // Es intencional que ambos se ejecuten si es necesario para garantizar que los botones siempre respondan.
   const enviarPedidoBtn = document.getElementById('enviar-pedido');
   if (enviarPedidoBtn) {
     enviarPedidoBtn.addEventListener('click', function(ev) {
