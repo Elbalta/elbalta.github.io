@@ -1553,5 +1553,45 @@ function renderAll(){
 })();
 </script>
 
+<script>
+  // Fallback directo para los botones de crear pedidos en caso de que falle la delegación global
+  (function(){
+    // Esperar al DOM por si acaso
+    function attachFallbacks() {
+      const safeCall = (fn, ev) => {
+        try {
+          if (typeof fn === 'function') fn(ev);
+        } catch (err) {
+          console.error('Error ejecutando handler:', err);
+        }
+      };
+
+      const btn = document.getElementById('enviar-pedido');
+      if (btn) {
+        btn.addEventListener('click', function(ev){
+          if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+          if (typeof handleEnviarPedido === 'function') safeCall(handleEnviarPedido, ev);
+          else console.warn('handleEnviarPedido no está definido al momento del click');
+        });
+      }
+
+      const btnAdmin = document.getElementById('admin-enviar-pedido');
+      if (btnAdmin) {
+        btnAdmin.addEventListener('click', function(ev){
+          if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+          if (typeof handleAdminCreateOrder === 'function') safeCall(handleAdminCreateOrder, ev);
+          else console.warn('handleAdminCreateOrder no está definido al momento del click');
+        });
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', attachFallbacks);
+    } else {
+      attachFallbacks();
+    }
+  })();
+</script>
+
 </body>
 </html>
