@@ -1010,9 +1010,11 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
   // b) Si backendUrl está configurado y es una URL válida, intentar sincronizar
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
     try {
-      // Preparar datos en formato form-urlencoded
-      const pedidoJson = JSON.stringify(pedido);
-      const formBody = `action=crear_pedido&pedido=${encodeURIComponent(pedidoJson)}`;
+      // Preparar datos en formato form-urlencoded usando URLSearchParams
+      const formBody = new URLSearchParams({
+        action: 'crear_pedido',
+        pedido: JSON.stringify(pedido)
+      }).toString();
       
       const resp = await fetch(backendUrl, {
         method: 'POST',
@@ -1030,7 +1032,7 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
         notify('Pedido creado y sincronizado', false);
       } else {
         console.warn('Respuesta backend crear_pedido:', r);
-        notify('Pedido creado (sincronización pendiente)', true);
+        notify('Pedido creado (no se pudo sincronizar)', true);
       }
     } catch (err) {
       console.error('Error al sincronizar pedido con backend:', err);
