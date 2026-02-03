@@ -923,6 +923,53 @@ function loadAll(){
   productos.champi = { ...DEFAULT_PRODUCTOS.champi, ...(productos.champi||{}) };
   productos.frutillas = { ...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas||{}) };
 }
+  // Intentar cargar desde Google Sheets
+  cargarPedidosDesdeSheets();
+}
+
+async function cargarPedidosDesdeSheets() {
+  try {
+    const SCRIPT_URL = 'Thttps://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/devU_URL_DEL_SCRIPT'; // Reemplaza con la URL que copiaste en el paso 3
+    const response = await fetch(SCRIPT_URL + '?action=obtener_pedidos');
+    const result = await response.json();
+    
+    if (result.success && result.pedidos) {
+      // Convertir los pedidos de Sheets a nuestro formato
+      const pedidosSheets = result.pedidos.map(p => {
+        // Asegúrate de que los nombres de las columnas coincidan
+        return {
+          id: p.ID || String(Date.now()),
+          nombre: p.Nombre,
+          telefono: p.Teléfono,
+          items: {
+            paltasKg: parseFloat(p['Paltas (kg)']) || 0,
+            champiCajas: parseFloat(p['Champiñones (cajas)']) || 0,
+            frutillasGramos: parseFloat(p['Frutillas (g)']) || 0
+          },
+          total: parseFloat(p.Total) || 0,
+          estadoPago: p['Estado Pago'] || 'pendiente',
+          fecha: p.Fecha || new Date().toISOString(),
+          comentarios: p.Comentarios || '',
+          deudaPendiente: parseFloat(p.Total) || 0,
+          pagos: []
+        };
+      });
+      
+      // Combinar con los pedidos locales (evitando duplicados)
+      pedidosSheets.forEach(pedidoSheet => {
+        const existe = pedidos.some(p => p.id === pedidoSheet.id);
+        if (!existe) {
+          pedidos.push(pedidoSheet);
+        }
+      });
+      
+      rebuildClientesFromPedidos();
+      saveAll();
+    }
+  } catch (error) {
+    console.error('Error cargando desde Google Sheets:', error);
+  }
+}
 
 // Recalcular clientes desde pedidos (evita duplicaciones y errores)
 function rebuildClientesFromPedidos(){
@@ -1132,6 +1179,34 @@ async function crearPedido({nombre, telefono, items, comentarios}, esAdmin=false
   const total = calcTotal(items);
   const id = String(Date.now());
 
+  // Guardar en Google Sheets
+  try {
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev'; // Reemplaza con la URL que copiaste en el paso 3
+    
+    const params = new URLSearchParams({
+      action: 'guardar_pedido',
+      nombre: nombre,
+      telefono: telefono,
+      paltasKg: items.paltasKg || 0,
+      champiCajas: items.champiCajas || 0,
+      frutillasGramos: items.frutillasGramos || 0,
+      total: total,
+      comentarios: comentarios || ''
+    });
+
+    const response = await fetch(SCRIPT_URL + '?' + params.toString());
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Error al guardar en la base de datos');
+    }
+  } catch (error) {
+    // Si falla, guardamos en localStorage como respaldo
+    console.error('Error al guardar en Google Sheets:', error);
+    notify('No se pudo conectar con el servidor. Guardando localmente.', true);
+  }
+
+  // Guardar en localStorage también
   const nuevo = {
     id,
     nombre,
@@ -1148,6 +1223,7 @@ async function crearPedido({nombre, telefono, items, comentarios}, esAdmin=false
 
   pedidos.push(nuevo);
   rebuildClientesFromPedidos();
+  saveAll();
   return nuevo;
 }
 
