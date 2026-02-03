@@ -999,6 +999,8 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
     pagos: [],
     creadoPorAdmin: creadoPorAdmin
   };
+  
+  // IMPORTANTE: Guardar siempre en localStorage primero (persistencia local)
   pedidos.push(pedido);
   rebuildClientesFromPedidos();
   saveAll();
@@ -1006,23 +1008,53 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
 
   // Intentar enviar al backend si está configurado
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
+    let syncSuccess = false;
+    
+    // Intento 1: usar application/x-www-form-urlencoded (más compatible)
     try {
-      const payload = { action: 'crear_pedido', pedido };
+      const params = new URLSearchParams();
+      params.append('action', 'crear_pedido');
+      params.append('pedido', JSON.stringify(pedido));
+      
       const resp = await fetch(backendUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
       });
       const r = await resp.json();
       if (r && r.success) {
+        syncSuccess = true;
         notify('Pedido creado y sincronizado', false);
       } else {
-        notify('Pedido creado (no sincronizado)', true);
-        console.warn('Respuesta backend crear_pedido:', r);
+        console.warn('Respuesta backend crear_pedido (urlencoded):', r);
       }
     } catch (err) {
-      console.error('Error al enviar pedido al backend:', err);
-      notify('Pedido creado (error al sincronizar)', true);
+      console.warn('Error con x-www-form-urlencoded, intentando JSON...', err);
+    }
+    
+    // Intento 2: si falla, usar JSON (fallback)
+    if (!syncSuccess) {
+      try {
+        const payload = { action: 'crear_pedido', pedido };
+        const resp = await fetch(backendUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const r = await resp.json();
+        if (r && r.success) {
+          syncSuccess = true;
+          notify('Pedido creado y sincronizado', false);
+        } else {
+          console.warn('Respuesta backend crear_pedido (JSON):', r);
+        }
+      } catch (err) {
+        console.error('Error al enviar pedido al backend (JSON):', err);
+      }
+    }
+    
+    if (!syncSuccess) {
+      notify('Pedido creado (no sincronizado con backend)', true);
     }
   } else {
     notify('Pedido creado (modo local)', false);
@@ -1087,7 +1119,8 @@ function renderOrders(filterText='', paymentFilter='all') {
       if (paymentFilter === 'parcial') return p.estadoPago === 'parcial';
       if (paymentFilter === 'pagado') return p.estadoPago === 'pagado';
       return true;
-    });
+    })
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Ordenar por fecha, más reciente primero
 
   rows.forEach(p => {
     total++;
@@ -1198,6 +1231,25 @@ function hideModal(id) {
 
 // Inicializar listeners
 function initListeners() {
+  // LISTENERS DIRECTOS (fallback para asegurar que siempre funcionen)
+  const btnEnviar = $('enviar-pedido');
+  if (btnEnviar) {
+    btnEnviar.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleEnviarPedido();
+    });
+  }
+  
+  const btnAdminEnviar = $('admin-enviar-pedido');
+  if (btnAdminEnviar) {
+    btnAdminEnviar.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleAdminCreateOrder();
+    });
+  }
+
   // quantity buttons (delegación)
   document.addEventListener('click', (ev) => {
     const btn = ev.target.closest('.quantity-btn');
@@ -1252,6 +1304,7 @@ function initListeners() {
       return;
     }
 
+    // Delegación para enviar pedido (respaldo)
     if (ev.target.closest('#enviar-pedido')) { handleEnviarPedido(); return; }
     if (ev.target.closest('#admin-enviar-pedido')) { handleAdminCreateOrder(); return; }
     if (ev.target.closest('#print-compras')) { window.print(); return; }
@@ -1365,7 +1418,8 @@ $('register-payment').addEventListener('click', async () => {
   if (!currentPaymentTargetId) { notify('No hay pedido seleccionado', true); return; }
   const pedido = pedidos.find(p => p.id === currentPaymentTargetId);
   if (!pedido) { notify('Pedido no encontrado', true); return; }
-  // registrar pago local
+  
+  // IMPORTANTE: registrar pago local primero (persistencia)
   const pago = { id: String(Date.now()) + Math.random().toString(36).slice(2,8), pedidoId: pedido.id, monto: amt, metodo: $('payment-method').value, notas: $('payment-notes').value, fecha: nowISO() };
   pagos.push(pago);
   pedido.pagos = pedido.pagos || [];
@@ -1380,10 +1434,35 @@ $('register-payment').addEventListener('click', async () => {
 
   // intentar enviar pago al backend
   if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
+    let syncSuccess = false;
+    
+    // Intento 1: usar application/x-www-form-urlencoded
     try {
-      await fetch(backendUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'registrar_pago', pago })});
+      const params = new URLSearchParams();
+      params.append('action', 'registrar_pago');
+      params.append('pago', JSON.stringify(pago));
+      
+      await fetch(backendUrl, { 
+        method:'POST', 
+        headers:{'Content-Type':'application/x-www-form-urlencoded'}, 
+        body: params.toString()
+      });
+      syncSuccess = true;
     } catch (err) {
-      console.warn('No se pudo sincronizar pago al backend:', err);
+      console.warn('Error sincronizando pago (urlencoded):', err);
+    }
+    
+    // Intento 2: fallback a JSON
+    if (!syncSuccess) {
+      try {
+        await fetch(backendUrl, { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify({ action:'registrar_pago', pago })
+        });
+      } catch (err) {
+        console.warn('Error sincronizando pago (JSON):', err);
+      }
     }
   }
 });
