@@ -1559,9 +1559,13 @@ function renderAll(){
     let fallbacksAttached = false; // Guard flag to prevent multiple attachments
     
     // Safe call wrapper to handle errors
-    const safeCall = (fn, ev) => {
+    const safeCall = (fn, ev, fnName) => {
+      if (typeof fn !== 'function') {
+        console.warn(`${fnName} no está definido al momento del click`);
+        return;
+      }
       try {
-        if (typeof fn === 'function') fn(ev);
+        fn(ev);
       } catch (err) {
         console.error('Error ejecutando handler:', err);
       }
@@ -1576,8 +1580,7 @@ function renderAll(){
       if (btn) {
         btn.addEventListener('click', function(ev){
           ev.preventDefault();
-          if (typeof handleEnviarPedido === 'function') safeCall(handleEnviarPedido, ev);
-          else console.warn('handleEnviarPedido no está definido al momento del click');
+          safeCall(handleEnviarPedido, ev, 'handleEnviarPedido');
         });
       }
 
@@ -1585,8 +1588,7 @@ function renderAll(){
       if (btnAdmin) {
         btnAdmin.addEventListener('click', function(ev){
           ev.preventDefault();
-          if (typeof handleAdminCreateOrder === 'function') safeCall(handleAdminCreateOrder, ev);
-          else console.warn('handleAdminCreateOrder no está definido al momento del click');
+          safeCall(handleAdminCreateOrder, ev, 'handleAdminCreateOrder');
         });
       }
     }
