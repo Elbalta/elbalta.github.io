@@ -1231,7 +1231,7 @@ function hideModal(id) {
 
 // Inicializar listeners
 function initListeners() {
-  // LISTENERS DIRECTOS (fallback para asegurar que siempre funcionen)
+  // LISTENERS DIRECTOS (método principal - event delegation es el backup)
   const btnEnviar = $('enviar-pedido');
   if (btnEnviar) {
     btnEnviar.addEventListener('click', (e) => {
@@ -1304,7 +1304,7 @@ function initListeners() {
       return;
     }
 
-    // Delegación para enviar pedido (respaldo)
+    // Delegación para enviar pedido (backup de los listeners directos)
     if (ev.target.closest('#enviar-pedido')) { handleEnviarPedido(); return; }
     if (ev.target.closest('#admin-enviar-pedido')) { handleAdminCreateOrder(); return; }
     if (ev.target.closest('#print-compras')) { window.print(); return; }
@@ -1442,12 +1442,15 @@ $('register-payment').addEventListener('click', async () => {
       params.append('action', 'registrar_pago');
       params.append('pago', JSON.stringify(pago));
       
-      await fetch(backendUrl, { 
+      const resp = await fetch(backendUrl, { 
         method:'POST', 
         headers:{'Content-Type':'application/x-www-form-urlencoded'}, 
         body: params.toString()
       });
-      syncSuccess = true;
+      const r = await resp.json();
+      if (r && r.success) {
+        syncSuccess = true;
+      }
     } catch (err) {
       console.warn('Error sincronizando pago (urlencoded):', err);
     }
@@ -1455,11 +1458,15 @@ $('register-payment').addEventListener('click', async () => {
     // Intento 2: fallback a JSON
     if (!syncSuccess) {
       try {
-        await fetch(backendUrl, { 
+        const resp = await fetch(backendUrl, { 
           method:'POST', 
           headers:{'Content-Type':'application/json'}, 
           body: JSON.stringify({ action:'registrar_pago', pago })
         });
+        const r = await resp.json();
+        if (r && r.success) {
+          syncSuccess = true;
+        }
       } catch (err) {
         console.warn('Error sincronizando pago (JSON):', err);
       }
