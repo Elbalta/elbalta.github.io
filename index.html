@@ -583,7 +583,7 @@
                   <input id="cfg-frut-price" type="number" min="0" step="50" value="1200">
                 </div>
                 <div>
-                  <label>Bloque (g) (ej. 100)</label>
+                  <label>Gramos por bloque</label>
                   <input id="cfg-frut-block" type="number" min="1" step="10" value="100">
                 </div>
                 <div>
@@ -997,8 +997,11 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
     comentarios: comentarios || '',
     deudaPendiente: calcTotalFromItems(items),
     pagos: [],
-    creadoPorAdmin: creadoPorAdmin
+    creadoPorAdmin: creadoPorAdmin,
+    _synced: false
   };
+  
+  // Guardar localmente primero
   pedidos.push(pedido);
   rebuildClientesFromPedidos();
   saveAll();
@@ -1015,14 +1018,18 @@ async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmi
       });
       const r = await resp.json();
       if (r && r.success) {
-        notify('Pedido creado y sincronizado', false);
+        // Actualizar el pedido como sincronizado
+        pedido._synced = true;
+        if (r.id) pedido.backendId = r.id;
+        saveAll();
+        notify('Pedido creado y sincronizado ✓', false);
       } else {
-        notify('Pedido creado (no sincronizado)', true);
+        notify('Pedido creado (en espera de sincronización)', true);
         console.warn('Respuesta backend crear_pedido:', r);
       }
     } catch (err) {
       console.error('Error al enviar pedido al backend:', err);
-      notify('Pedido creado (error al sincronizar)', true);
+      notify('Pedido creado (en espera de sincronización)', true);
     }
   } else {
     notify('Pedido creado (modo local)', false);
@@ -1086,6 +1093,10 @@ function renderOrders(filterText='', paymentFilter='all') {
       if (paymentFilter === 'pendiente') return p.estadoPago === 'pendiente';
       if (paymentFilter === 'parcial') return p.estadoPago === 'parcial';
       if (paymentFilter === 'pagado') return p.estadoPago === 'pagado';
+      if (paymentFilter === 'moroso') {
+        const days = Math.floor((Date.now() - new Date(p.fecha).getTime())/(1000*60*60*24));
+        return p.estadoPago !== 'pagado' && days > DIAS_MOROSIDAD;
+      }
       return true;
     });
 
@@ -1320,6 +1331,17 @@ function initListeners() {
   // search / filters
   $('search-input').addEventListener('input', e => renderOrders(e.target.value, $('payment-filter').value));
   $('payment-filter').addEventListener('change', e => renderOrders($('search-input').value, e.target.value));
+  
+  // Direct listeners como fallback para botones de enviar pedido
+  $('enviar-pedido').addEventListener('click', (e) => {
+    e.preventDefault();
+    handleEnviarPedido();
+  });
+  
+  $('admin-enviar-pedido').addEventListener('click', (e) => {
+    e.preventDefault();
+    handleAdminCreateOrder();
+  });
 }
 
 // Admin create order (using modal fields)
@@ -1545,11 +1567,45 @@ function renderAll(){
   updateSummary();
 }
 
+// Reintentar sincronizar pedidos pendientes con el backend
+async function retrySyncPendingOrders() {
+  if (!backendUrl || !/^https?:\/\//i.test(backendUrl)) return;
+  
+  const pendingOrders = pedidos.filter(p => !p._synced);
+  if (pendingOrders.length === 0) return;
+  
+  console.log(`Reintentando sincronizar ${pendingOrders.length} pedidos pendientes...`);
+  
+  for (const pedido of pendingOrders) {
+    try {
+      const payload = { action: 'crear_pedido', pedido };
+      const resp = await fetch(backendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const r = await resp.json();
+      if (r && r.success) {
+        pedido._synced = true;
+        if (r.id) pedido.backendId = r.id;
+        console.log(`Pedido ${pedido.id} sincronizado exitosamente`);
+      }
+    } catch (err) {
+      console.warn(`Error al sincronizar pedido ${pedido.id}:`, err);
+    }
+  }
+  
+  saveAll();
+  renderAll();
+}
+
 // Boot
 (function init(){
   loadAll();
   initListeners();
   renderAll();
+  // Reintentar sincronizar pedidos pendientes después de cargar
+  setTimeout(() => retrySyncPendingOrders(), 1000);
 })();
 </script>
 
