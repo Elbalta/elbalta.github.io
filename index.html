@@ -1366,22 +1366,21 @@ function initListeners() {
   $('payment-filter').addEventListener('change', e => renderOrders($('search-input').value, e.target.value));
 
   // Direct listeners para botones de enviar pedido (fallback adicional)
+  // Nota: El evento principal se maneja por delegación en document, estos son fallback adicional
   const enviarPedidoBtn = $('enviar-pedido');
-  if (enviarPedidoBtn && !enviarPedidoBtn.dataset.listenerAdded) {
+  if (enviarPedidoBtn) {
     enviarPedidoBtn.addEventListener('click', (e) => {
       e.preventDefault();
       handleEnviarPedido();
-    });
-    enviarPedidoBtn.dataset.listenerAdded = 'true';
+    }, { once: false });
   }
   
   const adminEnviarPedidoBtn = $('admin-enviar-pedido');
-  if (adminEnviarPedidoBtn && !adminEnviarPedidoBtn.dataset.listenerAdded) {
+  if (adminEnviarPedidoBtn) {
     adminEnviarPedidoBtn.addEventListener('click', (e) => {
       e.preventDefault();
       handleAdminCreateOrder();
-    });
-    adminEnviarPedidoBtn.dataset.listenerAdded = 'true';
+    }, { once: false });
   }
 }
 
