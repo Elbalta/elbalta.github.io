@@ -1,1557 +1,829 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Compras Grupales - Lazo Mercado</title>
 
   <!-- Fuentes e íconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --primary: #2e7d32;
-      --primary-light: #4caf50;
-      --primary-dark: #1b5e20;
-      --secondary: #f9a825;
-      --background: #f8f5f0;
-      --card: #ffffff;
-      --text: #333333;
-      --border: #e0e0e0;
-      --success: #388e3c;
-      --warning: #f57c00;
-      --error: #d32f2f;
-      --admin-bg: #f0f7ff;
+    :root{
+      --primary:#2e7d32; --primary-dark:#1b5e20; --bg:#f6f4f0; --card:#fff; --muted:#666666; --danger:#d32f2f;
     }
-
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins','Segoe UI',sans-serif; }
-    body { background: var(--background); color: var(--text); min-height: 100vh; }
-    header {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color:#fff; padding: 1rem; text-align:center; position:relative;
-      box-shadow:0 4px 12px rgba(0,0,0,.15); z-index:5;
-    }
-    .logo { display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom: 6px; }
-    .logo i { font-size:2.4rem; }
-    .logo h1 { font-size:1.7rem; font-weight:700; letter-spacing:0.4px; }
-    .logo p { opacity:.9; }
-
-    .header-buttons { display:flex; flex-direction:column; align-items:center; margin-top: 10px; }
-    .admin-login-btn {
-      background: rgba(255,255,255,.2); color:#fff;
-      padding: 8px 15px; border-radius: 20px;
-      border: 1px solid rgba(255,255,255,.3);
-      cursor:pointer; display:inline-flex; align-items:center; gap:8px;
-      transition: .2s;
-    }
-    .admin-login-btn:hover { background: rgba(255,255,255,.28); }
-
-    .container { max-width: 1200px; margin: 0 auto; padding: 15px; }
-    .app-container { display:flex; flex-direction:column; min-height: 70vh; }
-
-    .card {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-      width:100%;
-    }
-
-    .solicitante-form { max-width: 680px; margin: 0 auto; }
-    .admin-container { display:none; margin-top: 18px; }
-
-    .form-group { margin-bottom: 16px; }
-    label { display:block; margin-bottom: 8px; font-weight: 600; color:#444; }
-    input, select, textarea {
-      width:100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      background: #f9f9f9;
-      font-size: 1rem;
-      transition: .2s;
-    }
-    input:focus, textarea:focus, select:focus {
-      outline:none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(46,125,50,.18);
-      background:#fff;
-    }
-    input[type="number"] { -moz-appearance: textfield; }
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin:0; }
-
-    .btn {
-      background: linear-gradient(to right, var(--primary), var(--primary-dark));
-      color:#fff;
-      border:0;
-      padding: 12px 18px;
-      border-radius: 10px;
-      cursor:pointer;
-      font-weight: 700;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      width:100%;
-      box-shadow: 0 3px 8px rgba(46,125,50,.25);
-      transition:.2s;
-    }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(46,125,50,.25); }
-    .btn-admin { background: linear-gradient(to right, #1565c0, #0d47a1); box-shadow: 0 3px 8px rgba(13,71,161,.25); }
-    .btn-danger { background: linear-gradient(to right, #d32f2f, #b71c1c); box-shadow: 0 3px 8px rgba(183,28,28,.25); }
-    .btn-blue { background: linear-gradient(to right, #2196f3, #1976d2); box-shadow: 0 3px 8px rgba(25,118,210,.25); }
-    .btn-gray { background: linear-gradient(to right, #607d8b, #455a64); box-shadow: 0 3px 8px rgba(69,90,100,.25); }
-
-    .product-grid {
-      display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 14px;
-      margin: 12px 0;
-    }
-    .product-card {
-      border:1px solid #eee;
-      border-radius: 12px;
-      padding: 12px;
-      text-align:center;
-      box-shadow: 0 3px 10px rgba(0,0,0,.05);
-      position:relative;
-      background:#fff;
-    }
-    .product-card.unavailable { opacity: .7; background:#f6f6f6; }
-    .unavailable-tag {
-      position:absolute;
-      top: 8px; right: 8px;
-      background: var(--warning);
-      color:#fff; padding: 3px 8px; border-radius: 16px;
-      font-size: .75rem; font-weight: 700;
-    }
-    .product-name { font-weight: 800; margin: 8px 0 4px; }
-    .product-info { color:#666; font-size: .9rem; margin-bottom: 8px; }
-    .product-quantity { display:flex; align-items:center; justify-content:center; gap: 10px; margin-top: 10px; }
-    .quantity-btn {
-      width: 34px; height: 34px; border-radius: 50%;
-      border:1px solid #ddd;
-      background:#f9f9f9;
-      cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      font-size: 1.2rem;
-      user-select:none;
-      transition:.15s;
-    }
-    .quantity-btn:hover { background: var(--primary); color:#fff; border-color: var(--primary); }
-    .quantity-input {
-      width: 90px;
-      text-align:center;
-      font-weight: 800;
-      background:#fff;
-      padding: 8px;
-      border-radius: 10px;
-    }
-
-    .admin-header {
-      display:flex; flex-direction:column; gap: 12px;
-      padding-bottom: 14px; margin-bottom: 14px;
-      border-bottom: 2px solid rgba(46,125,50,.12);
-    }
-    .admin-controls {
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
-    }
-
-    .admin-tabs {
-      display:flex; flex-wrap:wrap;
-      background:#f9f9f9;
-      border-radius: 12px;
-      overflow:hidden;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.05);
-    }
-    .admin-tab {
-      flex:1;
-      min-width: 140px;
-      padding: 12px;
-      text-align:center;
-      cursor:pointer;
-      font-weight: 700;
-      border-bottom: 3px solid transparent;
-      transition:.2s;
-    }
-    .admin-tab.active {
-      background: rgba(46,125,50,.08);
-      border-bottom-color: var(--primary);
-      color: var(--primary-dark);
-    }
-    .admin-tab-content { display:none; }
-    .admin-tab-content.active { display:block; }
-
-    .stats-container {
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 12px;
-      margin: 14px 0;
-    }
-    .stat-card {
-      background:#fff;
-      border-radius: 12px;
-      padding: 14px;
-      box-shadow: 0 3px 8px rgba(0,0,0,.06);
-      border-left: 4px solid var(--primary);
-      text-align:center;
-    }
-    .stat-title { color:#666; font-size:.95rem; }
-    .stat-value { color: var(--primary); font-size: 1.5rem; font-weight: 900; margin-top: 6px; }
-
-    .orders-table {
-      width:100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      border-radius: 12px;
-      overflow:hidden;
-      box-shadow: 0 3px 8px rgba(0,0,0,.06);
-      margin-top: 12px;
-      font-size: .92rem;
-    }
-    .orders-table th, .orders-table td {
-      padding: 12px 10px;
-      border-bottom: 1px solid rgba(0,0,0,.05);
-      text-align:left;
-      vertical-align: top;
-    }
-    .orders-table th {
-      background: rgba(46,125,50,.14);
-      color: var(--primary-dark);
-      font-weight: 900;
-    }
-    .orders-table tr:hover { background: rgba(46,125,50,.05); }
-
-    .notification {
-      position: fixed;
-      top: 18px;
-      right: 18px;
-      max-width: 90%;
-      padding: 14px 16px;
-      border-radius: 12px;
-      display:flex;
-      gap: 10px;
-      align-items:center;
-      color:#fff;
-      font-weight: 800;
-      z-index: 2000;
-      transform: translateX(120%);
-      transition: transform .35s ease;
-      box-shadow: 0 10px 24px rgba(0,0,0,.18);
-    }
-    .notification.show { transform: translateX(0); }
-    .notification.success { background: rgba(56,142,60,.92); border-left: 4px solid #2e7d32; }
-    .notification.error { background: rgba(211,47,47,.92); border-left: 4px solid #b71c1c; }
-
-    .modal {
-      display:none;
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.7);
-      z-index: 1500;
-      align-items:center;
-      justify-content:center;
-      padding: 14px;
-    }
-    .modal-box {
-      background:#fff;
-      border-radius: 14px;
-      width:100%;
-      max-width: 720px;
-      padding: 18px;
-      position:relative;
-      max-height: 90vh;
-      overflow:auto;
-      box-shadow: 0 18px 42px rgba(0,0,0,.25);
-    }
-    .close-modal {
-      position:absolute; top: 8px; right: 12px;
-      font-size: 1.7rem; cursor:pointer;
-    }
-
-    .pill {
-      display:inline-block; padding: 6px 10px; border-radius: 16px;
-      background: #f1f1f1; font-weight: 800; font-size: .8rem;
-    }
-
-    .debt-alert {
-      background: linear-gradient(135deg, #ffeb3b, #ff9800);
-      color:#333;
-      padding: 10px 14px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      border-left: 4px solid #f44336;
-    }
-
-    .payment-history {
-      background:#f8f9fa;
-      border-radius: 12px;
-      padding: 10px;
-      margin-top: 10px;
-      font-size: .9rem;
-    }
-    .payment-item { display:flex; justify-content:space-between; padding: 7px 0; border-bottom:1px solid #eee; }
-    .payment-item:last-child { border-bottom: 0; }
-    .payment-amount { font-weight: 900; color: var(--success); }
-
-    .footer {
-      text-align:center;
-      padding: 18px;
-      color:#666;
-      font-size:.9rem;
-      margin-top: 28px;
-      border-top: 1px solid rgba(0,0,0,.08);
-    }
-
-    @media (min-width: 576px) {
-      .logo { flex-direction: row; text-align:left; justify-content:center; }
-      .header-buttons { flex-direction: row; position:absolute; top: 14px; right: 14px; margin-top:0; }
-      .admin-header { flex-direction: row; justify-content: space-between; align-items:center; }
-    }
-    @media (min-width: 768px) {
-      .container { padding: 20px; }
-      .card { padding: 22px; }
-    }
+    *{box-sizing:border-box}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:#222;margin:0}
+    header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;justify-content:space-between}
+    header .brand{display:flex;gap:12px;align-items:center}
+    header h1{font-size:1.05rem;margin:0}
+    header .small{opacity:.9;font-weight:600}
+    .container{max-width:1100px;margin:18px auto;padding:12px}
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 22px rgba(0,0,0,.06)}
+    .grid{display:grid;gap:12px}
+    .product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .product-card{border:1px solid #eee;border-radius:10px;padding:12px;background:#fff}
+    .product-name{font-weight:700;margin-bottom:6px}
+    .product-meta{color:var(--muted);font-size:.9rem;margin-bottom:8px}
+    input[type="number"], input[type="text"], input[type="tel"], select, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:.95rem}
+    textarea{resize:vertical}
+    .btn{background:linear-gradient(90deg,var(--primary),var(--primary-dark));color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer}
+    .btn.gray{background:linear-gradient(90deg,#607d8b,#455a64)}
+    .btn.danger{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .muted{color:var(--muted);font-size:.9rem}
+    .small{font-size:.88rem;color:var(--muted)}
+    .orders-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.95rem}
+    .orders-table th{background:rgba(46,125,50,.08);padding:10px;text-align:left;border-bottom:1px solid #e9f3ea}
+    .orders-table td{padding:10px;border-bottom:1px solid #f2f2f2;vertical-align:middle}
+    .orders-products{color:var(--muted);font-size:.92rem;line-height:1.25}
+    .order-actions{display:flex;gap:8px;justify-content:flex-end}
+    .icon-btn{width:40px;height:40px;border-radius:8px;border:0;color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 12px rgba(0,0,0,.06)}
+    .icon-pay{background:linear-gradient(90deg,#2196f3,#1976d2)}
+    .icon-view{background:linear-gradient(90deg,#607d8b,#455a64)}
+    .icon-delete{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
+    td.actions{width:140px;max-width:140px}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:12px}
+    .modal.show{display:flex}
+    .modal-box{width:100%;max-width:800px;background:#fff;border-radius:10px;padding:16px;max-height:92vh;overflow:auto;position:relative}
+    .close-modal{position:absolute;right:14px;top:10px;font-size:18px;cursor:pointer}
+    .prod-admin-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+    .prod-admin-row input, .prod-admin-row select{width:calc(100% / 4 - 8px);min-width:120px}
+    .prod-admin-row .avail{width:120px}
+    .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .list{max-height:300px;overflow:auto;padding:8px;border-radius:8px;border:1px solid #eee}
+    .list-item{padding:8px;border-bottom:1px solid #f2f2f2;display:flex;justify-content:space-between}
+    .badge{display:inline-block;padding:4px 8px;border-radius:6px;background:#f1f1f1}
+    @media (max-width:720px){ .prod-admin-row input, .prod-admin-row select{width:100%} .fin-grid{grid-template-columns:1fr} }
   </style>
 </head>
-
 <body>
 <header>
-  <div class="logo">
-    <i class="fas fa-shopping-basket"></i>
+  <div class="brand">
+    <i class="fas fa-shopping-basket" style="font-size:20px"></i>
     <div>
-      <h1>Compras Grupales</h1>
-      <p>Lazo Mercado - Control de Pagos y Pedidos</p>
+      <h1>Compras Grupales — Lazo Mercado</h1>
+      <div class="small muted">Control de pedidos, pagos y finanzas</div>
     </div>
   </div>
-  <div class="header-buttons">
-    <button id="admin-login-link" class="admin-login-btn">
-      <i class="fas fa-user-shield"></i> Administrador
-    </button>
+  <div>
+    <button id="admin-login-link" class="btn" style="background:linear-gradient(90deg,#1565c0,#0d47a1)"><i class="fas fa-user-shield" style="margin-right:8px"></i>Administrador</button>
   </div>
 </header>
 
 <div class="container">
-  <div class="app-container">
-
-    <!-- FORMULARIO CLIENTE -->
-    <div class="card solicitante-form" id="solicitante-form">
-      <h2 style="text-align:center; margin-bottom: 12px; color: var(--primary);">
-        <i class="fas fa-cart-plus"></i> Realiza tu pedido
-      </h2>
-
-      <div id="debt-alert-container" style="display:none;"></div>
-
-      <div class="form-group">
-        <label for="nombre"><i class="fas fa-user"></i> Nombre completo</label>
-        <input type="text" id="nombre" placeholder="Juan Pérez" />
+  <!-- CLIENT FORM -->
+  <div class="card">
+    <h2 style="margin:0 0 8px 0;color:var(--primary)">Realiza tu pedido</h2>
+    <div class="grid">
+      <div>
+        <label><strong>Nombre</strong></label>
+        <input id="nombre" type="text" placeholder="Juan Pérez">
+      </div>
+      <div>
+        <label><strong>Teléfono</strong></label>
+        <input id="telefono" type="tel" placeholder="+56912345678">
       </div>
 
-      <div class="form-group">
-        <label for="telefono"><i class="fas fa-phone"></i> Teléfono (identificador único)</label>
-        <input type="tel" id="telefono" placeholder="+56912345678" />
-        <div id="phone-warning" class="debt-alert" style="display:none; background: #fff3e0; border-left-color:#ffb74d;">
-          <i class="fas fa-exclamation-triangle"></i> Este teléfono ya existe. Se verificará su historial.
-        </div>
+      <div>
+        <label><strong>Productos disponibles</strong></label>
+        <div id="product-grid" class="product-grid" style="margin-top:8px"></div>
       </div>
 
-      <div id="client-info-container" style="display:none;">
-        <div class="card" style="padding: 14px; margin-bottom: 12px; border-left: 4px solid #4caf50; box-shadow:none; border:1px solid #eee;">
-          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
-            <h4><i class="fas fa-history"></i> Historial del cliente</h4>
-            <span style="font-weight:900; color:#f44336; font-size: 1.1rem;" id="client-debt-total">$0</span>
-          </div>
-          <div id="client-payment-history"></div>
-        </div>
+      <div>
+        <label><strong>Comentarios / Destino despacho</strong></label>
+        <textarea id="comentarios" rows="2" placeholder="Ej: departamento, dirección, referencia"></textarea>
       </div>
 
-      <h3 style="margin: 16px 0 10px; color: var(--primary);">
-        <i class="fas fa-apple-alt"></i> Productos
-      </h3>
-
-      <div class="product-grid">
-        <!-- PALTAS -->
-        <div class="product-card" id="paltas-card">
-          <div class="product-name" id="paltas-name">Paltas</div>
-          <div class="product-info">
-            Precio: <span id="paltas-price">$3.500</span> / kg
-          </div>
-          <label for="paltas-input">Kilos</label>
-          <div class="product-quantity">
-            <button type="button" class="quantity-btn" data-target="paltas-input" data-action="decrease">-</button>
-            <input type="number" id="paltas-input" class="quantity-input" min="0" step="1" value="0" />
-            <button type="button" class="quantity-btn" data-target="paltas-input" data-action="increase">+</button>
-          </div>
-        </div>
-
-        <!-- CHAMPIÑONES -->
-        <div class="product-card" id="champi-card">
-          <div class="product-name" id="champi-name">Champiñones</div>
-          <div class="product-info">
-            Precio: <span id="champi-price">$2.500</span> / caja (<span id="champi-pack">250</span>g)
-          </div>
-          <label for="champi-input">Cajas</label>
-          <div class="product-quantity">
-            <button type="button" class="quantity-btn" data-target="champi-input" data-action="decrease">-</button>
-            <input type="number" id="champi-input" class="quantity-input" min="0" step="1" value="0" />
-            <button type="button" class="quantity-btn" data-target="champi-input" data-action="increase">+</button>
-          </div>
-          <div style="margin-top: 8px; color:#666; font-size:.85rem;">Se calcula gramos = cajas × gramos/caja</div>
-        </div>
-
-        <!-- FRUTILLAS -->
-        <div class="product-card" id="frutillas-card">
-          <div class="product-name" id="frutillas-name">Frutillas</div>
-          <div class="product-info">
-            Precio: <span id="frutillas-price">$1.200</span> / <span id="frutillas-block">100</span>g
-          </div>
-          <label for="frutillas-input">Gramos</label>
-          <div class="product-quantity">
-            <button type="button" class="quantity-btn" data-target="frutillas-input" data-action="decrease">-</button>
-            <input type="number" id="frutillas-input" class="quantity-input" min="0" step="100" value="0" />
-            <button type="button" class="quantity-btn" data-target="frutillas-input" data-action="increase">+</button>
-          </div>
-          <div style="margin-top: 8px; color:#666; font-size:.85rem;">Paso recomendado: bloque (ej. 100g)</div>
-        </div>
+      <div style="margin-top:8px">
+        <button id="enviar-pedido" class="btn"><i class="fas fa-paper-plane" style="margin-right:8px"></i>Enviar pedido</button>
       </div>
+    </div>
+  </div>
 
-      <div class="form-group">
-        <label for="comentarios"><i class="fas fa-comment"></i> Comentarios adicionales</label>
-        <textarea id="comentarios" rows="3" placeholder="Ej: entrega, forma de pago, etc."></textarea>
+  <!-- ADMIN PANEL -->
+  <div id="admin-container" class="card" style="display:none;margin-top:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div>
+        <h3 style="margin:0">Panel Administrador</h3>
+        <div class="muted small">Gestiona pedidos, pagos y finanzas</div>
       </div>
-
-      <button class="btn" id="enviar-pedido">
-        <i class="fas fa-paper-plane"></i> Enviar pedido
-      </button>
+      <div class="row">
+        <button id="add-order-btn" class="btn" title="Agregar pedido manual">Agregar</button>
+        <button id="export-btn" class="btn gray">Exportar CSV</button>
+        <button id="refresh-btn" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Actualizar</button>
+        <button id="logout-btn" class="btn danger">Salir</button>
+      </div>
     </div>
 
-    <!-- PANEL ADMIN -->
-    <div class="card admin-container" id="admin-container">
-      <div class="admin-header">
-        <h2><i class="fas fa-user-shield"></i> Panel Administrador</h2>
-        <div class="admin-controls">
-          <button class="btn btn-admin" id="add-order-btn"><i class="fas fa-plus-circle"></i> Agregar pedido</button>
-          <button class="btn btn-admin" id="compras-btn"><i class="fas fa-shopping-cart"></i> Resumen compra</button>
-          <button class="btn btn-admin" id="export-btn"><i class="fas fa-file-export"></i> Exportar CSV</button>
-          <button class="btn btn-admin" id="refresh-btn"><i class="fas fa-sync"></i> Actualizar</button>
-          <button class="btn btn-admin" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Salir</button>
+    <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap">
+      <input id="search-input" placeholder="Buscar por nombre o teléfono..." style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd">
+      <select id="payment-filter" style="width:200px;padding:10px;border-radius:8px;border:1px solid #ddd">
+        <option value="all">Todos</option>
+        <option value="pendiente">Pendientes</option>
+        <option value="parcial">Parciales</option>
+        <option value="pagado">Pagados</option>
+        <option value="moroso">Morosos (+30 días)</option>
+      </select>
+    </div>
+
+    <table class="orders-table" aria-describedby="orders">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Productos</th>
+          <th>Comentarios (Despacho)</th>
+          <th>Total</th>
+          <th>Pago</th>
+          <th>Fecha</th>
+          <th class="actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="orders-body"></tbody>
+    </table>
+
+    <!-- Admin: Products & Finances -->
+    <div style="margin-top:14px;display:flex;gap:12px;flex-direction:column">
+      <div class="card">
+        <h4 style="margin:0">Configuración de productos (Administrador)</h4>
+        <div id="products-admin" style="margin-top:10px"></div>
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button id="save-products-btn" class="btn">Guardar productos</button>
+          <button id="reset-products-btn" class="btn danger">Reset</button>
         </div>
       </div>
 
-      <div class="admin-tabs">
-        <div class="admin-tab active" data-tab="pedidos">Pedidos</div>
-        <div class="admin-tab" data-tab="pagos">Gestión de pagos</div>
-        <div class="admin-tab" data-tab="productos">Productos</div>
-        <div class="admin-tab" data-tab="finanzas">Finanzas</div>
-        <div class="admin-tab" data-tab="config">Configuración</div>
-      </div>
-
-      <!-- TAB PEDIDOS -->
-      <div class="admin-tab-content active" id="pedidos-tab">
-        <div class="stats-container">
-          <div class="stat-card"><div class="stat-title">Total pedidos</div><div class="stat-value" id="stat-total-pedidos">0</div></div>
-          <div class="stat-card"><div class="stat-title">Pendientes</div><div class="stat-value" id="stat-pendientes">0</div></div>
-          <div class="stat-card"><div class="stat-title">Pagados</div><div class="stat-value" id="stat-pagados">0</div></div>
-          <div class="stat-card"><div class="stat-title">Deuda total</div><div class="stat-value" id="stat-deuda">$0</div></div>
-        </div>
-
-        <div style="display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-          <input type="text" id="search-input" placeholder="Buscar por nombre o teléfono..." style="flex:2;">
-          <select id="payment-filter" style="flex:1;">
-            <option value="all">Todos</option>
-            <option value="pendiente">Pendientes</option>
-            <option value="parcial">Parciales</option>
-            <option value="pagado">Pagados</option>
-            <option value="moroso">Morosos (+30 días)</option>
-          </select>
-        </div>
-
-        <table class="orders-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Teléfono</th>
-              <th>Productos</th>
-              <th>Total</th>
-              <th>Pago</th>
-              <th>Fecha</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="orders-body"></tbody>
-        </table>
-      </div>
-
-      <!-- TAB PAGOS -->
-      <div class="admin-tab-content" id="pagos-tab">
-        <div class="card" style="box-shadow:none; border:1px solid #eee;">
-          <h3><i class="fas fa-money-bill-wave"></i> Gestión de pagos y deudas</h3>
-
-          <div style="display:flex; gap:10px; flex-wrap:wrap; margin: 12px 0;">
-            <input type="text" id="search-debt" placeholder="Buscar cliente por nombre o teléfono" style="flex:2;">
-            <select id="debt-filter" style="flex:1;">
-              <option value="all">Todos</option>
-              <option value="con-deuda">Con deuda</option>
-              <option value="morosos">Morosos (+30 días)</option>
-              <option value="al-dia">Al día</option>
-            </select>
-            <button class="btn btn-blue" id="export-debt-btn" style="flex:1;">
-              <i class="fas fa-file-csv"></i> Exportar deudores
-            </button>
+      <div class="card">
+        <h4 style="margin:0">Finanzas</h4>
+        <div class="fin-grid" style="margin-top:10px">
+          <div>
+            <strong>Registrar compra (costo)</strong>
+            <div style="margin-top:8px">
+              <select id="fin-prod" style="padding:8px;border-radius:8px;border:1px solid #ddd">
+                <option value="paltas">Paltas</option>
+                <option value="champi">Champiñones</option>
+                <option value="frutillas">Frutillas</option>
+              </select>
+            </div>
+            <div style="margin-top:8px" class="row">
+              <input id="fin-qty" type="number" min="0" step="0.1" placeholder="Cantidad (ej: kg)">
+              <select id="fin-unit" style="padding:8px;border-radius:8px;border:1px solid #ddd">
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="caja">caja</option>
+                <option value="saco">saco</option>
+              </select>
+              <input id="fin-price" type="number" min="0" placeholder="Precio compra (por unidad)" style="width:160px">
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button id="add-purchase-btn" class="btn">Añadir compra</button>
+              <button id="clear-purchases-btn" class="btn gray">Limpiar compras</button>
+            </div>
           </div>
 
-          <div class="stats-container">
-            <div class="stat-card" style="border-left-color:#ff9800;"><div class="stat-title">Deuda total</div><div class="stat-value" id="global-debt">$0</div></div>
-            <div class="stat-card" style="border-left-color:#2196f3;"><div class="stat-title">Recaudado (mes)</div><div class="stat-value" id="global-paid-month">$0</div></div>
-            <div class="stat-card" style="border-left-color:#4caf50;"><div class="stat-title">Clientes con deuda</div><div class="stat-value" id="global-debtors">0</div></div>
-            <div class="stat-card" style="border-left-color:#f44336;"><div class="stat-title">Morosos</div><div class="stat-value" id="global-morosos">0</div></div>
-          </div>
+          <div>
+            <strong>Resumen compras e inventario</strong>
+            <div id="purchases-list" class="list" style="margin-top:8px"></div>
 
-          <div id="debtors-list" style="margin-top: 10px;"></div>
-        </div>
-      </div>
-
-      <!-- TAB PRODUCTOS -->
-      <div class="admin-tab-content" id="productos-tab">
-        <div class="card" style="box-shadow:none; border:1px solid #eee;">
-          <h3><i class="fas fa-tags"></i> Productos (editar precios/nombres/unidad)</h3>
-
-          <div style="display:grid; gap: 10px; margin-top: 10px;">
-            <div class="card" style="box-shadow:none; border:1px solid #eee;">
-              <strong>Paltas</strong>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top: 10px;">
-                <div>
-                  <label>Nombre</label>
-                  <input id="cfg-paltas-name" type="text" value="Paltas">
-                </div>
-                <div>
-                  <label>Precio por kg</label>
-                  <input id="cfg-paltas-price" type="number" min="0" step="50" value="3500">
-                </div>
-                <div>
-                  <label>Disponible</label>
-                  <select id="cfg-paltas-avail">
-                    <option value="true" selected>Sí</option>
-                    <option value="false">No</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Unidad</label>
-                  <input type="text" value="kg (enteros)" disabled>
-                </div>
+            <div style="margin-top:12px">
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <div class="muted">Total costo: <strong id="fin-total-cost">$0</strong></div>
+                <div class="muted">Total ventas: <strong id="fin-total-sales">$0</strong></div>
+                <div class="muted">Ganancia realizada (ventas - costo vendido): <strong id="fin-profit">$0</strong></div>
               </div>
-            </div>
 
-            <div class="card" style="box-shadow:none; border:1px solid #eee;">
-              <strong>Champiñones</strong>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top: 10px;">
-                <div>
-                  <label>Nombre</label>
-                  <input id="cfg-champi-name" type="text" value="Champiñones">
-                </div>
-                <div>
-                  <label>Precio por caja</label>
-                  <input id="cfg-champi-price" type="number" min="0" step="50" value="2500">
-                </div>
-                <div>
-                  <label>Gramos por caja</label>
-                  <input id="cfg-champi-pack" type="number" min="1" step="10" value="250">
-                </div>
-                <div>
-                  <label>Disponible</label>
-                  <select id="cfg-champi-avail">
-                    <option value="true" selected>Sí</option>
-                    <option value="false">No</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="card" style="box-shadow:none; border:1px solid #eee;">
-              <strong>Frutillas</strong>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top: 10px;">
-                <div>
-                  <label>Nombre</label>
-                  <input id="cfg-frut-name" type="text" value="Frutillas">
-                </div>
-                <div>
-                  <label>Precio por bloque</label>
-                  <input id="cfg-frut-price" type="number" min="0" step="50" value="1200">
-                </div>
-                <div>
-                  <label>Bloque (g) (ej. 100)</label>
-                  <input id="cfg-frut-block" type="number" min="1" step="10" value="100">
-                </div>
-                <div>
-                  <label>Disponible</label>
-                  <select id="cfg-frut-avail">
-                    <option value="true" selected>Sí</option>
-                    <option value="false">No</option>
-                  </select>
-                </div>
+              <div style="margin-top:12px">
+                <h4 style="margin:0 0 6px 0">Inventario por producto</h4>
+                <div id="inventory-list" class="list"></div>
               </div>
             </div>
           </div>
-
-          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px;">
-            <button class="btn" id="save-products-btn" style="flex:2;">
-              <i class="fas fa-save"></i> Guardar productos
-            </button>
-            <button class="btn btn-danger" id="reset-products-btn" style="flex:1;">
-              <i class="fas fa-rotate-left"></i> Reset
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB FINANZAS -->
-      <div class="admin-tab-content" id="finanzas-tab">
-        <div class="card" style="box-shadow:none; border:1px solid #eee;">
-          <h3><i class="fas fa-calculator"></i> Resumen financiero</h3>
-          <table class="orders-table">
-            <thead>
-              <tr><th>Concepto</th><th>Valor</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>Total ventas (suma de pedidos)</td><td id="fin-ventas">$0</td></tr>
-              <tr><td>Total recaudado (histórico pagos)</td><td id="fin-recaudado">$0</td></tr>
-              <tr><td>Total deuda (pendiente)</td><td id="fin-deuda">$0</td></tr>
-              <tr><td>Clientes con deuda</td><td id="fin-clientes-deuda">0</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TAB CONFIG -->
-      <div class="admin-tab-content" id="config-tab">
-        <div class="card" style="box-shadow:none; border:1px solid #eee;">
-          <h3><i class="fas fa-cogs"></i> Configuración</h3>
-          <div class="form-group">
-            <label for="backend-url"><i class="fas fa-server"></i> URL Backend (opcional)</label>
-            <input type="text" id="backend-url" placeholder="Si no usas backend, deja vacío">
-            <div style="color:#666; font-size:.9rem; margin-top: 6px;">
-              Si configuras backend, los pedidos / clientes se sincronizarán con ese endpoint.
-            </div>
-          </div>
-          <button class="btn" id="save-settings-btn"><i class="fas fa-save"></i> Guardar configuración</button>
-
-          <div style="margin-top: 12px;">
-            <button class="btn btn-danger" id="clear-local-btn">
-              <i class="fas fa-broom"></i> Borrar datos locales (reiniciar)
-            </button>
-          </div>
         </div>
       </div>
 
     </div>
+
   </div>
 </div>
 
-<!-- MODALES -->
-<div class="modal" id="login-modal">
+<!-- Modals -->
+<div id="order-summary-modal" class="modal" aria-hidden="true">
   <div class="modal-box">
-    <span class="close-modal" id="close-login">&times;</span>
-    <h2><i class="fas fa-lock"></i> Acceso Administrador</h2>
+    <span class="close-modal" id="close-order-summary">&times;</span>
+    <h2>Resumen de tu pedido</h2>
+    <div id="summary-items" style="margin-top:10px"></div>
 
-    <div class="form-group" style="margin-top: 12px;">
-      <label for="admin-email"><i class="fas fa-envelope"></i> Correo</label>
-      <input type="email" id="admin-email" placeholder="admin@valledor.com">
-    </div>
-    <div class="form-group">
-      <label for="admin-password"><i class="fas fa-key"></i> Contraseña</label>
-      <input type="password" id="admin-password" placeholder="admin123">
-    </div>
-
-    <button class="btn btn-admin" id="login-btn"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</button>
-
-    <div id="login-error" style="display:none; color: var(--error); font-weight: 900; margin-top: 10px; text-align:center;">
-      Credenciales incorrectas
-    </div>
-
-    <div class="card" style="margin-top: 12px; box-shadow:none; border:1px solid #eee;">
-      <div style="font-weight:900; color:#1565c0;">Credenciales de prueba:</div>
-      <div><i class="fas fa-user"></i> Email: <b>admin@valledor.com</b></div>
-      <div><i class="fas fa-key"></i> Contraseña: <b>admin123</b></div>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="add-order-modal">
-  <div class="modal-box">
-    <span class="close-modal" id="close-add-order">&times;</span>
-    <h2><i class="fas fa-cart-plus"></i> Agregar pedido (Admin)</h2>
-
-    <div class="form-group" style="margin-top: 12px;">
-      <label>Nombre</label>
-      <input type="text" id="admin-nombre" placeholder="Juan Pérez">
-    </div>
-    <div class="form-group">
-      <label>Teléfono</label>
-      <input type="tel" id="admin-telefono" placeholder="+56912345678">
-    </div>
-
-    <h3 style="margin: 10px 0;"><i class="fas fa-apple-alt"></i> Productos</h3>
-
-    <div class="product-grid">
-      <div class="product-card">
-        <div class="product-name" id="admin-paltas-name">Paltas</div>
-        <div class="product-info">Precio: <span id="admin-paltas-price">$3.500</span> / kg</div>
-        <label>Kilos</label>
-        <div class="product-quantity">
-          <button type="button" class="quantity-btn" data-target="admin-paltas-input" data-action="decrease">-</button>
-          <input type="number" id="admin-paltas-input" class="quantity-input" min="0" step="1" value="0">
-          <button type="button" class="quantity-btn" data-target="admin-paltas-input" data-action="increase">+</button>
-        </div>
+    <div style="display:flex;gap:12px;margin-top:12px;align-items:center">
+      <div style="flex:1">
+        <label>Método de pago</label>
+        <select id="summary-payment-method" style="padding:10px;border-radius:8px;border:1px solid #ddd">
+          <option value="efectivo">Efectivo (al recibir)</option>
+          <option value="transferencia">Transferencia / Mercado Pago</option>
+        </select>
       </div>
-
-      <div class="product-card">
-        <div class="product-name" id="admin-champi-name">Champiñones</div>
-        <div class="product-info">Precio: <span id="admin-champi-price">$2.500</span> / caja (<span id="admin-champi-pack">250</span>g)</div>
-        <label>Cajas</label>
-        <div class="product-quantity">
-          <button type="button" class="quantity-btn" data-target="admin-champi-input" data-action="decrease">-</button>
-          <input type="number" id="admin-champi-input" class="quantity-input" min="0" step="1" value="0">
-          <button type="button" class="quantity-btn" data-target="admin-champi-input" data-action="increase">+</button>
-        </div>
+      <div style="display:flex;gap:8px">
+        <button id="confirm-order" class="btn">Aceptar</button>
+        <button id="reject-order" class="btn gray">Rechazar</button>
       </div>
+    </div>
 
-      <div class="product-card">
-        <div class="product-name" id="admin-frutillas-name">Frutillas</div>
-        <div class="product-info">Precio: <span id="admin-frutillas-price">$1.200</span> / <span id="admin-frutillas-block">100</span>g</div>
-        <label>Gramos</label>
-        <div class="product-quantity">
-          <button type="button" class="quantity-btn" data-target="admin-frutillas-input" data-action="decrease">-</button>
-          <input type="number" id="admin-frutillas-input" class="quantity-input" min="0" step="100" value="0">
-          <button type="button" class="quantity-btn" data-target="admin-frutillas-input" data-action="increase">+</button>
+    <div id="summary-transfer-details" style="display:none;margin-top:12px">
+      <div class="card">
+        <strong>Datos para transferencia / Mercado Pago</strong>
+        <div class="muted small" style="margin-top:6px">Sólo si seleccionas transferencia</div>
+        <div style="margin-top:8px;font-weight:700">
+          Álvaro Aaron Lazo Reyes<br>
+          RUT: 168400896<br>
+          Cuenta Vista - Número de cuenta: <b>1014726096</b><br>
+          Email Mercado Pago: <b>alvarolazo18@gmail.com</b>
         </div>
       </div>
     </div>
 
-    <div class="form-group">
-      <label>Comentarios</label>
-      <textarea id="admin-comentarios" rows="3" placeholder="Opcional"></textarea>
-    </div>
-
-    <button class="btn" id="admin-enviar-pedido"><i class="fas fa-check"></i> Crear pedido</button>
+    <div style="text-align:right;margin-top:12px">Total: <span id="summary-total" style="font-weight:800;color:var(--primary)">$0</span></div>
   </div>
 </div>
 
-<div class="modal" id="compras-modal">
-  <div class="modal-box">
-    <span class="close-modal" id="close-compras">&times;</span>
-    <h2><i class="fas fa-shopping-cart"></i> Resumen de compra</h2>
-
-    <div class="stats-container" style="margin-top: 12px;">
-      <div class="stat-card"><div class="stat-title" id="sum-paltas-title">Paltas</div><div class="stat-value" id="sum-paltas">0 kg</div></div>
-      <div class="stat-card"><div class="stat-title" id="sum-champi-title">Champiñones</div><div class="stat-value" id="sum-champi">0 cajas</div></div>
-      <div class="stat-card"><div class="stat-title" id="sum-frutillas-title">Frutillas</div><div class="stat-value" id="sum-frutillas">0 g</div></div>
-    </div>
-
-    <button class="btn btn-gray" id="print-compras"><i class="fas fa-print"></i> Imprimir</button>
-  </div>
-</div>
-
-<div class="modal" id="payment-modal">
+<div id="payment-modal" class="modal" aria-hidden="true">
   <div class="modal-box">
     <span class="close-modal" id="close-payment">&times;</span>
-    <h2><i class="fas fa-money-bill-wave"></i> Gestión de pagos</h2>
+    <h2>Registrar pago</h2>
+    <div id="payment-client-info" class="muted small"></div>
 
-    <div id="payment-client-info" style="margin-top: 12px;"></div>
-
-    <div class="card" style="box-shadow:none; border: 2px solid #ff9800; margin-top: 10px;">
-      <div style="text-align:center; font-weight: 900; color:#f44336;"><i class="fas fa-exclamation-triangle"></i> Deuda pendiente</div>
-      <div style="text-align:center; font-weight: 900; font-size: 1.8rem; color:#f44336; margin-top: 6px;" id="modal-debt-amount">$0</div>
+    <div style="margin-top:8px">
+      <label>Monto</label>
+      <input id="payment-amount" type="number" min="0" step="100">
     </div>
-
-    <div class="form-group" style="margin-top: 12px;">
-      <label>Monto a pagar</label>
-      <input type="number" id="payment-amount" min="0" step="100" placeholder="Monto">
-    </div>
-
-    <div class="form-group">
+    <div style="margin-top:8px">
       <label>Método</label>
       <select id="payment-method">
         <option value="efectivo">Efectivo</option>
         <option value="transferencia">Transferencia</option>
       </select>
     </div>
-
-    <div class="form-group">
+    <div style="margin-top:8px">
       <label>Notas</label>
-      <textarea id="payment-notes" rows="2" placeholder="Referencia u observación"></textarea>
+      <textarea id="payment-notes" rows="2"></textarea>
     </div>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn btn-blue" id="register-payment" style="flex:1;"><i class="fas fa-check-circle"></i> Registrar pago</button>
-      <button class="btn btn-danger" id="mark-as-paid" style="flex:1;"><i class="fas fa-flag-checkered"></i> Marcar todo pagado</button>
-      <button class="btn btn-gray" id="toggle-payment-history" style="flex:1;"><i class="fas fa-history"></i> Historial</button>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="register-payment" class="btn">Registrar</button>
+      <button id="mark-as-paid" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Marcar pagado</button>
+      <button id="toggle-payment-history" class="btn gray">Historial</button>
     </div>
 
-    <div id="payment-history-container" style="display:none;">
-      <div class="payment-history" id="modal-payment-history"></div>
+    <div id="payment-history-container" style="display:none;margin-top:12px">
+      <div id="modal-payment-history" class="list"></div>
     </div>
   </div>
 </div>
 
-<div class="notification success" id="notification">
-  <i class="fas fa-check-circle"></i>
-  <span id="notification-text">OK</span>
+<div id="login-modal" class="modal">
+  <div class="modal-box">
+    <span class="close-modal" id="close-login">&times;</span>
+    <h2>Acceso Administrador</h2>
+    <div style="margin-top:8px">
+      <label>Correo</label>
+      <input id="admin-email" type="email" placeholder="admin@valledor.com">
+    </div>
+    <div style="margin-top:8px">
+      <label>Contraseña</label>
+      <input id="admin-password" type="password" placeholder="admin123">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="login-btn" class="btn">Iniciar sesión</button>
+      <button id="cancel-login" class="btn gray">Cancelar</button>
+    </div>
+    <div id="login-error" class="muted" style="color:var(--danger);display:none;margin-top:8px">Credenciales incorrectas</div>
+  </div>
 </div>
 
-<div class="footer">
-  <p>Sistema de pedidos grupales para Lazo Mercado | Control de Pagos</p>
-  <p>© 2026</p>
-</div>
+<div id="notification" style="position:fixed;right:16px;top:16px;background:var(--primary);color:#fff;padding:8px 12px;border-radius:8px;display:none;z-index:99999"></div>
 
 <script>
-/* ===========================================================
-   Lazo Mercado - Pedido + Admin + Pagos + Productos (LocalStorage + optional backend)
-   Correcciones: sintaxis arreglada, carga desde backend opcional, listeners funcionando.
-=========================================================== */
+/* Mejoras en Finanzas:
+   - purchases: {id, prod, qty, unit, costPerUnit, totalCost, remainingQty, fecha}
+   - inventario calculado sum(remainingQty) por producto (con conversión simple según unidad)
+   - potentialRevenue = availableQty * sellingPrice
+   - potentialProfit = potentialRevenue - costOfAvailable
+   - botón 'Usar' en cada compra para reducir remainingQty (registrar salida/venta manual)
+   - se mantiene persistencia en localStorage
+*/
 
-const DIAS_MOROSIDAD = 30;
-const BACKEND_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev";
+const DEFAULT_PRODUCTOS = {
+  paltas:{key:'paltas',nombre:'Paltas',precio:3500,baseUnit:'kg',sacoKg:25,disponible:true},
+  champi:{key:'champi',nombre:'Champiñones',precio:2500,baseUnit:'caja',packGramos:250,disponible:true},
+  frutillas:{key:'frutillas',nombre:'Frutillas',precio:1200,baseUnit:'g',bloqueGramos:100,disponible:true}
+};
 
-// Estado
+let productos = structuredClone(DEFAULT_PRODUCTOS);
 let pedidos = [];
 let pagos = [];
-let clientes = {};
+let purchases = []; // purchases list with remainingQty
 let isAdmin = false;
-let adminEmail = "";
-let backendUrl = BACKEND_URL_DEFAULT;
+let currentPaymentPedidoId = null;
 
-// Productos por defecto (se guardan/leen en localStorage)
-const DEFAULT_PRODUCTOS = {
-  paltas: { key:"paltas", nombre:"Paltas", precio:3500, unidad:"kg", step:1, disponible:true },
-  champi: { key:"champi", nombre:"Champiñones", precio:2500, unidad:"caja", step:1, packGramos:250, disponible:true },
-  frutillas: { key:"frutillas", nombre:"Frutillas", precio:1200, unidad:"g", step:100, bloqueGramos:100, disponible:true }
-};
-let productos = structuredClone(DEFAULT_PRODUCTOS);
-
-// Utilidades DOM y formato
+// DOM shortcuts
 const $ = id => document.getElementById(id);
 const money = n => `$${(Number(n)||0).toLocaleString('es-CL')}`;
 const nowISO = () => new Date().toISOString();
-const normPhone = t => (t||'').replace(/\s|-/g,'').trim();
+const normPhone = s => (s||'').replace(/\s|-/g,'').trim();
+function escapeHTML(s=''){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function notify(msg,t=3000){ const n=$('notification'); n.textContent = msg; n.style.display='block'; setTimeout(()=>n.style.display='none',t); }
 
-function escapeHTML(str="") {
-  return String(str).replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-}
-
-function notify(msg, isError=false){
-  const n = $("notification");
-  const txt = $("notification-text");
-  txt.textContent = msg;
-  n.classList.toggle("error", isError);
-  n.classList.toggle("success", !isError);
-  n.classList.add("show");
-  setTimeout(()=>n.classList.remove("show"), 3200);
-}
-
-// Persistencia
-function saveAll(){
-  localStorage.setItem("pedidos", JSON.stringify(pedidos));
-  localStorage.setItem("pagos", JSON.stringify(pagos));
-  localStorage.setItem("clientes", JSON.stringify(clientes));
-  localStorage.setItem("productos", JSON.stringify(productos));
-  localStorage.setItem("backendUrl", backendUrl);
-}
-
+// persistence
+function saveAll(){ localStorage.setItem('productos', JSON.stringify(productos)); localStorage.setItem('pedidos', JSON.stringify(pedidos)); localStorage.setItem('pagos', JSON.stringify(pagos)); localStorage.setItem('purchases', JSON.stringify(purchases)); localStorage.setItem('isAdmin', isAdmin ? '1' : ''); }
 function loadAll(){
-  const p = localStorage.getItem("pedidos");
-  const g = localStorage.getItem("pagos");
-  const c = localStorage.getItem("clientes");
-  const pr = localStorage.getItem("productos");
-  const bu = localStorage.getItem("backendUrl");
-
-  if (p) pedidos = JSON.parse(p);
-  if (g) pagos = JSON.parse(g);
-  if (c) clientes = JSON.parse(c);
-  if (pr) productos = JSON.parse(pr);
-  if (bu !== null && bu !== "") backendUrl = bu;
-
-  // asegurar defaults
-  productos.paltas = { ...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas || {}) };
-  productos.champi = { ...DEFAULT_PRODUCTOS.champi, ...(productos.champi || {}) };
-  productos.frutillas = { ...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas || {}) };
-
-  // intentar cargar desde backend si está configurado
-  try {
-    if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
-      cargarPedidosDesdeSheets();
-    }
-  } catch (e) {
-    console.error('Error iniciando carga desde backend:', e);
-  }
+  try{
+    const pr = localStorage.getItem('productos');
+    const p = localStorage.getItem('pedidos');
+    const pay = localStorage.getItem('pagos');
+    const pur = localStorage.getItem('purchases');
+    const adm = localStorage.getItem('isAdmin');
+    if(pr) productos = {...DEFAULT_PRODUCTOS, ...JSON.parse(pr)};
+    if(p) pedidos = JSON.parse(p);
+    if(pay) pagos = JSON.parse(pay);
+    if(pur) purchases = JSON.parse(pur);
+    isAdmin = !!adm;
+  }catch(e){ console.error(e) }
+  productos.paltas = {...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas||{})};
+  productos.champi = {...DEFAULT_PRODUCTOS.champi, ...(productos.champi||{})};
+  productos.frutillas = {...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas||{})};
 }
 
-// Cargar pedidos desde backend (Google Apps Script u otro endpoint)
-// El backend debe aceptar queries como ?action=obtener_pedidos o endpoints POST para crear pedidos/pagos.
-// Ajusta los nombres de acción a tu backend.
-async function cargarPedidosDesdeSheets() {
-  const SCRIPT_URL = (backendUrl && backendUrl.trim()) ? backendUrl.trim() : BACKEND_URL_DEFAULT;
-  if (!SCRIPT_URL || !/^https?:\/\//i.test(SCRIPT_URL)) {
-    console.warn('No hay backendUrl válido para cargar pedidos:', SCRIPT_URL);
-    return;
-  }
-
-  try {
-    const response = await fetch(SCRIPT_URL + '?action=obtener_pedidos', { method: 'GET' });
-    if (!response.ok) {
-      console.warn('Backend respondió con error:', response.status);
-      return;
-    }
-    const result = await response.json();
-    if (result && result.success && Array.isArray(result.pedidos)) {
-      const pedidosSheets = result.pedidos.map(p => ({
-        id: p.ID || String(Date.now()) + Math.random().toString(36).slice(2,8),
-        nombre: p.Nombre ?? p.nombre ?? '',
-        telefono: p.Telefono ?? p.telefono ?? '',
-        items: {
-          paltasKg: parseFloat(p['Paltas (kg)'] ?? p.paltasKg ?? 0) || 0,
-          champiCajas: parseFloat(p['Champiñones (cajas)'] ?? p.champiCajas ?? 0) || 0,
-          frutillasGramos: parseFloat(p['Frutillas (g)'] ?? p.frutillasGramos ?? 0) || 0
-        },
-        total: parseFloat(p.Total ?? 0) || 0,
-        estadoPago: p['Estado Pago'] ?? p.estadoPago ?? 'pendiente',
-        fecha: p.Fecha ?? p.fecha ?? new Date().toISOString(),
-        comentarios: p.Comentarios ?? p.comentarios ?? '',
-        deudaPendiente: parseFloat(p.Total ?? 0) || 0,
-        pagos: p.pagos ?? []
-      }));
-      pedidosSheets.forEach(ps => {
-        if (!pedidos.some(p => p.id === ps.id)) pedidos.push(ps);
-      });
-      rebuildClientesFromPedidos();
-      saveAll();
-      renderAll();
-      console.info('Pedidos cargados desde backend:', pedidosSheets.length);
-    } else {
-      console.info('No pedidos recibidos desde backend o estructura inesperada.', result);
-    }
-  } catch (err) {
-    console.error('Error cargando pedidos desde backend:', err);
-  }
-}
-
-// Reconstruir clientes desde pedidos
+// rebuild helper (not used for customers here)
 function rebuildClientesFromPedidos(){
-  const nuevo = {};
-  pedidos.forEach(p => {
-    const tel = normPhone(p.telefono || '');
-    if (!nuevo[tel]) {
-      nuevo[tel] = { nombre: p.nombre || '', telefono: tel, pedidos: [], deudaTotal: 0, primerPedido: p.fecha, ultimoPedido: p.fecha };
-    }
-    nuevo[tel].pedidos.push(p.id);
-    nuevo[tel].ultimoPedido = p.fecha;
-    const deuda = (p.estadoPago === "pagado") ? 0 : (p.deudaPendiente ?? p.total ?? 0);
-    nuevo[tel].deudaTotal += Number(deuda) || 0;
-  });
-  clientes = nuevo;
+  // optional if needed later
   saveAll();
 }
 
-// UI: aplicar disponibilidad visual
-function applyAvailability(cardId, disponible){
-  const card = $(cardId);
-  if (!card) return;
-  card.classList.toggle('unavailable', !disponible);
-  const tag = card.querySelector('.unavailable-tag');
-  if (!disponible) {
-    if (!tag) {
-      const span = document.createElement('span');
-      span.className = 'unavailable-tag';
-      span.textContent = 'No disponible';
-      card.appendChild(span);
-    }
-  } else {
-    if (tag) tag.remove();
+// Calculation: convert quantity to base unit for comparison
+// We'll use a simple conversion function that returns quantity in base unit of product where base is:
+// - paltas: kg
+// - champi: caja (we will convert g/kg to 'caja' by packGramos if needed for potential inventory calc)
+// - frutillas: grams / block logic (we compute using g)
+function qtyToBase(productKey, qty, unit){
+  const prod = productos[productKey];
+  if(!prod) return 0;
+  // For paltas base kg:
+  if(productKey === 'paltas'){
+    if(unit === 'kg') return qty; // kg
+    if(unit === 'saco') return qty * (prod.sacoKg || 25); // convert sack to kg
+    if(unit === 'g') return qty / 1000;
+    if(unit === 'caja') return qty * 1; // fallback
   }
+  // For champi base we'll keep as 'cajas' for inventory display; convert g/kg to cajas using packGramos
+  if(productKey === 'champi'){
+    if(unit === 'caja') return qty; // number of cajas
+    if(unit === 'g') return qty / (prod.packGramos || 250);
+    if(unit === 'kg') return (qty * 1000) / (prod.packGramos || 250);
+    if(unit === 'saco') return qty * ((prod.sacoKg||25) * 1000 / (prod.packGramos || 250)); // rough
+  }
+  // For frutillas base gram-block; we'll express inventory in grams and blocks
+  if(productKey === 'frutillas'){
+    if(unit === 'g') return qty;
+    if(unit === 'kg') return qty * 1000;
+    if(unit === 'caja') return (qty * (prod.bloqueGramos || 100)); // fallback
+    if(unit === 'saco') return qty * (prod.sacoKg||25) * 1000;
+  }
+  return qty;
 }
 
-// Calcular total de pedido desde items
-function calcTotalFromItems(items) {
+// calcTotalFromItems (as earlier)
+function calcTotalFromItems(items){
   let total = 0;
-  total += (Number(items.paltasKg)||0) * (productos.paltas.precio || DEFAULT_PRODUCTOS.paltas.precio);
-  total += (Number(items.champiCajas)||0) * (productos.champi.precio || DEFAULT_PRODUCTOS.champi.precio);
-  // frutillas precio por bloque: precio * (gramos / bloqueGramos)
-  const bloque = productos.frutillas.bloqueGramos || DEFAULT_PRODUCTOS.frutillas.bloqueGramos;
-  total += ( (Number(items.frutillasGramos)||0) / bloque ) * (productos.frutillas.precio || DEFAULT_PRODUCTOS.frutillas.precio);
+  if(items.paltas && Number(items.paltas.qty)){
+    const q = Number(items.paltas.qty)||0; const u = items.paltas.unit;
+    if(u==='kg') total += q * (productos.paltas.precio||DEFAULT_PRODUCTOS.paltas.precio);
+    else if(u==='saco') total += q * ((productos.paltas.sacoKg||25)*(productos.paltas.precio||DEFAULT_PRODUCTOS.paltas.precio));
+    else if(u==='g') total += (q/1000) * (productos.paltas.precio||DEFAULT_PRODUCTOS.paltas.precio);
+    else total += q * (productos.paltas.precio||DEFAULT_PRODUCTOS.paltas.precio);
+  }
+  if(items.champi && Number(items.champi.qty)){
+    const q = Number(items.champi.qty)||0; const u = items.champi.unit;
+    if(u==='caja') total += q * (productos.champi.precio||DEFAULT_PRODUCTOS.champi.precio);
+    else if(u==='g') total += (q / (productos.champi.packGramos||250)) * (productos.champi.precio||DEFAULT_PRODUCTOS.champi.precio);
+    else if(u==='kg') total += ((q*1000)/(productos.champi.packGramos||250)) * (productos.champi.precio||DEFAULT_PRODUCTOS.champi.precio);
+    else total += q * (productos.champi.precio||DEFAULT_PRODUCTOS.champi.precio);
+  }
+  if(items.frutillas && Number(items.frutillas.qty)){
+    const q = Number(items.frutillas.qty)||0; const u = items.frutillas.unit; const bloque = productos.frutillas.bloqueGramos||100;
+    if(u==='g') total += (q / bloque) * (productos.frutillas.precio||DEFAULT_PRODUCTOS.frutillas.precio);
+    else if(u==='kg') total += ((q*1000) / bloque) * (productos.frutillas.precio||DEFAULT_PRODUCTOS.frutillas.precio);
+    else total += q * (productos.frutillas.precio||DEFAULT_PRODUCTOS.frutillas.precio);
+  }
   return Math.round(total);
 }
 
-// Crear pedido local y (opcional) backend
-async function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin=false }) {
+// Create order (client or admin)
+function crearPedido({nombre,telefono,items,comentarios,creadoPorAdmin=false,paymentMethod='' }){
   const pedido = {
     id: String(Date.now()) + Math.random().toString(36).slice(2,8),
-    nombre: nombre || '',
-    telefono: telefono || '',
-    items,
-    total: calcTotalFromItems(items),
-    estadoPago: 'pendiente',
-    fecha: nowISO(),
-    comentarios: comentarios || '',
-    deudaPendiente: calcTotalFromItems(items),
-    pagos: [],
-    creadoPorAdmin: creadoPorAdmin
+    nombre:nombre||'', telefono:telefono||'', items, total:calcTotalFromItems(items),
+    estadoPago:'pendiente', fecha: nowISO(), comentarios:comentarios||'', deudaPendiente: calcTotalFromItems(items),
+    pagos:[], creadoPorAdmin, paymentMethod
   };
-  pedidos.push(pedido);
-  rebuildClientesFromPedidos();
+  pedidos.unshift(pedido);
   saveAll();
   renderAll();
-
-  // Intentar enviar al backend si está configurado
-  if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
-    try {
-      const payload = { action: 'crear_pedido', pedido };
-      const resp = await fetch(backendUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const r = await resp.json();
-      if (r && r.success) {
-        notify('Pedido creado y sincronizado', false);
-      } else {
-        notify('Pedido creado (no sincronizado)', true);
-        console.warn('Respuesta backend crear_pedido:', r);
-      }
-    } catch (err) {
-      console.error('Error al enviar pedido al backend:', err);
-      notify('Pedido creado (error al sincronizar)', true);
-    }
-  } else {
-    notify('Pedido creado (modo local)', false);
-  }
+  return pedido;
 }
 
-// Enviar pedido desde formulario cliente
-async function handleEnviarPedido(e){
-  const nombre = $('nombre').value.trim();
-  const telefono = normPhone($('telefono').value);
-  if (!nombre || !telefono) {
-    notify('Nombre y teléfono son requeridos', true);
-    return;
-  }
-  const items = {
-    paltasKg: Number($('paltas-input').value) || 0,
-    champiCajas: Number($('champi-input').value) || 0,
-    frutillasGramos: Number($('frutillas-input').value) || 0
-  };
-  if (items.paltasKg===0 && items.champiCajas===0 && items.frutillasGramos===0) {
-    notify('Agrega al menos un producto', true);
-    return;
-  }
-  const comentarios = $('comentarios').value.trim();
-  await crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin:false });
+// Registrar pago
+function registrarPago(pedidoId,{monto,metodo,notas,fecha}){
+  const pedido = pedidos.find(p=>p.id===pedidoId); if(!pedido) return false;
+  const pago = { id:String(Date.now())+Math.random().toString(36).slice(2,8), pedidoId, monto:Number(monto)||0, metodo:metodo||'efectivo', notas:notas||'', fecha:fecha||nowISO() };
+  pagos.unshift(pago); pedido.pagos = pedido.pagos || []; pedido.pagos.push(pago);
+  pedido.deudaPendiente = Math.max(0, Number(pedido.deudaPendiente||pedido.total) - Number(pago.monto||0));
+  if(pedido.deudaPendiente <= 0) pedido.estadoPago = 'pagado'; else if(pedido.deudaPendiente < pedido.total) pedido.estadoPago = 'parcial';
+  saveAll(); renderAll(); return pago;
+}
+function marcarTodoPagado(pedidoId){ const pedido = pedidos.find(p=>p.id===pedidoId); if(!pedido) return false; const monto = Number(pedido.deudaPendiente||pedido.total); if(monto<=0) return false; return registrarPago(pedidoId, {monto,metodo:'transferencia',notas:'Marcado pagado por admin',fecha:nowISO()}); }
 
-  // Si backend se usa también registrar cliente (opcional)
-  if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
-    try {
-      const clientPayload = { action: 'crear_actualizar_cliente', cliente: { nombre, telefono } };
-      await fetch(backendUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(clientPayload) });
-    } catch (err) {
-      console.warn('No se pudo sincronizar cliente al backend:', err);
-    }
-  }
-
-  // Limpiar formulario
-  $('nombre').value = '';
-  $('telefono').value = '';
-  $('paltas-input').value = 0;
-  $('champi-input').value = 0;
-  $('frutillas-input').value = 0;
-  $('comentarios').value = '';
-  $('client-info-container').style.display = 'none';
+// Purchases handling (improved)
+// purchase: {id, prod, qty, unit, costPerUnit, totalCost, remainingQty, fecha}
+function addPurchase(prod, qty, unit, costPerUnit){
+  const totalCost = Math.round(Number(qty || 0) * Number(costPerUnit || 0));
+  const p = { id:String(Date.now())+Math.random().toString(36).slice(2,6), prod, qty:Number(qty)||0, unit, costPerUnit:Number(costPerUnit)||0, totalCost, remainingQty:Number(qty)||0, fecha: nowISO() };
+  purchases.unshift(p);
+  saveAll();
+  renderPurchases();
+  notify('Compra registrada');
+}
+function useFromPurchase(purchaseId, qtyToUse){
+  const purchase = purchases.find(x=>x.id===purchaseId);
+  if(!purchase) return alert('Compra no encontrada');
+  const q = Number(qtyToUse)||0;
+  if(q <= 0) return alert('Cantidad inválida');
+  if(q > purchase.remainingQty) return alert('No hay suficiente cantidad disponible en esta compra');
+  purchase.remainingQty = Math.max(0, purchase.remainingQty - q);
+  saveAll();
+  renderPurchases();
+  notify('Inventario actualizado (consumo registrado)');
 }
 
-// Renders orders table and stats
-function renderOrders(filterText='', paymentFilter='all') {
-  const tbody = $('orders-body');
-  tbody.innerHTML = '';
-  let total = 0, pendientes = 0, pagados = 0, deudaTotal = 0;
+// Inventory summary and finances calculations
+function computeInventorySummary(){
+  // We'll compute per product: totalAvailable (in product's main display unit), totalCostOfAvailable, averageCostPerUnit
+  const summary = {};
+  Object.keys(productos).forEach(k => {
+    summary[k] = { productName: productos[k].nombre, totalAvailableRaw:0, totalCostOfAvailable:0, entries:[] };
+  });
+  purchases.forEach(p => {
+    const prodKey = p.prod;
+    if(!summary[prodKey]) return;
+    // For consolidation we use product-specific unit conversions:
+    // For paltas -> we store available in kg (convert p.remainingQty from its unit to kg using qtyToBase)
+    const availableInBase = qtyToBase(prodKey, p.remainingQty, p.unit); // base: kg for paltas, cajas for champi (approx), grams for frutillas
+    // cost per base unit: if purchase costPerUnit is per its unit, convert to base cost per baseUnit:
+    // costPerBase = costPerUnit * (1 / conversionFactor)
+    // e.g., if p.unit === 'kg' costPerBase = costPerUnit; if p.unit === 'g' costPerBase = costPerUnit * 1000 (then divide by 1000)
+    // We'll convert cost to the base quantity used by qtyToBase above:
+    let costOfAvailable = 0;
+    // costPerBaseUnit = costPerUnit * (unit -> base factor)
+    // To avoid complicated factors, compute costOfAvailable proportionally:
+    // costOfAvailable = (availableInBase / qtyToBase(prodKey, p.qty, p.unit)) * p.totalCost  (if original qty > 0)
+    const originalQtyBase = qtyToBase(prodKey, p.qty, p.unit) || 0;
+    if(originalQtyBase > 0){
+      costOfAvailable = (availableInBase / originalQtyBase) * p.totalCost;
+    } else {
+      costOfAvailable = 0;
+    }
+    summary[prodKey].totalAvailableRaw += availableInBase;
+    summary[prodKey].totalCostOfAvailable += costOfAvailable;
+    summary[prodKey].entries.push({ purchaseId: p.id, remainingInBase: availableInBase, costOfAvailable });
+  });
+  // Add derived values like potentialRevenue and profit using current selling price and units
+  Object.keys(summary).forEach(k=>{
+    const s = summary[k];
+    const prod = productos[k];
+    // Determine sellable quantity in same base used above:
+    // For paltas: base is kg -> s.totalAvailableRaw in kg -> potential revenue = kg * selling price per kg
+    // For champi: base is 'caja' count -> s.totalAvailableRaw is count of cajas -> potential revenue = cajas * price per caja
+    // For frutillas: s.totalAvailableRaw in grams -> determine blocks = grams / bloqueGramos, potential revenue = blocks * price
+    let potentialRevenue = 0, potentialProfit = 0, avgCostPerBase = 0;
+    if(k === 'paltas'){
+      const availableKg = s.totalAvailableRaw;
+      potentialRevenue = availableKg * (prod.precio || 0);
+      const cost = s.totalCostOfAvailable || 0;
+      potentialProfit = potentialRevenue - cost;
+      avgCostPerBase = (availableKg > 0) ? (cost / availableKg) : 0; // cost per kg
+    } else if(k === 'champi'){
+      const availableCajas = s.totalAvailableRaw;
+      potentialRevenue = availableCajas * (prod.precio || 0);
+      const cost = s.totalCostOfAvailable || 0;
+      potentialProfit = potentialRevenue - cost;
+      avgCostPerBase = (availableCajas > 0) ? (cost / availableCajas) : 0; // cost per caja
+    } else if(k === 'frutillas'){
+      const availableGr = s.totalAvailableRaw;
+      const bloque = prod.bloqueGramos || 100;
+      const bloques = availableGr / bloque;
+      potentialRevenue = bloques * (prod.precio || 0);
+      const cost = s.totalCostOfAvailable || 0;
+      potentialProfit = potentialRevenue - cost;
+      avgCostPerBase = (availableGr > 0) ? (cost / (availableGr/1000)) : 0; // cost per kg approx
+    }
+    s.potentialRevenue = Math.round(potentialRevenue);
+    s.potentialProfit = Math.round(potentialProfit);
+    s.avgCostPerBase = avgCostPerBase;
+  });
+  return summary;
+}
 
-  const rows = pedidos
-    .filter(p => {
-      if (!filterText) return true;
-      const ft = filterText.toLowerCase();
-      return (p.nombre||'').toLowerCase().includes(ft) || (p.telefono||'').toLowerCase().includes(ft);
-    })
-    .filter(p => {
-      if (paymentFilter === 'all') return true;
-      if (paymentFilter === 'pendiente') return p.estadoPago === 'pendiente';
-      if (paymentFilter === 'parcial') return p.estadoPago === 'parcial';
-      if (paymentFilter === 'pagado') return p.estadoPago === 'pagado';
-      return true;
+// Render purchases list and inventory summary
+function renderPurchases(){
+  const list = $('purchases-list'); list.innerHTML = '';
+  purchases.forEach(p=>{
+    const div = document.createElement('div'); div.className = 'list-item';
+    div.innerHTML = `<div>
+      <div><strong>${escapeHTML(productos[p.prod]?.nombre || p.prod)}</strong> • ${p.qty} ${escapeHTML(p.unit)}</div>
+      <div class="muted small">Costo unit: ${money(p.costPerUnit)} • Total: ${money(p.totalCost)} • restante: ${p.remainingQty} ${escapeHTML(p.unit)}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+      <button class="btn gray" data-action="use" data-id="${p.id}" style="padding:6px 8px">Usar</button>
+      <div class="muted small">${new Date(p.fecha).toLocaleString()}</div>
+    </div>`;
+    list.appendChild(div);
+  });
+
+  // attach use buttons
+  list.querySelectorAll('button[data-action="use"]').forEach(btn=>{
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const qty = prompt('Cantidad a consumir (en la misma unidad de la compra):', '1');
+      if(qty === null) return;
+      const qnum = Number(qty);
+      if(isNaN(qnum) || qnum <= 0) return alert('Cantidad inválida');
+      useFromPurchase(id, qnum);
     });
+  });
 
-  rows.forEach(p => {
-    total++;
-    if (p.estadoPago === 'pagado') pagados++; else pendientes++;
-    deudaTotal += Number(p.deudaPendiente || 0);
+  // inventory summary
+  const inv = computeInventorySummary();
+  const invList = $('inventory-list'); invList.innerHTML = '';
+  Object.keys(inv).forEach(k=>{
+    const s = inv[k];
+    // Display different units nicely:
+    let availLabel = '';
+    if(k === 'paltas') availLabel = `${Math.round((s.totalAvailableRaw + Number.EPSILON)*100)/100} kg`;
+    else if(k === 'champi') availLabel = `${Math.round((s.totalAvailableRaw + Number.EPSILON)*100)/100} caja(s)`;
+    else if(k === 'frutillas') availLabel = `${Math.round(s.totalAvailableRaw)} g`;
+    const div = document.createElement('div'); div.className='list-item';
+    div.innerHTML = `<div>
+      <div><strong>${escapeHTML(s.productName)}</strong> • Disponible: <span class="badge">${escapeHTML(availLabel)}</span></div>
+      <div class="muted small">Costo disponible: ${money(Math.round(s.totalCostOfAvailable||0))} • Ingreso potencial: ${money(s.potentialRevenue||0)} • Ganancia potencial: ${money(s.potentialProfit||0)}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+      <div class="muted small">Costo medio por base: ${s.avgCostPerBase ? money(Math.round(s.avgCostPerBase)) : '-'}</div>
+    </div>`;
+    invList.appendChild(div);
+  });
 
+  // update totals (cost, sales, profit realized)
+  const totalCost = purchases.reduce((sum,p)=>sum + Number(p.totalCost||0), 0);
+  const totalSales = pedidos.reduce((s,p)=>s + Number(p.total||0), 0);
+  const profitRealized = totalSales - totalCost; // crude realized profit if you consider all sales costed by purchases (simple)
+  $('fin-total-cost').textContent = money(totalCost);
+  $('fin-total-sales').textContent = money(totalSales);
+  $('fin-profit').textContent = money(profitRealized);
+}
+
+// ---------- Rendering product grid and orders ----------
+function renderProductGrid(){
+  const grid = $('product-grid'); grid.innerHTML = '';
+  Object.keys(productos).forEach(key=>{
+    const prod = productos[key];
+    if(!prod.disponible) return;
+    const el = document.createElement('div'); el.className = 'product-card';
+    const step = (prod.baseUnit === 'g') ? 100 : 1;
+    el.innerHTML = `
+      <div class="product-name">${escapeHTML(prod.nombre)}</div>
+      <div class="product-meta">Unidad: <strong>${escapeHTML(prod.baseUnit)}</strong> • Precio venta: <strong>${money(prod.precio)}</strong></div>
+      <div style="display:flex;gap:8px">
+        <input type="number" min="0" step="${step}" value="${prod.baseUnit === 'kg' ? 1 : 0}" data-product="${key}" class="client-qty" aria-label="Cantidad ${escapeHTML(prod.nombre)}">
+      </div>
+    `;
+    grid.appendChild(el);
+  });
+}
+
+function renderOrders(filterText='', paymentFilter='all'){
+  const tbody = $('orders-body'); tbody.innerHTML = '';
+  const ft = (filterText||'').toLowerCase();
+  pedidos.forEach(p=>{
+    if(ft){
+      const found = (p.nombre||'').toLowerCase().includes(ft) || (p.telefono||'').toLowerCase().includes(ft);
+      if(!found) return;
+    }
+    if(paymentFilter && paymentFilter!=='all'){
+      if(paymentFilter==='moroso'){
+        const dias = (Date.now() - new Date(p.fecha).getTime())/(1000*60*60*24);
+        if(!(p.deudaPendiente>0 && dias>30)) return;
+      } else {
+        if(p.estadoPago !== paymentFilter) return;
+      }
+    }
+    const lines = [];
+    if(p.items.paltas && Number(p.items.paltas.qty)) lines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML(productos.paltas.nombre)}`);
+    if(p.items.champi && Number(p.items.champi.qty)) lines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML(productos.champi.nombre)}`);
+    if(p.items.frutillas && Number(p.items.frutillas.qty)) lines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML(productos.frutillas.nombre)}`);
     const tr = document.createElement('tr');
-    const products = [];
-    if ((p.items.paltasKg||0)>0) products.push(`${p.items.paltasKg} kg paltas`);
-    if ((p.items.champiCajas||0)>0) products.push(`${p.items.champiCajas} cajas champi`);
-    if ((p.items.frutillasGramos||0)>0) products.push(`${p.items.frutillasGramos} g frutillas`);
-
     tr.innerHTML = `
-      <td>${escapeHTML(p.nombre)}</td>
+      <td><strong>${escapeHTML(p.nombre)}</strong></td>
       <td>${escapeHTML(p.telefono)}</td>
-      <td>${escapeHTML(products.join(', '))}</td>
+      <td class="orders-products">${lines.join('<br>')}</td>
+      <td>${escapeHTML(p.comentarios||'')}</td>
       <td>${money(p.total)}</td>
-      <td><span class="payment-status ${p.estadoPago==='pagado'?'payment-pagado':'payment-pendiente'}">${escapeHTML(p.estadoPago)}</span></td>
+      <td><strong>${escapeHTML(p.estadoPago.toUpperCase())}</strong><div class="muted small">Pendiente: ${money(p.deudaPendiente||0)}</div></td>
       <td>${new Date(p.fecha).toLocaleString()}</td>
-      <td>
-        <button class="action-btn btn-pay" data-action="open-payment" data-id="${p.id}"><i class="fas fa-money-bill-wave"></i> Pagar</button>
-        <button class="action-btn btn-gray" data-action="view" data-id="${p.id}"><i class="fas fa-eye"></i> Ver</button>
-        <button class="action-btn btn-del" data-action="delete" data-id="${p.id}"><i class="fas fa-trash"></i> Eliminar</button>
+      <td class="actions" style="text-align:right">
+        <div class="order-actions">
+          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}" title="Registrar pago"><i class="fas fa-money-bill-wave"></i></button>
+          <button class="icon-btn icon-view" data-action="view" data-id="${p.id}" title="Ver pedido"><i class="fas fa-eye"></i></button>
+          <button class="icon-btn icon-delete" data-action="delete" data-id="${p.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
   });
-
-  $('stat-total-pedidos').textContent = total;
-  $('stat-pendientes').textContent = pendientes;
-  $('stat-pagados').textContent = pagados;
-  $('stat-deuda').textContent = money(deudaTotal);
 }
 
-// Render deudores
-function renderDebtors() {
-  const container = $('debtors-list');
-  container.innerHTML = '';
-  const list = Object.values(clientes).filter(c => c.deudaTotal > 0);
-  $('global-debt').textContent = money(list.reduce((s,c)=>s+c.deudaTotal,0));
-  $('global-debtors').textContent = list.length;
-  $('global-morosos').textContent = list.filter(c => {
-    const days = Math.floor((Date.now() - new Date(c.ultimoPedido).getTime())/(1000*60*60*24));
-    return days > DIAS_MOROSIDAD;
-  }).length;
+// Delegated actions (orders)
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-action]');
+  if(!btn) return;
+  const action = btn.getAttribute('data-action'); const id = btn.getAttribute('data-id');
+  if(action === 'open-pay') openPaymentModal(id);
+  if(action === 'view') viewPedidoDetails(id);
+  if(action === 'delete'){ if(confirm('Eliminar pedido?')){ pedidos = pedidos.filter(p=>p.id !== id); saveAll(); renderAll(); notify('Pedido eliminado'); } }
+});
 
-  list.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.style.marginBottom = '8px';
-    div.style.padding = '10px';
-    div.innerHTML = `<strong>${escapeHTML(c.nombre)} — ${escapeHTML(c.telefono)}</strong>
-      <div>Deuda: <span style="font-weight:900; color:#d32f2f">${money(c.deudaTotal)}</span></div>
-      <div style="font-size:.9rem;color:#666">Último pedido: ${new Date(c.ultimoPedido).toLocaleString()}</div>
-      <div style="margin-top:6px"><button class="btn btn-blue" data-action="open-client-pay" data-tel="${escapeHTML(c.telefono)}">Gestionar pago</button></div>`;
-    container.appendChild(div);
+// Payment modal & order details
+function viewPedidoDetails(id){ const p = pedidos.find(x=>x.id===id); if(!p) return notify('Pedido no encontrado'); let s = `Pedido: ${p.nombre}\nTel: ${p.telefono}\nFecha: ${new Date(p.fecha).toLocaleString()}\nProductos:\n`; if(p.items.paltas && p.items.paltas.qty) s += ` - ${p.items.paltas.qty} ${p.items.paltas.unit} ${productos.paltas.nombre}\n`; if(p.items.champi && p.items.champi.qty) s += ` - ${p.items.champi.qty} ${p.items.champi.unit} ${productos.champi.nombre}\n`; if(p.items.frutillas && p.items.frutillas.qty) s += ` - ${p.items.frutillas.qty} ${p.items.frutillas.unit} ${productos.frutillas.nombre}\n`; s += `Total: ${money(p.total)}\nPendiente: ${money(p.deudaPendiente)}\nComentarios: ${p.comentarios||'-'}`; alert(s); }
+
+function openPaymentModal(pedidoId){ const p = pedidos.find(x=>x.id===pedidoId); if(!p) return notify('Pedido no encontrado'); currentPaymentPedidoId = pedidoId; $('payment-client-info').textContent = `${p.nombre} (${p.telefono}) — ${new Date(p.fecha).toLocaleString()}`; $('payment-amount').value = Math.min(p.deudaPendiente || p.total || 0, p.deudaPendiente || p.total || 0); $('payment-notes').value = ''; $('payment-history-container').style.display = 'none'; renderPaymentHistoryForPedido(pedidoId); showModal('payment-modal'); }
+function renderPaymentHistoryForPedido(pedidoId){ const p = pedidos.find(x=>x.id===pedidoId); const cont = $('modal-payment-history'); cont.innerHTML = ''; if(!p || !p.pagos || p.pagos.length===0){ cont.textContent = 'No hay pagos registrados'; return; } p.pagos.slice().reverse().forEach(pa=>{ const div = document.createElement('div'); div.style.display='flex'; div.style.justifyContent='space-between'; div.style.padding='6px 0'; div.innerHTML = `<div>${new Date(pa.fecha).toLocaleString()} <span class="muted small">(${pa.metodo})</span></div><div style="font-weight:700">${money(pa.monto)}</div>`; cont.appendChild(div); }); }
+
+// Modal helpers
+function showModal(id){ const el = $(id); if(!el) return; el.classList.add('show'); el.style.display = 'flex'; }
+function hideModal(id){ const el = $(id); if(!el) return; el.classList.remove('show'); el.style.display = 'none'; }
+
+// Products admin rendering and save/reset
+function renderProductsAdmin(){
+  const container = $('products-admin'); container.innerHTML = '';
+  Object.keys(productos).forEach(k=>{
+    const p = productos[k];
+    const row = document.createElement('div'); row.className = 'prod-admin-row';
+    row.innerHTML = `<input id="cfg-${k}-name" value="${escapeHTML(p.nombre)}">
+      <input id="cfg-${k}-price" type="number" value="${p.precio}">
+      <select id="cfg-${k}-baseunit"><option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option></select>
+      <select id="cfg-${k}-avail" class="avail"><option value="true">Disponible</option><option value="false">No</option></select>`;
+    container.appendChild(row);
+    $(`cfg-${k}-baseunit`).value = p.baseUnit || 'kg';
+    $(`cfg-${k}-avail`).value = p.disponible ? 'true' : 'false';
   });
 }
 
-// Mostrar info cliente cuando escriben teléfono en formulario
-async function checkClientByPhone(rawPhone) {
-  const tel = normPhone(rawPhone);
-  if (!tel) {
-    $('client-info-container').style.display = 'none';
-    return;
-  }
-  const c = clientes[tel];
-  if (c) {
-    $('phone-warning').style.display = 'block';
-    $('client-info-container').style.display = 'block';
-    $('client-debt-total').textContent = money(c.deudaTotal || 0);
-    const ph = $('client-payment-history');
-    ph.innerHTML = `<div>Pedidos: ${c.pedidos.length}</div>`;
-    return;
-  } else {
-    $('phone-warning').style.display = 'none';
-    $('client-info-container').style.display = 'none';
-  }
+// Purchases UI wiring (Add purchase + render)
+function setupListeners(){
+  // Enviar pedido (cliente)
+  $('enviar-pedido').addEventListener('click', ()=>{
+    const nombre = $('nombre').value.trim(); const telefono = $('telefono').value.trim();
+    if(!nombre || !telefono) return alert('Nombre y teléfono son requeridos');
+    const items = {};
+    document.querySelectorAll('.client-qty').forEach(input=>{
+      const key = input.getAttribute('data-product'); const qty = Number(input.value) || 0;
+      if(qty > 0) items[key] = { qty, unit: productos[key].baseUnit || 'kg' };
+    });
+    if(Object.keys(items).length === 0) return alert('Selecciona al menos un producto');
+    const comentarios = $('comentarios').value.trim();
 
-  // Intentar buscar en backend si está configurado
-  if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
-    try {
-      const resp = await fetch(backendUrl + `?action=buscar_cliente&telefono=${encodeURIComponent(tel)}`, { method: 'GET' });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      if (data && data.success && data.cliente) {
-        const cliente = data.cliente;
-        $('phone-warning').style.display = 'block';
-        $('client-info-container').style.display = 'block';
-        $('client-debt-total').textContent = money(cliente.deudaTotal || 0);
-        $('client-payment-history').innerHTML = `<div>Último: ${cliente.ultimoPedido || ''}</div>`;
-      }
-    } catch (err) {
-      console.warn('Error buscando cliente en backend:', err);
-    }
-  }
-}
+    const summaryItemsEl = $('summary-items'); summaryItemsEl.innerHTML = '';
+    Object.keys(items).forEach(k=>{
+      const p = productos[k];
+      const partial = {}; partial[k] = items[k];
+      const subtotal = calcTotalFromItems(partial);
+      const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.padding='6px 0';
+      row.innerHTML = `<div>${items[k].qty} ${items[k].unit} ${escapeHTML(p.nombre)}</div><div style="font-weight:800">${money(subtotal)}</div>`;
+      summaryItemsEl.appendChild(row);
+    });
+    if(comentarios){ const c = document.createElement('div'); c.className='muted small'; c.style.marginTop='8px'; c.textContent = 'Comentarios / Despacho: ' + comentarios; summaryItemsEl.appendChild(c); }
+    const total = calcTotalFromItems(items); $('summary-total').textContent = money(total);
+    $('summary-payment-method').value = 'efectivo'; $('summary-transfer-details').style.display = 'none';
+    showModal('order-summary-modal');
 
-// Helpers para mostrar/ocultar modales
-function showModal(id) {
-  const m = $(id);
-  if (m) m.style.display = 'flex';
-}
-function hideModal(id) {
-  const m = $(id);
-  if (m) m.style.display = 'none';
-}
+    // rewire confirm/reject safely
+    const confirmOld = $('confirm-order'); const confirmNew = confirmOld.cloneNode(true); confirmOld.parentNode.replaceChild(confirmNew, confirmOld);
+    const rejectOld = $('reject-order'); const rejectNew = rejectOld.cloneNode(true); rejectOld.parentNode.replaceChild(rejectNew, rejectOld);
+    const methodOld = $('summary-payment-method'); const methodNew = methodOld.cloneNode(true); methodOld.parentNode.replaceChild(methodNew, methodOld);
 
-// Inicializar listeners
-function initListeners() {
-  // quantity buttons (delegación)
-  document.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('.quantity-btn');
-    if (btn) {
-      const targetId = btn.dataset.target;
-      const action = btn.dataset.action;
-      const input = $(targetId);
-      if (!input) return;
-      let val = Number(input.value) || 0;
-      const step = Number(input.step) || 1;
-      if (action === 'increase') val += step;
-      else if (action === 'decrease') val = Math.max(0, val - step);
-      input.value = val;
-      return;
-    }
-
-    // admin open login
-    if (ev.target.closest('#admin-login-link')) {
-      showModal('login-modal');
-      return;
-    }
-
-    // close modals
-    const closeLogin = ev.target.closest('#close-login');
-    if (closeLogin) hideModal('login-modal');
-    const closeAdd = ev.target.closest('#close-add-order');
-    if (closeAdd) hideModal('add-order-modal');
-    const closeCompras = ev.target.closest('#close-compras');
-    if (closeCompras) hideModal('compras-modal');
-    const closePayment = ev.target.closest('#close-payment');
-    if (closePayment) hideModal('payment-modal');
-
-    // admin controls
-    if (ev.target.closest('#add-order-btn')) { showModal('add-order-modal'); return; }
-    if (ev.target.closest('#compras-btn')) { updateSummary(); showModal('compras-modal'); return; }
-    if (ev.target.closest('#export-btn')) { exportCSV(); return; }
-    if (ev.target.closest('#refresh-btn')) { renderAll(); notify('Actualizado', false); return; }
-    if (ev.target.closest('#logout-btn')) { doLogout(); return; }
-
-    if (ev.target.closest('#save-products-btn')) { saveProductConfigs(); return; }
-    if (ev.target.closest('#reset-products-btn')) { resetProductConfigs(); return; }
-
-    if (ev.target.closest('#save-settings-btn')) { saveSettings(); return; }
-    if (ev.target.closest('#clear-local-btn')) {
-      if (confirm('Borrar datos locales?')) {
-        localStorage.clear();
-        pedidos = []; pagos = []; clientes = {}; productos = structuredClone(DEFAULT_PRODUCTOS);
-        saveAll();
-        renderAll();
-        notify('Datos locales borrados', false);
-      }
-      return;
-    }
-
-    if (ev.target.closest('#enviar-pedido')) { handleEnviarPedido(); return; }
-    if (ev.target.closest('#admin-enviar-pedido')) { handleAdminCreateOrder(); return; }
-    if (ev.target.closest('#print-compras')) { window.print(); return; }
-
-    // orders table actions (delegación)
-    const actionBtn = ev.target.closest('[data-action]');
-    if (actionBtn) {
-      const action = actionBtn.dataset.action;
-      const id = actionBtn.dataset.id;
-      if (action === 'open-payment') openPaymentModal(id);
-      else if (action === 'delete') {
-        if (confirm('Eliminar pedido?')) {
-          pedidos = pedidos.filter(p => p.id !== id);
-          rebuildClientesFromPedidos();
-          saveAll();
-          renderAll();
-        }
-      } else if (action === 'view') {
-        const p = pedidos.find(x => x.id === id);
-        if (p) {
-          alert(`Pedido de ${p.nombre}\nTel: ${p.telefono}\nTotal: ${money(p.total)}\nProductos: ${JSON.stringify(p.items)}`);
-        }
-      } else if (action === 'open-client-pay') {
-        const tel = actionBtn.dataset.tel;
-        openPaymentModalForPhone(tel);
-      }
-      return;
-    }
-
-    // export deudores
-    if (ev.target.closest('#export-debt-btn')) { exportDebtorsCSV(); return; }
+    methodNew.addEventListener('change', ()=> { if(methodNew.value === 'transferencia') $('summary-transfer-details').style.display = 'block'; else $('summary-transfer-details').style.display = 'none'; });
+    confirmNew.addEventListener('click', ()=>{ crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin:false, paymentMethod: methodNew.value }); hideModal('order-summary-modal'); notify('Pedido enviado'); document.querySelectorAll('.client-qty').forEach(i=>{ if(i.getAttribute('data-product')==='paltas') i.value = 1; else i.value = 0; }); $('nombre').value=''; $('telefono').value=''; $('comentarios').value=''; });
+    rejectNew.addEventListener('click', ()=> hideModal('order-summary-modal'));
   });
 
-  // login modal
-  $('login-btn').addEventListener('click', () => {
-    const email = $('admin-email').value.trim();
-    const pwd = $('admin-password').value;
-    if (email === 'admin@valledor.com' && pwd === 'admin123') {
-      isAdmin = true; adminEmail = email;
-      hideModal('login-modal');
-      $('admin-container').style.display = 'block';
-      $('solicitante-form').style.display = 'none';
-      notify('Bienvenido administrador', false);
-      renderAll();
-    } else {
-      $('login-error').style.display = 'block';
-      setTimeout(()=> $('login-error').style.display = 'none', 3000);
-    }
+  // Admin login
+  $('admin-login-link').addEventListener('click', ()=> showModal('login-modal'));
+  $('close-login').addEventListener('click', ()=> hideModal('login-modal'));
+  $('cancel-login').addEventListener('click', ()=> hideModal('login-modal'));
+  $('login-btn').addEventListener('click', ()=> {
+    const email = $('admin-email').value.trim(); const pass = $('admin-password').value;
+    if(email === 'admin@valledor.com' && pass === 'admin123'){ isAdmin = true; localStorage.setItem('isAdmin','1'); hideModal('login-modal'); $('admin-email').value=''; $('admin-password').value=''; $('admin-container').style.display = 'block'; notify('Acceso admin'); renderAll(); } else { $('login-error').style.display='block'; setTimeout(()=> $('login-error').style.display='none',2000); }
   });
+  $('logout-btn').addEventListener('click', ()=> { isAdmin=false; localStorage.removeItem('isAdmin'); $('admin-container').style.display='none'; notify('Sesión cerrada'); });
 
-  // telefono blur para chequear cliente
-  $('telefono').addEventListener('blur', (e) => checkClientByPhone(e.target.value));
+  // Search / filter
+  $('search-input').addEventListener('input', e => renderOrders(e.target.value || '', $('payment-filter').value || 'all'));
+  $('payment-filter').addEventListener('change', ()=> renderOrders($('search-input').value || '', $('payment-filter').value || 'all'));
 
-  // admin tabs
-  document.querySelectorAll('.admin-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      const tabName = tab.dataset.tab;
-      document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-      const cont = $(`${tabName}-tab`);
-      if (cont) cont.classList.add('active');
+  // Add order admin (modal) - small flow for manual creation
+  $('add-order-btn').addEventListener('click', ()=>{
+    if(!isAdmin) return notify('Debes iniciar sesi��n como admin');
+    const wrapper = document.createElement('div'); wrapper.className='modal show'; wrapper.style.display='flex';
+    const box = document.createElement('div'); box.className='modal-box';
+    box.innerHTML = `<span class="close-modal tmp-close">&times;</span><h3>Agregar pedido (admin)</h3>
+      <div style="display:flex;gap:8px;margin-top:8px"><input id="tmp-name" placeholder="Nombre" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px"><input id="tmp-tel" placeholder="Teléfono" style="width:180px;padding:8px;border:1px solid #ddd;border-radius:6px"></div>
+      <div id="tmp-products" style="margin-top:10px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px"><button id="tmp-create" class="btn">Crear</button><button id="tmp-cancel" class="btn gray">Cancelar</button></div>`;
+    wrapper.appendChild(box); document.body.appendChild(wrapper);
+    box.querySelector('.tmp-close').addEventListener('click', ()=> wrapper.remove());
+    box.querySelector('#tmp-cancel').addEventListener('click', ()=> wrapper.remove());
+    const tp = box.querySelector('#tmp-products');
+    Object.keys(productos).forEach(k=>{
+      const p = productos[k];
+      const row = document.createElement('div'); row.style.display='flex'; row.style.gap='8px'; row.style.marginTop='8px';
+      row.innerHTML = `<div style="width:160px"><strong>${escapeHTML(p.nombre)}</strong></div>
+        <select id="tmp-${k}-unit" style="padding:8px;border-radius:6px;border:1px solid #ddd"><option value="${p.baseUnit}">${p.baseUnit}</option><option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option></select>
+        <input id="tmp-${k}-qty" type="number" min="0" step="1" placeholder="Cantidad" style="width:120px;padding:8px;border:1px solid #ddd;border-radius:6px">`;
+      tp.appendChild(row);
+    });
+    box.querySelector('#tmp-create').addEventListener('click', ()=>{
+      const nombre = box.querySelector('#tmp-name').value.trim(); const telefono = box.querySelector('#tmp-tel').value.trim();
+      if(!nombre || !telefono) return alert('Nombre y teléfono requeridos');
+      const items = {};
+      Object.keys(productos).forEach(k=>{
+        const q = Number(box.querySelector(`#tmp-${k}-qty`).value) || 0; const u = box.querySelector(`#tmp-${k}-unit`).value || productos[k].baseUnit;
+        if(q>0) items[k] = { qty: q, unit: u };
+      });
+      if(Object.keys(items).length===0) return alert('Añade al menos un producto');
+      crearPedido({ nombre, telefono, items, comentarios:'Creado por admin', creadoPorAdmin:true });
+      wrapper.remove();
+      notify('Pedido creado (admin)');
     });
   });
 
-  // search / filters
-  $('search-input').addEventListener('input', e => renderOrders(e.target.value, $('payment-filter').value));
-  $('payment-filter').addEventListener('change', e => renderOrders($('search-input').value, e.target.value));
-}
+  // Export CSV
+  $('export-btn').addEventListener('click', ()=>{ const rows = buildOrdersCSV(); exportCSV('pedidos.csv', rows); notify('CSV exportado'); });
 
-// Admin create order (using modal fields)
-async function handleAdminCreateOrder() {
-  const nombre = $('admin-nombre').value.trim();
-  const telefono = normPhone($('admin-telefono').value);
-  if (!nombre || !telefono) { notify('Nombre y teléfono son requeridos', true); return; }
-  const items = {
-    paltasKg: Number($('admin-paltas-input').value) || 0,
-    champiCajas: Number($('admin-champi-input').value) || 0,
-    frutillasGramos: Number($('admin-frutillas-input').value) || 0
-  };
-  const comentarios = $('admin-comentarios').value.trim();
-  await crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin:true });
-  hideModal('add-order-modal');
-  $('admin-nombre').value = ''; $('admin-telefono').value = ''; $('admin-paltas-input').value = 0; $('admin-champi-input').value = 0; $('admin-frutillas-input').value = 0; $('admin-comentarios').value = '';
-}
+  // Refresh
+  $('refresh-btn').addEventListener('click', ()=>{ renderAll(); notify('Vista actualizada'); });
 
-// Payment modal management
-let currentPaymentTargetId = null; // pedido id or telefono
-function openPaymentModal(pedidoId) {
-  const p = pedidos.find(x => x.id === pedidoId);
-  if (!p) { notify('Pedido no encontrado', true); return; }
-  currentPaymentTargetId = pedidoId;
-  $('payment-client-info').innerHTML = `<strong>${escapeHTML(p.nombre)}</strong> — ${escapeHTML(p.telefono)}<div style="margin-top:6px">Deuda: ${money(p.deudaPendiente)}</div>`;
-  $('modal-debt-amount').textContent = money(p.deudaPendiente || 0);
-  $('payment-amount').value = '';
-  $('payment-notes').value = '';
-  $('payment-history-container').style.display = 'none';
-  showModal('payment-modal');
-}
+  // Products admin save/reset
+  $('save-products-btn').addEventListener('click', ()=>{ Object.keys(productos).forEach(k=>{ productos[k].nombre = $(`cfg-${k}-name`).value || productos[k].nombre; productos[k].precio = Number($(`cfg-${k}-price`).value) || productos[k].precio; productos[k].baseUnit = $(`cfg-${k}-baseunit`).value || productos[k].baseUnit; productos[k].disponible = $(`cfg-${k}-avail`).value === 'true'; }); saveAll(); renderAll(); notify('Productos guardados'); });
+  $('reset-products-btn').addEventListener('click', ()=>{ if(!confirm('Resetear productos a por defecto?')) return; productos = structuredClone(DEFAULT_PRODUCTOS); saveAll(); renderAll(); notify('Productos restaurados'); });
 
-function openPaymentModalForPhone(telefono) {
-  // buscar primer pedido con deuda para ese telefono
-  const p = pedidos.find(x => normPhone(x.telefono) === normPhone(telefono) && (Number(x.deudaPendiente)||0) > 0);
-  if (p) openPaymentModal(p.id);
-  else notify('No se encontró pedido con deuda para este teléfono', true);
-}
-
-$('register-payment').addEventListener('click', async () => {
-  const amt = Number($('payment-amount').value) || 0;
-  if (amt <= 0) { notify('Monto inválido', true); return; }
-  if (!currentPaymentTargetId) { notify('No hay pedido seleccionado', true); return; }
-  const pedido = pedidos.find(p => p.id === currentPaymentTargetId);
-  if (!pedido) { notify('Pedido no encontrado', true); return; }
-  // registrar pago local
-  const pago = { id: String(Date.now()) + Math.random().toString(36).slice(2,8), pedidoId: pedido.id, monto: amt, metodo: $('payment-method').value, notas: $('payment-notes').value, fecha: nowISO() };
-  pagos.push(pago);
-  pedido.pagos = pedido.pagos || [];
-  pedido.pagos.push(pago);
-  pedido.deudaPendiente = Math.max(0, (pedido.deudaPendiente || pedido.total) - amt);
-  if (pedido.deudaPendiente === 0) pedido.estadoPago = 'pagado'; else pedido.estadoPago = 'parcial';
-  rebuildClientesFromPedidos();
-  saveAll();
-  renderAll();
-  notify('Pago registrado', false);
-  hideModal('payment-modal');
-
-  // intentar enviar pago al backend
-  if (backendUrl && /^https?:\/\//i.test(backendUrl)) {
-    try {
-      await fetch(backendUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'registrar_pago', pago })});
-    } catch (err) {
-      console.warn('No se pudo sincronizar pago al backend:', err);
-    }
-  }
-});
-
-$('mark-as-paid').addEventListener('click', async () => {
-  if (!currentPaymentTargetId) return notify('No hay pedido seleccionado', true);
-  const pedido = pedidos.find(p => p.id === currentPaymentTargetId);
-  if (!pedido) return;
-  pedido.estadoPago = 'pagado';
-  pedido.deudaPendiente = 0;
-  saveAll();
-  rebuildClientesFromPedidos();
-  renderAll();
-  hideModal('payment-modal');
-  notify('Pedido marcado como pagado', false);
-});
-
-// Export CSV (pedidos)
-function exportCSV(){
-  const rows = [['id','nombre','telefono','total','estadoPago','fecha','comentarios']];
-  pedidos.forEach(p => rows.push([p.id, p.nombre, p.telefono, p.total, p.estadoPago, p.fecha, p.comentarios]));
-  const csv = rows.map(r => r.map(cell => `"${String(cell||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-// Export deudores CSV
-function exportDebtorsCSV(){
-  const rows = [['telefono','nombre','deudaTotal','pedidos']];
-  Object.values(clientes).filter(c=>c.deudaTotal>0).forEach(c =>{
-    rows.push([c.telefono, c.nombre, c.deudaTotal, c.pedidos.join(';')]);
+  // Purchases listeners
+  $('add-purchase-btn').addEventListener('click', ()=> {
+    const prod = $('fin-prod').value; const qty = Number($('fin-qty').value) || 0; const unit = $('fin-unit').value; const price = Number($('fin-price').value) || 0;
+    if(!qty || !price) return alert('Cantidad y precio son requeridos');
+    addPurchase(prod, qty, unit, price);
   });
-  const csv = rows.map(r => r.map(cell => `"${String(cell||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `deudores_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  $('clear-purchases-btn').addEventListener('click', ()=> { if(!confirm('Limpiar compras?')) return; purchases = []; saveAll(); renderPurchases(); notify('Compras limpiadas'); });
+
+  // Payments modal
+  $('close-payment').addEventListener('click', ()=> hideModal('payment-modal'));
+  $('register-payment').addEventListener('click', ()=> {
+    if(!currentPaymentPedidoId) return notify('Seleccione pedido'); const monto = Number($('payment-amount').value) || 0; const metodo = $('payment-method').value; const notas = $('payment-notes').value.trim();
+    if(monto<=0) return alert('Ingrese monto válido'); registrarPago(currentPaymentPedidoId,{monto,metodo,notas,fecha:nowISO()}); renderPaymentHistoryForPedido(currentPaymentPedidoId); notify('Pago registrado');
+  });
+  $('mark-as-paid').addEventListener('click', ()=> { if(!currentPaymentPedidoId) return notify('Seleccione pedido'); if(!confirm('Marcar todo como pagado?')) return; marcarTodoPagado(currentPaymentPedidoId); notify('Marcado pagado'); });
+  $('toggle-payment-history').addEventListener('click', ()=> { const el = $('payment-history-container'); el.style.display = (el.style.display==='block') ? 'none' : 'block'; if(el.style.display==='block') renderPaymentHistoryForPedido(currentPaymentPedidoId); });
+
+  // Order summary modal close
+  $('close-order-summary').addEventListener('click', ()=> hideModal('order-summary-modal'));
 }
 
-// Update summary modal
-function updateSummary(){
-  const sumPaltas = pedidos.reduce((s,p)=>s + (Number(p.items.paltasKg)||0), 0);
-  const sumChampi = pedidos.reduce((s,p)=>s + (Number(p.items.champiCajas)||0), 0);
-  const sumFrut = pedidos.reduce((s,p)=>s + (Number(p.items.frutillasGramos)||0), 0);
-  $('sum-paltas').textContent = `${sumPaltas} kg`;
-  $('sum-champi').textContent = `${sumChampi} cajas`;
-  $('sum-frutillas').textContent = `${sumFrut} g`;
-}
+// CSV export utilities
+function buildOrdersCSV(){ const header = ['ID','Nombre','Telefono','Fecha','Productos','Total','Estado','DeudaPendiente','Comentarios']; const rows = [header]; pedidos.forEach(p=>{ const prod=[]; if(p.items.paltas && p.items.paltas.qty) prod.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${productos.paltas.nombre}`); if(p.items.champi && p.items.champi.qty) prod.push(`${p.items.champi.qty} ${p.items.champi.unit} ${productos.champi.nombre}`); if(p.items.frutillas && p.items.frutillas.qty) prod.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${productos.frutillas.nombre}`); rows.push([p.id,p.nombre,p.telefono,p.fecha,prod.join(' | '),p.total,p.estadoPago,p.deudaPendiente,p.comentarios||'']); }); return rows; }
+function exportCSV(filename, rows){ const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n'); const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url); }
 
-// Productos config save/reset
-function saveProductConfigs(){
-  productos.paltas.nombre = $('cfg-paltas-name').value || productos.paltas.nombre;
-  productos.paltas.precio = Number($('cfg-paltas-price').value) || productos.paltas.precio;
-  productos.paltas.disponible = $('cfg-paltas-avail').value === 'true';
+// Render all components
+function renderAll(){ renderProductGrid(); renderProductsAdmin(); renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'all'); renderPurchases(); }
 
-  productos.champi.nombre = $('cfg-champi-name').value || productos.champi.nombre;
-  productos.champi.precio = Number($('cfg-champi-price').value) || productos.champi.precio;
-  productos.champi.packGramos = Number($('cfg-champi-pack').value) || productos.champi.packGramos;
-  productos.champi.disponible = $('cfg-champi-avail').value === 'true';
+// render product admin
+function renderProductsAdmin(){ const container = $('products-admin'); container.innerHTML = ''; Object.keys(productos).forEach(k=>{ const p = productos[k]; const row = document.createElement('div'); row.className='prod-admin-row'; row.innerHTML = `<input id="cfg-${k}-name" value="${escapeHTML(p.nombre)}"><input id="cfg-${k}-price" type="number" value="${p.precio}"><select id="cfg-${k}-baseunit"><option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option></select><select id="cfg-${k}-avail" class="avail"><option value="true">Disponible</option><option value="false">No</option></select>`; container.appendChild(row); $(`cfg-${k}-baseunit`).value = p.baseUnit || 'kg'; $(`cfg-${k}-avail`).value = p.disponible ? 'true' : 'false'; }); }
 
-  productos.frutillas.nombre = $('cfg-frut-name').value || productos.frutillas.nombre;
-  productos.frutillas.precio = Number($('cfg-frut-price').value) || productos.frutillas.precio;
-  productos.frutillas.bloqueGramos = Number($('cfg-frut-block').value) || productos.frutillas.bloqueGramos;
-  productos.frutillas.disponible = $('cfg-frut-avail').value === 'true';
-
-  // Aplicar visual
-  applyAvailability('paltas-card', productos.paltas.disponible);
-  applyAvailability('champi-card', productos.champi.disponible);
-  applyAvailability('frutillas-card', productos.frutillas.disponible);
-
-  // actualizar textos de precios
-  $('paltas-price').textContent = money(productos.paltas.precio);
-  $('champi-price').textContent = money(productos.champi.precio);
-  $('champi-pack').textContent = productos.champi.packGramos;
-  $('frutillas-price').textContent = money(productos.frutillas.precio);
-  $('frutillas-block').textContent = productos.frutillas.bloqueGramos;
-
-  saveAll();
-  notify('Productos guardados', false);
-}
-
-function resetProductConfigs(){
-  productos = structuredClone(DEFAULT_PRODUCTOS);
-  saveAll();
-  // recargar inputs
-  $('cfg-paltas-name').value = productos.paltas.nombre;
-  $('cfg-paltas-price').value = productos.paltas.precio;
-  $('cfg-paltas-avail').value = productos.paltas.disponible ? 'true' : 'false';
-  $('cfg-champi-name').value = productos.champi.nombre;
-  $('cfg-champi-price').value = productos.champi.precio;
-  $('cfg-champi-pack').value = productos.champi.packGramos;
-  $('cfg-champi-avail').value = productos.champi.disponible ? 'true' : 'false';
-  $('cfg-frut-name').value = productos.frutillas.nombre;
-  $('cfg-frut-price').value = productos.frutillas.precio;
-  $('cfg-frut-block').value = productos.frutillas.bloqueGramos;
-  $('cfg-frut-avail').value = productos.frutillas.disponible ? 'true' : 'false';
-  saveProductConfigs();
-  notify('Productos reseteados', false);
-}
-
-// Guardar settings (backend url)
-function saveSettings(){
-  const url = $('backend-url').value.trim();
-  if (url && !/^https?:\/\//i.test(url)) {
-    notify('La URL debe comenzar con http o https', true);
-    return;
-  }
-  backendUrl = url || BACKEND_URL_DEFAULT;
-  saveAll();
-  notify('Configuración guardada', false);
-  // intentar cargar pedidos inmediatamente
-  if (backendUrl) cargarPedidosDesdeSheets();
-}
-
-// Logout admin
-function doLogout(){
-  isAdmin = false;
-  adminEmail = '';
-  $('admin-container').style.display = 'none';
-  $('solicitante-form').style.display = 'block';
-  notify('Sesión cerrada', false);
-}
-
-// Render everything
-function renderAll(){
-  // set inputs from productos
-  $('cfg-paltas-name').value = productos.paltas.nombre;
-  $('cfg-paltas-price').value = productos.paltas.precio;
-  $('cfg-paltas-avail').value = productos.paltas.disponible ? 'true' : 'false';
-  $('cfg-champi-name').value = productos.champi.nombre;
-  $('cfg-champi-price').value = productos.champi.precio;
-  $('cfg-champi-pack').value = productos.champi.packGramos;
-  $('cfg-champi-avail').value = productos.champi.disponible ? 'true' : 'false';
-  $('cfg-frut-name').value = productos.frutillas.nombre;
-  $('cfg-frut-price').value = productos.frutillas.precio;
-  $('cfg-frut-block').value = productos.frutillas.bloqueGramos;
-  $('cfg-frut-avail').value = productos.frutillas.disponible ? 'true' : 'false';
-  // price labels
-  $('paltas-price').textContent = money(productos.paltas.precio);
-  $('champi-price').textContent = money(productos.champi.precio);
-  $('champi-pack').textContent = productos.champi.packGramos;
-  $('frutillas-price').textContent = money(productos.frutillas.precio);
-  $('frutillas-block').textContent = productos.frutillas.bloqueGramos;
-  applyAvailability('paltas-card', productos.paltas.disponible);
-  applyAvailability('champi-card', productos.champi.disponible);
-  applyAvailability('frutillas-card', productos.frutillas.disponible);
-
-  // backend url input
-  $('backend-url').value = backendUrl || '';
-
-  renderOrders();
-  renderDebtors();
-  updateSummary();
-}
-
-// Boot
+// init
 (function init(){
   loadAll();
-  initListeners();
+  if(localStorage.getItem('isAdmin')){ isAdmin = true; $('admin-container').style.display = 'block'; } else { $('admin-container').style.display = 'none'; }
+  setupListeners();
   renderAll();
+  // set default client paltas qty to 1 for convenience (if visible)
+  setTimeout(()=>{ document.querySelectorAll('.client-qty').forEach(i=>{ if(i && i.getAttribute('data-product')==='paltas') i.value = 1; }) }, 200);
 })();
 </script>
-
 </body>
 </html>
