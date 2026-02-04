@@ -103,7 +103,7 @@
   </div>
 
   <!-- WELCOME BANNER (phone recognition) -->
-  <div id="welcome-banner" class="card" style="display:none;margin-top:12px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border:2px solid var(--primary)">
+  <div id="welcome-banner" class="card" role="status" aria-live="polite" style="display:none;margin-top:12px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border:2px solid var(--primary)">
     <h3 style="margin:0;color:var(--primary)">¡Bienvenido de vuelta, <span id="welcome-name"></span>!</h3>
     <div class="muted" style="margin-top:6px">
       <div id="welcome-history"></div>
@@ -587,15 +587,16 @@ async function registrarPago(pedidoId,{monto,metodo,notas,fecha}){
   // Validation
   monto = Number(monto) || 0;
   if(monto <= 0) {
-    alert('El monto debe ser mayor a 0');
+    notify('El monto debe ser mayor a 0');
     return false;
   }
   
   // Allow overpayment with note
+  let finalNotas = notas || '';
   if(monto > pedido.deudaPendiente) {
     const confirmOver = confirm(`El monto (${money(monto)}) es mayor que la deuda pendiente (${money(pedido.deudaPendiente)}). ¿Continuar con sobrepago?`);
     if(!confirmOver) return false;
-    notas = (notas ? notas + ' | ' : '') + 'Sobrepago registrado';
+    finalNotas = (finalNotas ? finalNotas + ' | ' : '') + 'Sobrepago registrado';
   }
   
   const pago = { 
@@ -603,7 +604,7 @@ async function registrarPago(pedidoId,{monto,metodo,notas,fecha}){
     pedidoId, 
     monto, 
     metodo:metodo||'efectivo', 
-    notas:notas||'', 
+    notas:finalNotas, 
     fecha:fecha||nowISO() 
   };
   
@@ -967,8 +968,8 @@ function renderPaymentHistoryForPedido(pedidoId){
 }
 
 // Modal helpers
-function showModal(id){ const el = $(id); if(!el) return; el.classList.add('show'); el.style.display = 'flex'; }
-function hideModal(id){ const el = $(id); if(!el) return; el.classList.remove('show'); el.style.display = 'none'; }
+function showModal(id){ const el = $(id); if(!el) return; el.classList.add('show'); el.style.display = 'flex'; el.setAttribute('aria-hidden', 'false'); }
+function hideModal(id){ const el = $(id); if(!el) return; el.classList.remove('show'); el.style.display = 'none'; el.setAttribute('aria-hidden', 'true'); }
 
 // Products admin rendering and save/reset
 function renderProductsAdmin(){
@@ -1115,7 +1116,7 @@ function setupListeners(){
   });
   $('test-backend').addEventListener('click', async ()=> {
     const url = $('backend-url').value.trim();
-    if(!url) return alert('Ingresa una URL primero');
+    if(!url) return notify('Ingresa una URL primero');
     
     try {
       const response = await fetch(`${url}?action=test`, { method: 'GET', mode: 'cors' });
@@ -1158,13 +1159,13 @@ function setupListeners(){
     });
     box.querySelector('#tmp-create').addEventListener('click', async ()=>{
       const nombre = box.querySelector('#tmp-name').value.trim(); const telefono = box.querySelector('#tmp-tel').value.trim();
-      if(!nombre || !telefono) return alert('Nombre y teléfono requeridos');
+      if(!nombre || !telefono) return notify('Nombre y teléfono requeridos');
       const items = {};
       Object.keys(productos).forEach(k=>{
         const q = Number(box.querySelector(`#tmp-${k}-qty`).value) || 0; const u = box.querySelector(`#tmp-${k}-unit`).value || productos[k].baseUnit;
         if(q>0) items[k] = { qty: q, unit: u };
       });
-      if(Object.keys(items).length===0) return alert('Añade al menos un producto');
+      if(Object.keys(items).length===0) return notify('Añade al menos un producto');
       await crearPedido({ nombre, telefono, items, comentarios:'Creado por admin', creadoPorAdmin:true });
       wrapper.remove();
       notify('Pedido creado (admin)');
@@ -1196,7 +1197,7 @@ function setupListeners(){
     const monto = Number($('payment-amount').value) || 0; 
     const metodo = $('payment-method').value; 
     const notas = $('payment-notes').value.trim();
-    if(monto<=0) return alert('Ingrese monto válido'); 
+    if(monto<=0) return notify('Ingrese monto válido'); 
     await registrarPago(currentPaymentPedidoId,{monto,metodo,notas,fecha:nowISO()}); 
     renderPaymentHistoryForPedido(currentPaymentPedidoId); 
     notify('Pago registrado');
