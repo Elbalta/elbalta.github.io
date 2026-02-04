@@ -102,6 +102,15 @@
     </div>
   </div>
 
+  <!-- WELCOME BANNER (phone recognition) -->
+  <div id="welcome-banner" class="card" style="display:none;margin-top:12px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border:2px solid var(--primary)">
+    <h3 style="margin:0;color:var(--primary)">¡Bienvenido de vuelta, <span id="welcome-name"></span>!</h3>
+    <div class="muted" style="margin-top:6px">
+      <div id="welcome-history"></div>
+      <div id="welcome-debt"></div>
+    </div>
+  </div>
+
   <!-- ADMIN PANEL -->
   <div id="admin-container" class="card" style="display:none;margin-top:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
@@ -113,6 +122,7 @@
         <button id="add-order-btn" class="btn" title="Agregar pedido manual">Agregar</button>
         <button id="export-btn" class="btn gray">Exportar CSV</button>
         <button id="refresh-btn" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Actualizar</button>
+        <button id="settings-btn" class="btn" style="background:linear-gradient(90deg,#607d8b,#455a64)" title="Configuración backend">⚙️</button>
         <button id="logout-btn" class="btn danger">Salir</button>
       </div>
     </div>
@@ -275,7 +285,25 @@
     </div>
 
     <div id="payment-history-container" style="display:none;margin-top:12px">
-      <div id="modal-payment-history" class="list"></div>
+      <strong>Historial de pagos</strong>
+      <div id="modal-payment-history" class="list" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="settings-modal" class="modal" aria-hidden="true">
+  <div class="modal-box">
+    <span class="close-modal" id="close-settings">&times;</span>
+    <h2>Configuración Backend</h2>
+    <div style="margin-top:12px">
+      <label><strong>URL del Backend (Google Apps Script)</strong></label>
+      <input id="backend-url" type="text" placeholder="https://script.google.com/macros/s/.../exec" style="margin-top:6px">
+      <div class="muted small" style="margin-top:6px">Deja en blanco para trabajar solo en modo local</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="save-settings" class="btn">Guardar</button>
+      <button id="test-backend" class="btn gray">Probar conexión</button>
+      <button id="cancel-settings" class="btn gray">Cancelar</button>
     </div>
   </div>
 </div>
@@ -322,8 +350,10 @@ let productos = structuredClone(DEFAULT_PRODUCTOS);
 let pedidos = [];
 let pagos = [];
 let purchases = []; // purchases list with remainingQty
+let clientes = {}; // phone -> {nombre, pedidos:[], deuda:0}
 let isAdmin = false;
 let currentPaymentPedidoId = null;
+let backendUrl = ''; // Google Apps Script URL
 
 // DOM shortcuts
 const $ = id => document.getElementById(id);
@@ -334,20 +364,32 @@ function escapeHTML(s=''){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;'
 function notify(msg,t=3000){ const n=$('notification'); n.textContent = msg; n.style.display='block'; setTimeout(()=>n.style.display='none',t); }
 
 // persistence
-function saveAll(){ localStorage.setItem('productos', JSON.stringify(productos)); localStorage.setItem('pedidos', JSON.stringify(pedidos)); localStorage.setItem('pagos', JSON.stringify(pagos)); localStorage.setItem('purchases', JSON.stringify(purchases)); localStorage.setItem('isAdmin', isAdmin ? '1' : ''); }
+function saveAll(){ 
+  localStorage.setItem('productos', JSON.stringify(productos)); 
+  localStorage.setItem('pedidos', JSON.stringify(pedidos)); 
+  localStorage.setItem('pagos', JSON.stringify(pagos)); 
+  localStorage.setItem('purchases', JSON.stringify(purchases)); 
+  localStorage.setItem('clientes', JSON.stringify(clientes));
+  localStorage.setItem('backendUrl', backendUrl || '');
+  localStorage.setItem('isAdmin', isAdmin ? '1' : ''); 
+}
 function loadAll(){
   try{
     const pr = localStorage.getItem('productos');
     const p = localStorage.getItem('pedidos');
     const pay = localStorage.getItem('pagos');
     const pur = localStorage.getItem('purchases');
+    const cli = localStorage.getItem('clientes');
+    const burl = localStorage.getItem('backendUrl');
     const adm = localStorage.getItem('isAdmin');
     if(pr) productos = {...DEFAULT_PRODUCTOS, ...JSON.parse(pr)};
     if(p) pedidos = JSON.parse(p);
     if(pay) pagos = JSON.parse(pay);
     if(pur) purchases = JSON.parse(pur);
+    if(cli) clientes = JSON.parse(cli);
+    if(burl) backendUrl = burl;
     isAdmin = !!adm;
-  }catch(e){ console.error(e) }
+  }catch(e){ console.error('Error loading data:', e) }
   productos.paltas = {...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas||{})};
   productos.champi = {...DEFAULT_PRODUCTOS.champi, ...(productos.champi||{})};
   productos.frutillas = {...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas||{})};
@@ -355,8 +397,97 @@ function loadAll(){
 
 // rebuild helper (not used for customers here)
 function rebuildClientesFromPedidos(){
-  // optional if needed later
+  // Rebuild clientes database from pedidos
+  clientes = {};
+  pedidos.forEach(p => {
+    const phone = normPhone(p.telefono);
+    if(!phone) return;
+    if(!clientes[phone]) {
+      clientes[phone] = { nombre: p.nombre, pedidos: [], deuda: 0 };
+    }
+    clientes[phone].pedidos.push(p.id);
+    clientes[phone].deuda += Number(p.deudaPendiente || 0);
+    // Update nombre to latest
+    if(p.nombre) clientes[phone].nombre = p.nombre;
+  });
   saveAll();
+}
+
+// Backend sync functions
+async function syncWithBackend(action, data) {
+  if(!backendUrl) {
+    console.info('Backend URL not configured, operating in local mode');
+    return null;
+  }
+  
+  try {
+    const payload = { action, ...data };
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if(!response.ok) {
+      throw new Error(`Backend error: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    return result;
+  } catch(error) {
+    console.error('Backend sync error:', error);
+    notify('Error al sincronizar con backend (continuando en modo local)', 4000);
+    return null;
+  }
+}
+
+async function loadPedidosFromBackend() {
+  if(!backendUrl) return;
+  
+  try {
+    const response = await fetch(`${backendUrl}?action=obtener_pedidos`, {
+      method: 'GET',
+      mode: 'cors'
+    });
+    
+    if(!response.ok) throw new Error('Backend error');
+    
+    const result = await response.json();
+    if(result.pedidos && Array.isArray(result.pedidos)) {
+      // Merge with local pedidos
+      result.pedidos.forEach(backendPedido => {
+        const exists = pedidos.find(p => p.id === backendPedido.id);
+        if(!exists) {
+          pedidos.push(backendPedido);
+        }
+      });
+      saveAll();
+      renderAll();
+      notify('Pedidos sincronizados desde backend');
+    }
+  } catch(error) {
+    console.error('Error loading from backend:', error);
+  }
+}
+
+async function searchClienteInBackend(telefono) {
+  if(!backendUrl) return null;
+  
+  try {
+    const response = await fetch(`${backendUrl}?action=buscar_cliente&telefono=${encodeURIComponent(telefono)}`, {
+      method: 'GET',
+      mode: 'cors'
+    });
+    
+    if(!response.ok) return null;
+    
+    const result = await response.json();
+    return result.cliente || null;
+  } catch(error) {
+    console.error('Error searching cliente:', error);
+    return null;
+  }
 }
 
 // Calculation: convert quantity to base unit for comparison
@@ -418,7 +549,7 @@ function calcTotalFromItems(items){
 }
 
 // Create order (client or admin)
-function crearPedido({nombre,telefono,items,comentarios,creadoPorAdmin=false,paymentMethod='' }){
+async function crearPedido({nombre,telefono,items,comentarios,creadoPorAdmin=false,paymentMethod='' }){
   const pedido = {
     id: String(Date.now()) + Math.random().toString(36).slice(2,8),
     nombre:nombre||'', telefono:telefono||'', items, total:calcTotalFromItems(items),
@@ -426,21 +557,134 @@ function crearPedido({nombre,telefono,items,comentarios,creadoPorAdmin=false,pay
     pagos:[], creadoPorAdmin, paymentMethod
   };
   pedidos.unshift(pedido);
+  
+  // Update clientes database
+  const phone = normPhone(telefono);
+  if(phone) {
+    if(!clientes[phone]) {
+      clientes[phone] = { nombre, pedidos: [], deuda: 0 };
+    }
+    clientes[phone].pedidos.push(pedido.id);
+    clientes[phone].deuda += pedido.total;
+    if(nombre) clientes[phone].nombre = nombre;
+  }
+  
   saveAll();
   renderAll();
+  
+  // Sync with backend
+  if(backendUrl) {
+    await syncWithBackend('crear_pedido', { pedido });
+  }
+  
   return pedido;
 }
 
 // Registrar pago
-function registrarPago(pedidoId,{monto,metodo,notas,fecha}){
+async function registrarPago(pedidoId,{monto,metodo,notas,fecha}){
   const pedido = pedidos.find(p=>p.id===pedidoId); if(!pedido) return false;
-  const pago = { id:String(Date.now())+Math.random().toString(36).slice(2,8), pedidoId, monto:Number(monto)||0, metodo:metodo||'efectivo', notas:notas||'', fecha:fecha||nowISO() };
-  pagos.unshift(pago); pedido.pagos = pedido.pagos || []; pedido.pagos.push(pago);
+  
+  // Validation
+  monto = Number(monto) || 0;
+  if(monto <= 0) {
+    alert('El monto debe ser mayor a 0');
+    return false;
+  }
+  
+  // Allow overpayment with note
+  if(monto > pedido.deudaPendiente) {
+    const confirmOver = confirm(`El monto (${money(monto)}) es mayor que la deuda pendiente (${money(pedido.deudaPendiente)}). ¿Continuar con sobrepago?`);
+    if(!confirmOver) return false;
+    notas = (notas ? notas + ' | ' : '') + 'Sobrepago registrado';
+  }
+  
+  const pago = { 
+    id:String(Date.now())+Math.random().toString(36).slice(2,8), 
+    pedidoId, 
+    monto, 
+    metodo:metodo||'efectivo', 
+    notas:notas||'', 
+    fecha:fecha||nowISO() 
+  };
+  
+  pagos.unshift(pago); 
+  pedido.pagos = pedido.pagos || []; 
+  pedido.pagos.push(pago);
   pedido.deudaPendiente = Math.max(0, Number(pedido.deudaPendiente||pedido.total) - Number(pago.monto||0));
-  if(pedido.deudaPendiente <= 0) pedido.estadoPago = 'pagado'; else if(pedido.deudaPendiente < pedido.total) pedido.estadoPago = 'parcial';
-  saveAll(); renderAll(); return pago;
+  
+  if(pedido.deudaPendiente <= 0) {
+    pedido.estadoPago = 'pagado';
+  } else if(pedido.deudaPendiente < pedido.total) {
+    pedido.estadoPago = 'parcial';
+  }
+  
+  // Update cliente deuda
+  const phone = normPhone(pedido.telefono);
+  if(phone && clientes[phone]) {
+    clientes[phone].deuda = Math.max(0, (clientes[phone].deuda || 0) - monto);
+  }
+  
+  saveAll(); 
+  renderAll(); 
+  
+  // Sync with backend
+  if(backendUrl) {
+    await syncWithBackend('registrar_pago', { pago, pedidoId });
+  }
+  
+  return pago;
 }
-function marcarTodoPagado(pedidoId){ const pedido = pedidos.find(p=>p.id===pedidoId); if(!pedido) return false; const monto = Number(pedido.deudaPendiente||pedido.total); if(monto<=0) return false; return registrarPago(pedidoId, {monto,metodo:'transferencia',notas:'Marcado pagado por admin',fecha:nowISO()}); }
+
+// Delete payment
+async function eliminarPago(pagoId) {
+  const pago = pagos.find(p => p.id === pagoId);
+  if(!pago) return false;
+  
+  const pedido = pedidos.find(p => p.id === pago.pedidoId);
+  if(!pedido) return false;
+  
+  // Remove from global pagos
+  pagos = pagos.filter(p => p.id !== pagoId);
+  
+  // Remove from pedido.pagos
+  pedido.pagos = (pedido.pagos || []).filter(p => p.id !== pagoId);
+  
+  // Restore debt
+  pedido.deudaPendiente = Number(pedido.deudaPendiente || 0) + Number(pago.monto || 0);
+  
+  // Update status
+  if(pedido.deudaPendiente >= pedido.total) {
+    pedido.estadoPago = 'pendiente';
+  } else if(pedido.deudaPendiente > 0) {
+    pedido.estadoPago = 'parcial';
+  } else {
+    pedido.estadoPago = 'pagado';
+  }
+  
+  // Update cliente deuda
+  const phone = normPhone(pedido.telefono);
+  if(phone && clientes[phone]) {
+    clientes[phone].deuda = (clientes[phone].deuda || 0) + pago.monto;
+  }
+  
+  saveAll();
+  renderAll();
+  
+  // Sync with backend
+  if(backendUrl) {
+    await syncWithBackend('eliminar_pago', { pagoId, pedidoId: pago.pedidoId });
+  }
+  
+  return true;
+}
+
+function marcarTodoPagado(pedidoId){ 
+  const pedido = pedidos.find(p=>p.id===pedidoId); 
+  if(!pedido) return false; 
+  const monto = Number(pedido.deudaPendiente||pedido.total); 
+  if(monto<=0) return false; 
+  return registrarPago(pedidoId, {monto,metodo:'transferencia',notas:'Marcado pagado por admin',fecha:nowISO()}); 
+}
 
 // Purchases handling (improved)
 // purchase: {id, prod, qty, unit, costPerUnit, totalCost, remainingQty, fecha}
@@ -654,17 +898,73 @@ function renderOrders(filterText='', paymentFilter='all'){
 document.addEventListener('click', (e)=>{
   const btn = e.target.closest('button[data-action]');
   if(!btn) return;
-  const action = btn.getAttribute('data-action'); const id = btn.getAttribute('data-id');
+  const action = btn.getAttribute('data-action'); 
+  const id = btn.getAttribute('data-id');
+  const paymentId = btn.getAttribute('data-payment-id');
+  
   if(action === 'open-pay') openPaymentModal(id);
   if(action === 'view') viewPedidoDetails(id);
-  if(action === 'delete'){ if(confirm('Eliminar pedido?')){ pedidos = pedidos.filter(p=>p.id !== id); saveAll(); renderAll(); notify('Pedido eliminado'); } }
+  if(action === 'delete'){ 
+    if(confirm('Eliminar pedido?')){ 
+      pedidos = pedidos.filter(p=>p.id !== id); 
+      // Also remove from clientes
+      rebuildClientesFromPedidos();
+      saveAll(); 
+      renderAll(); 
+      notify('Pedido eliminado'); 
+      
+      // Sync with backend
+      if(backendUrl) {
+        syncWithBackend('eliminar_pedido', { pedidoId: id });
+      }
+    } 
+  }
+  if(action === 'delete-payment') {
+    if(confirm('¿Eliminar este pago? Se restaurará la deuda correspondiente.')) {
+      eliminarPago(paymentId);
+      renderPaymentHistoryForPedido(currentPaymentPedidoId);
+      notify('Pago eliminado');
+    }
+  }
 });
 
 // Payment modal & order details
 function viewPedidoDetails(id){ const p = pedidos.find(x=>x.id===id); if(!p) return notify('Pedido no encontrado'); let s = `Pedido: ${p.nombre}\nTel: ${p.telefono}\nFecha: ${new Date(p.fecha).toLocaleString()}\nProductos:\n`; if(p.items.paltas && p.items.paltas.qty) s += ` - ${p.items.paltas.qty} ${p.items.paltas.unit} ${productos.paltas.nombre}\n`; if(p.items.champi && p.items.champi.qty) s += ` - ${p.items.champi.qty} ${p.items.champi.unit} ${productos.champi.nombre}\n`; if(p.items.frutillas && p.items.frutillas.qty) s += ` - ${p.items.frutillas.qty} ${p.items.frutillas.unit} ${productos.frutillas.nombre}\n`; s += `Total: ${money(p.total)}\nPendiente: ${money(p.deudaPendiente)}\nComentarios: ${p.comentarios||'-'}`; alert(s); }
 
 function openPaymentModal(pedidoId){ const p = pedidos.find(x=>x.id===pedidoId); if(!p) return notify('Pedido no encontrado'); currentPaymentPedidoId = pedidoId; $('payment-client-info').textContent = `${p.nombre} (${p.telefono}) — ${new Date(p.fecha).toLocaleString()}`; $('payment-amount').value = Math.min(p.deudaPendiente || p.total || 0, p.deudaPendiente || p.total || 0); $('payment-notes').value = ''; $('payment-history-container').style.display = 'none'; renderPaymentHistoryForPedido(pedidoId); showModal('payment-modal'); }
-function renderPaymentHistoryForPedido(pedidoId){ const p = pedidos.find(x=>x.id===pedidoId); const cont = $('modal-payment-history'); cont.innerHTML = ''; if(!p || !p.pagos || p.pagos.length===0){ cont.textContent = 'No hay pagos registrados'; return; } p.pagos.slice().reverse().forEach(pa=>{ const div = document.createElement('div'); div.style.display='flex'; div.style.justifyContent='space-between'; div.style.padding='6px 0'; div.innerHTML = `<div>${new Date(pa.fecha).toLocaleString()} <span class="muted small">(${pa.metodo})</span></div><div style="font-weight:700">${money(pa.monto)}</div>`; cont.appendChild(div); }); }
+function renderPaymentHistoryForPedido(pedidoId){ 
+  const p = pedidos.find(x=>x.id===pedidoId); 
+  const cont = $('modal-payment-history'); 
+  cont.innerHTML = ''; 
+  
+  if(!p || !p.pagos || p.pagos.length===0){ 
+    cont.textContent = 'No hay pagos registrados'; 
+    return; 
+  } 
+  
+  p.pagos.slice().reverse().forEach(pa=>{ 
+    const div = document.createElement('div'); 
+    div.style.display='flex'; 
+    div.style.justifyContent='space-between'; 
+    div.style.padding='8px 0'; 
+    div.style.alignItems='center';
+    div.style.borderBottom='1px solid #f0f0f0';
+    
+    div.innerHTML = `
+      <div style="flex:1">
+        <div>${new Date(pa.fecha).toLocaleString()} <span class="muted small">(${escapeHTML(pa.metodo)})</span></div>
+        ${pa.notas ? `<div class="muted small">${escapeHTML(pa.notas)}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div style="font-weight:700">${money(pa.monto)}</div>
+        <button class="btn danger" data-action="delete-payment" data-payment-id="${pa.id}" style="padding:4px 8px;font-size:0.85rem">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    `; 
+    cont.appendChild(div); 
+  }); 
+}
 
 // Modal helpers
 function showModal(id){ const el = $(id); if(!el) return; el.classList.add('show'); el.style.display = 'flex'; }
@@ -688,6 +988,54 @@ function renderProductsAdmin(){
 
 // Purchases UI wiring (Add purchase + render)
 function setupListeners(){
+  // Phone recognition
+  const telefonoInput = $('telefono');
+  if(telefonoInput) {
+    telefonoInput.addEventListener('blur', async function() {
+      const telefono = normPhone(this.value);
+      const banner = $('welcome-banner');
+      
+      if(!telefono) {
+        banner.style.display = 'none';
+        return;
+      }
+      
+      // First check local clientes
+      let cliente = clientes[telefono];
+      
+      // If not found locally and backend configured, try backend
+      if(!cliente && backendUrl) {
+        cliente = await searchClienteInBackend(telefono);
+        if(cliente) {
+          clientes[telefono] = cliente;
+          saveAll();
+        }
+      }
+      
+      if(cliente) {
+        // Show welcome banner
+        $('welcome-name').textContent = cliente.nombre || 'Cliente';
+        
+        const pedidosCount = (cliente.pedidos || []).length;
+        $('welcome-history').textContent = `Pedidos realizados: ${pedidosCount}`;
+        
+        const deuda = Number(cliente.deuda || 0);
+        $('welcome-debt').innerHTML = deuda > 0 
+          ? `<strong style="color:var(--danger)">Deuda pendiente: ${money(deuda)}</strong>`
+          : `<strong style="color:var(--primary)">Sin deudas pendientes</strong>`;
+        
+        banner.style.display = 'block';
+        
+        // Auto-fill nombre if it exists
+        if(cliente.nombre && !$('nombre').value) {
+          $('nombre').value = cliente.nombre;
+        }
+      } else {
+        banner.style.display = 'none';
+      }
+    });
+  }
+  
   // Enviar pedido (cliente)
   $('enviar-pedido').addEventListener('click', ()=>{
     const nombre = $('nombre').value.trim(); const telefono = $('telefono').value.trim();
@@ -720,7 +1068,20 @@ function setupListeners(){
     const methodOld = $('summary-payment-method'); const methodNew = methodOld.cloneNode(true); methodOld.parentNode.replaceChild(methodNew, methodOld);
 
     methodNew.addEventListener('change', ()=> { if(methodNew.value === 'transferencia') $('summary-transfer-details').style.display = 'block'; else $('summary-transfer-details').style.display = 'none'; });
-    confirmNew.addEventListener('click', ()=>{ crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin:false, paymentMethod: methodNew.value }); hideModal('order-summary-modal'); notify('Pedido enviado'); document.querySelectorAll('.client-qty').forEach(i=>{ if(i.getAttribute('data-product')==='paltas') i.value = 1; else i.value = 0; }); $('nombre').value=''; $('telefono').value=''; $('comentarios').value=''; });
+    confirmNew.addEventListener('click', async ()=>{ 
+      await crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin:false, paymentMethod: methodNew.value }); 
+      hideModal('order-summary-modal'); 
+      notify('Pedido enviado'); 
+      document.querySelectorAll('.client-qty').forEach(i=>{ 
+        if(i.getAttribute('data-product')==='paltas') i.value = 1; 
+        else i.value = 0; 
+      }); 
+      $('nombre').value=''; 
+      $('telefono').value=''; 
+      $('comentarios').value=''; 
+      // Hide welcome banner after order
+      $('welcome-banner').style.display = 'none';
+    });
     rejectNew.addEventListener('click', ()=> hideModal('order-summary-modal'));
   });
 
@@ -733,6 +1094,42 @@ function setupListeners(){
     if(email === 'admin@valledor.com' && pass === 'admin123'){ isAdmin = true; localStorage.setItem('isAdmin','1'); hideModal('login-modal'); $('admin-email').value=''; $('admin-password').value=''; $('admin-container').style.display = 'block'; notify('Acceso admin'); renderAll(); } else { $('login-error').style.display='block'; setTimeout(()=> $('login-error').style.display='none',2000); }
   });
   $('logout-btn').addEventListener('click', ()=> { isAdmin=false; localStorage.removeItem('isAdmin'); $('admin-container').style.display='none'; notify('Sesión cerrada'); });
+
+  // Settings button
+  $('settings-btn').addEventListener('click', ()=> {
+    $('backend-url').value = backendUrl || '';
+    showModal('settings-modal');
+  });
+  $('close-settings').addEventListener('click', ()=> hideModal('settings-modal'));
+  $('cancel-settings').addEventListener('click', ()=> hideModal('settings-modal'));
+  $('save-settings').addEventListener('click', ()=> {
+    backendUrl = $('backend-url').value.trim();
+    saveAll();
+    hideModal('settings-modal');
+    notify('Configuración guardada');
+    
+    // Try to load pedidos from backend
+    if(backendUrl) {
+      loadPedidosFromBackend();
+    }
+  });
+  $('test-backend').addEventListener('click', async ()=> {
+    const url = $('backend-url').value.trim();
+    if(!url) return alert('Ingresa una URL primero');
+    
+    try {
+      const response = await fetch(`${url}?action=test`, { method: 'GET', mode: 'cors' });
+      if(response.ok) {
+        notify('✓ Conexión exitosa con el backend', 3000);
+      } else {
+        notify('✗ Error en la conexión: ' + response.status, 4000);
+      }
+    } catch(error) {
+      notify('✗ No se pudo conectar con el backend', 4000);
+      console.error(error);
+    }
+  });
+
 
   // Search / filter
   $('search-input').addEventListener('input', e => renderOrders(e.target.value || '', $('payment-filter').value || 'all'));
@@ -759,7 +1156,7 @@ function setupListeners(){
         <input id="tmp-${k}-qty" type="number" min="0" step="1" placeholder="Cantidad" style="width:120px;padding:8px;border:1px solid #ddd;border-radius:6px">`;
       tp.appendChild(row);
     });
-    box.querySelector('#tmp-create').addEventListener('click', ()=>{
+    box.querySelector('#tmp-create').addEventListener('click', async ()=>{
       const nombre = box.querySelector('#tmp-name').value.trim(); const telefono = box.querySelector('#tmp-tel').value.trim();
       if(!nombre || !telefono) return alert('Nombre y teléfono requeridos');
       const items = {};
@@ -768,7 +1165,7 @@ function setupListeners(){
         if(q>0) items[k] = { qty: q, unit: u };
       });
       if(Object.keys(items).length===0) return alert('Añade al menos un producto');
-      crearPedido({ nombre, telefono, items, comentarios:'Creado por admin', creadoPorAdmin:true });
+      await crearPedido({ nombre, telefono, items, comentarios:'Creado por admin', creadoPorAdmin:true });
       wrapper.remove();
       notify('Pedido creado (admin)');
     });
@@ -794,11 +1191,22 @@ function setupListeners(){
 
   // Payments modal
   $('close-payment').addEventListener('click', ()=> hideModal('payment-modal'));
-  $('register-payment').addEventListener('click', ()=> {
-    if(!currentPaymentPedidoId) return notify('Seleccione pedido'); const monto = Number($('payment-amount').value) || 0; const metodo = $('payment-method').value; const notas = $('payment-notes').value.trim();
-    if(monto<=0) return alert('Ingrese monto válido'); registrarPago(currentPaymentPedidoId,{monto,metodo,notas,fecha:nowISO()}); renderPaymentHistoryForPedido(currentPaymentPedidoId); notify('Pago registrado');
+  $('register-payment').addEventListener('click', async ()=> {
+    if(!currentPaymentPedidoId) return notify('Seleccione pedido'); 
+    const monto = Number($('payment-amount').value) || 0; 
+    const metodo = $('payment-method').value; 
+    const notas = $('payment-notes').value.trim();
+    if(monto<=0) return alert('Ingrese monto válido'); 
+    await registrarPago(currentPaymentPedidoId,{monto,metodo,notas,fecha:nowISO()}); 
+    renderPaymentHistoryForPedido(currentPaymentPedidoId); 
+    notify('Pago registrado');
   });
-  $('mark-as-paid').addEventListener('click', ()=> { if(!currentPaymentPedidoId) return notify('Seleccione pedido'); if(!confirm('Marcar todo como pagado?')) return; marcarTodoPagado(currentPaymentPedidoId); notify('Marcado pagado'); });
+  $('mark-as-paid').addEventListener('click', async ()=> { 
+    if(!currentPaymentPedidoId) return notify('Seleccione pedido'); 
+    if(!confirm('Marcar todo como pagado?')) return; 
+    await marcarTodoPagado(currentPaymentPedidoId); 
+    notify('Marcado pagado'); 
+  });
   $('toggle-payment-history').addEventListener('click', ()=> { const el = $('payment-history-container'); el.style.display = (el.style.display==='block') ? 'none' : 'block'; if(el.style.display==='block') renderPaymentHistoryForPedido(currentPaymentPedidoId); });
 
   // Order summary modal close
@@ -818,11 +1226,33 @@ function renderProductsAdmin(){ const container = $('products-admin'); container
 // init
 (function init(){
   loadAll();
-  if(localStorage.getItem('isAdmin')){ isAdmin = true; $('admin-container').style.display = 'block'; } else { $('admin-container').style.display = 'none'; }
+  
+  // Rebuild clientes from pedidos if empty
+  if(Object.keys(clientes).length === 0 && pedidos.length > 0) {
+    rebuildClientesFromPedidos();
+  }
+  
+  if(localStorage.getItem('isAdmin')){ 
+    isAdmin = true; 
+    $('admin-container').style.display = 'block'; 
+  } else { 
+    $('admin-container').style.display = 'none'; 
+  }
+  
   setupListeners();
   renderAll();
+  
+  // Try to load from backend on init if configured
+  if(backendUrl && isAdmin) {
+    loadPedidosFromBackend();
+  }
+  
   // set default client paltas qty to 1 for convenience (if visible)
-  setTimeout(()=>{ document.querySelectorAll('.client-qty').forEach(i=>{ if(i && i.getAttribute('data-product')==='paltas') i.value = 1; }) }, 200);
+  setTimeout(()=>{ 
+    document.querySelectorAll('.client-qty').forEach(i=>{ 
+      if(i && i.getAttribute('data-product')==='paltas') i.value = 1; 
+    }) 
+  }, 200);
 })();
 </script>
 </body>
