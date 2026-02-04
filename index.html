@@ -67,12 +67,23 @@
       <div class="small muted">Control de pedidos, pagos y finanzas</div>
     </div>
   </div>
-  <div>
+  <div id="admin-login-container">
     <button id="admin-login-link" class="btn" style="background:linear-gradient(90deg,#1565c0,#0d47a1)"><i class="fas fa-user-shield" style="margin-right:8px"></i>Administrador</button>
   </div>
 </header>
 
 <div class="container">
+  <!-- Welcome banner for returning customers -->
+  <div id="welcome-banner" class="card" style="display:none;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <i class="fas fa-user-check" style="font-size:24px"></i>
+      <div>
+        <h3 style="margin:0;font-size:1.1rem" id="welcome-message">¡Bienvenido de nuevo!</h3>
+        <div class="small" style="opacity:0.9;margin-top:4px">Tus datos han sido cargados automáticamente</div>
+      </div>
+    </div>
+  </div>
+
   <!-- CLIENT FORM -->
   <div class="card">
     <h2 style="margin:0 0 8px 0;color:var(--primary)">Realiza tu pedido</h2>
@@ -688,6 +699,30 @@ function renderProductsAdmin(){
 
 // Purchases UI wiring (Add purchase + render)
 function setupListeners(){
+  // Phone number recognition for returning customers
+  $('telefono').addEventListener('input', (e)=>{
+    const phone = normPhone(e.target.value);
+    if(phone.length < 8) {
+      $('welcome-banner').style.display = 'none';
+      return;
+    }
+    
+    // Find existing customer by phone
+    const existingPedido = pedidos.find(p => normPhone(p.telefono) === phone);
+    if(existingPedido && existingPedido.nombre) {
+      // Show welcome banner
+      $('welcome-message').textContent = `¡Bienvenido de nuevo, ${existingPedido.nombre}!`;
+      $('welcome-banner').style.display = 'block';
+      
+      // Auto-fill name if empty
+      if(!$('nombre').value.trim()) {
+        $('nombre').value = existingPedido.nombre;
+      }
+    } else {
+      $('welcome-banner').style.display = 'none';
+    }
+  });
+
   // Enviar pedido (cliente)
   $('enviar-pedido').addEventListener('click', ()=>{
     const nombre = $('nombre').value.trim(); const telefono = $('telefono').value.trim();
@@ -730,9 +765,28 @@ function setupListeners(){
   $('cancel-login').addEventListener('click', ()=> hideModal('login-modal'));
   $('login-btn').addEventListener('click', ()=> {
     const email = $('admin-email').value.trim(); const pass = $('admin-password').value;
-    if(email === 'admin@valledor.com' && pass === 'admin123'){ isAdmin = true; localStorage.setItem('isAdmin','1'); hideModal('login-modal'); $('admin-email').value=''; $('admin-password').value=''; $('admin-container').style.display = 'block'; notify('Acceso admin'); renderAll(); } else { $('login-error').style.display='block'; setTimeout(()=> $('login-error').style.display='none',2000); }
+    if(email === 'admin@valledor.com' && pass === 'admin123'){ 
+      isAdmin = true; 
+      localStorage.setItem('isAdmin','1'); 
+      hideModal('login-modal'); 
+      $('admin-email').value=''; 
+      $('admin-password').value=''; 
+      $('admin-container').style.display = 'block'; 
+      $('admin-login-container').style.display = 'none'; // Hide login button when logged in
+      notify('Acceso admin'); 
+      renderAll(); 
+    } else { 
+      $('login-error').style.display='block'; 
+      setTimeout(()=> $('login-error').style.display='none',2000); 
+    }
   });
-  $('logout-btn').addEventListener('click', ()=> { isAdmin=false; localStorage.removeItem('isAdmin'); $('admin-container').style.display='none'; notify('Sesión cerrada'); });
+  $('logout-btn').addEventListener('click', ()=> { 
+    isAdmin=false; 
+    localStorage.removeItem('isAdmin'); 
+    $('admin-container').style.display='none'; 
+    $('admin-login-container').style.display = 'block'; // Show login button again
+    notify('Sesión cerrada'); 
+  });
 
   // Search / filter
   $('search-input').addEventListener('input', e => renderOrders(e.target.value || '', $('payment-filter').value || 'all'));
@@ -818,7 +872,14 @@ function renderProductsAdmin(){ const container = $('products-admin'); container
 // init
 (function init(){
   loadAll();
-  if(localStorage.getItem('isAdmin')){ isAdmin = true; $('admin-container').style.display = 'block'; } else { $('admin-container').style.display = 'none'; }
+  if(localStorage.getItem('isAdmin')){ 
+    isAdmin = true; 
+    $('admin-container').style.display = 'block'; 
+    $('admin-login-container').style.display = 'none'; // Hide login button when admin is logged in
+  } else { 
+    $('admin-container').style.display = 'none'; 
+    $('admin-login-container').style.display = 'block'; // Show login button for non-admin
+  }
   setupListeners();
   renderAll();
   // set default client paltas qty to 1 for convenience (if visible)
