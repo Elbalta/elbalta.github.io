@@ -6,7 +6,7 @@
   <title>Compras Grupales - Lazo Mercado</title>
 
   <!-- Fuentes e íconos -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -17,9 +17,17 @@
       --card:#ffffff;
       --muted:#6b7280;
       --danger:#d32f2f;
-      --success:#2e7d32;
-      --glass: rgba(255,255,255,0.7);
       --ring:#bde0bd;
+      --paid:#e8f5e9;
+      --partial:#fff8e1;
+      --pending:#ffffff;
+
+      --btn-blue-bg:#e3f2fd;
+      --btn-blue-text:#0d47a1;
+      --btn-green-bg:#e8f5e9;
+      --btn-green-text:#1b5e20;
+      --btn-red-bg:#ffebee;
+      --btn-red-text:#b71c1c;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -50,7 +58,7 @@
     .header-actions{display:flex;gap:8px;align-items:center}
 
     /* Layout */
-    .container{max-width:980px;margin:20px auto;padding:0 14px}
+    .container{max-width:1100px;margin:20px auto;padding:0 14px}
     .card{
       background:var(--card);
       border-radius:14px;padding:16px;
@@ -111,11 +119,29 @@
     .orders-table td{padding:10px;border-bottom:1px solid #f2f2f2;vertical-align:middle}
     .orders-products{color:var(--muted);font-size:.92rem;line-height:1.25}
     .order-actions{display:flex;gap:8px;justify-content:flex-end}
-    .icon-btn{width:40px;height:40px;border-radius:8px;border:0;color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 12px rgba(0,0,0,.06)}
-    .icon-pay{background:linear-gradient(90deg,#2196f3,#1976d2)}
-    .icon-view{background:linear-gradient(90deg,#607d8b,#455a64)}
-    .icon-delete{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
-    td.actions{width:140px;max-width:140px}
+    .icon-btn{
+      min-width:40px;height:34px;border-radius:999px;border:0;
+      display:inline-flex;align-items:center;justify-content:center;
+      cursor:pointer;font-size:.8rem;font-weight:600;
+      padding:0 12px;gap:6px;
+    }
+    .icon-pay{
+      background:var(--btn-blue-bg);
+      color:var(--btn-blue-text);
+    }
+    .icon-view{
+      background:#eceff1;
+      color:#374151;
+    }
+    .icon-delete{
+      background:var(--btn-red-bg);
+      color:var(--btn-red-text);
+    }
+    td.actions{width:180px;max-width:190px}
+
+    .row-paid{background:var(--paid);}
+    .row-partial{background:var(--partial);}
+    .row-pending{background:var(--pending);}
 
     /* Tabs */
     .tabs{display:flex;gap:8px;border-bottom:1px solid #e5e7eb;margin-bottom:12px;flex-wrap:wrap}
@@ -143,89 +169,72 @@
     .prod-admin-row .avail{width:140px}
 
     /* Finanzas */
-    .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .fin-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
     .list{max-height:300px;overflow:auto;padding:8px;border-radius:10px;border:1px solid #eee}
 
-    /* ====== NUEVO: estilos mensaje de gracias centrado ====== */
-    .thanks-wrapper{
-      display:flex;
+    /* MENSAJE GRACIAS CENTRADO */
+    .thanks-overlay{
+      position:fixed;
+      inset:0;
+      display:none;
       align-items:center;
       justify-content:center;
-      margin-top:12px;
+      background:rgba(0,0,0,.5);
+      z-index:9000;
     }
-    .thanks-message{
-      background:#e8f5e9;
-      color:var(--primary-strong);
-      padding:10px 14px;
-      border-radius:999px;
-      font-size:.9rem;
+    .thanks-card{
+      background:#ffffff;
+      padding:20px 26px;
+      border-radius:18px;
+      box-shadow:0 16px 40px rgba(0,0,0,.25);
+      max-width:360px;
       text-align:center;
-      box-shadow:0 4px 12px rgba(0,0,0,.04);
+    }
+    .thanks-card h3{
+      margin:0 0 6px 0;
+      font-size:1.1rem;
+      color:var(--primary-strong);
+    }
+    .thanks-card p{
+      margin:0;
+      font-size:.95rem;
+      color:#4b5563;
     }
 
-    /* ====== NUEVO: modal de confirmación más agradable ====== */
-    #order-summary-modal .modal-box{
-      max-width:640px;
-      padding:20px;
-    }
+    /* MODAL RESUMEN */
+    #order-summary-modal .modal-box{max-width:640px;padding:20px;}
     #order-summary-modal h2{
-      margin:0;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-size:1.2rem;
+      margin:0;display:flex;align-items:center;gap:8px;font-size:1.2rem;
     }
     #summary-items{
-      border-radius:12px;
-      border:1px solid #e5e7eb;
-      padding:10px 12px;
-      background:#fafafa;
-      font-size:.94rem;
+      border-radius:12px;border:1px solid #e5e7eb;
+      padding:10px 12px;background:#fafafa;font-size:.94rem;
     }
-    #summary-items strong{
-      font-weight:600;
-    }
-    #order-summary-modal label{
-      font-size:.9rem;
-    }
+    #summary-items strong{font-weight:600;}
+    #order-summary-modal label{font-size:.9rem;}
 
-    /* ====== NUEVO: mejoras visuales panel admin ====== */
+    /* PANEL ADMIN VISUAL */
     #admin-container{
       border-radius:18px;
       padding:18px 18px 16px;
       box-shadow:0 18px 40px rgba(0,0,0,.12);
     }
-    .admin-header-title{
-      font-size:1.1rem;
-      font-weight:700;
-    }
+    .admin-header-title{font-size:1.1rem;font-weight:700;}
     .admin-controls .btn.small{
       border-radius:999px;
       padding:8px 14px;
     }
-    .btn-pill-green{
-      background:linear-gradient(90deg,#2e7d32,#1b5e20);
-    }
-    .btn-pill-gray{
-      background:linear-gradient(90deg,#9ca3af,#6b7280);
-    }
-    .btn-pill-red{
-      background:linear-gradient(90deg,#d32f2f,#b71c1c);
-    }
+    .btn-pill-green{background:linear-gradient(90deg,#2e7d32,#1b5e20);}
+    .btn-pill-gray{background:linear-gradient(90deg,#9ca3af,#6b7280);}
+    .btn-pill-red{background:linear-gradient(90deg,#d32f2f,#b71c1c);}
 
-    /* ====== NUEVO: botones dentro del modal de pago ====== */
-    #payment-modal h2{
-      margin:0;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      font-size:1.15rem;
-    }
-    #payment-modal .btn{
-      border-radius:999px;
-    }
+    #payment-modal h2{margin:0;display:flex;gap:8px;align-items:center;font-size:1.15rem;}
+    #payment-modal .btn{border-radius:999px;}
 
     /* Responsive */
+    @media (max-width:900px){
+      .fin-grid{grid-template-columns:1fr 1fr;}
+    }
     @media (max-width:720px){
       .prod-admin-row input, .prod-admin-row select{width:100%}
       .fin-grid{grid-template-columns:1fr}
@@ -276,22 +285,15 @@
       <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end">
         <button id="enviar-pedido" class="btn"><i class="fas fa-paper-plane" style="margin-right:8px"></i> Enviar pedido</button>
       </div>
-
-      <!-- NUEVO: mensaje centrado de agradecimiento -->
-      <div class="thanks-wrapper">
-        <div class="thanks-message" id="thanks-message" style="display:none;">
-          ¡Gracias por comprar con nosotros! Te contactaremos pronto para coordinar la entrega y el pago.
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- ADMIN (oculto hasta login) -->
+  <!-- ADMIN -->
   <div id="admin-container" class="card" style="display:none;margin-top:14px;">
     <div class="admin-header">
       <div>
         <h3 class="admin-header-title" style="margin:0">Panel Administrador</h3>
-        <div class="small muted">Gestiona productos y pedidos</div>
+        <div class="small muted">Gestiona productos, pedidos y pagos</div>
       </div>
       <div class="admin-controls">
         <button id="add-order-btn" class="btn small btn-pill-green">Agregar pedido</button>
@@ -302,20 +304,20 @@
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" data-tab="tab-pedidos">Pedidos</button>
+      <button class="tab-btn active" data-tab="tab-pedidos">Pedidos activos</button>
+      <button class="tab-btn" data-tab="tab-pagos">Pagos / Pagados</button>
       <button class="tab-btn" data-tab="tab-productos">Productos</button>
       <button class="tab-btn" data-tab="tab-finanzas">Finanzas</button>
     </div>
 
-    <!-- PEDIDOS -->
+    <!-- PEDIDOS ACTIVOS -->
     <div id="tab-pedidos" class="tab-panel active">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
         <input id="search-input" placeholder="Buscar por nombre o teléfono..." style="flex:1;padding:10px;border-radius:10px;border:1px solid #ddd">
         <select id="payment-filter" style="width:220px;padding:10px;border-radius:10px;border:1px solid #ddd">
-          <option value="all">Todos</option>
+          <option value="allActivos">Todos activos</option>
           <option value="pendiente">Pendientes</option>
           <option value="parcial">Parciales</option>
-          <option value="pagado">Pagados</option>
           <option value="moroso">Morosos (+30 días)</option>
         </select>
       </div>
@@ -337,6 +339,33 @@
       </table>
     </div>
 
+    <!-- PAGOS / PAGADOS -->
+    <div id="tab-pagos" class="tab-panel">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <input id="search-paid-input" placeholder="Buscar en pagados..." style="flex:1;padding:10px;border-radius:10px;border:1px solid #ddd">
+        <select id="paid-filter" style="width:220px;padding:10px;border-radius:10px;border:1px solid:#ddd">
+          <option value="pagado">Pagados</option>
+          <option value="parcial">Parciales</option>
+          <option value="todos">Pagados + parciales</option>
+        </select>
+      </div>
+      <table class="orders-table">
+        <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Productos</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Deuda</th>
+          <th>Último pago</th>
+          <th class="actions">Acciones</th>
+        </tr>
+        </thead>
+        <tbody id="paid-orders-body"></tbody>
+      </table>
+    </div>
+
     <!-- PRODUCTOS -->
     <div id="tab-productos" class="tab-panel">
       <div class="card">
@@ -355,16 +384,39 @@
         <h4 style="margin:0">Resumen financiero</h4>
         <div class="fin-grid" style="margin-top:10px">
           <div class="card">
-            <div class="muted small">Total vendido</div>
+            <div class="muted small">Total vendido (monto de pedidos)</div>
             <div id="fin-total" style="font-size:1.2rem;font-weight:700">$0</div>
+          </div>
+          <div class="card">
+            <div class="muted small">Total cobrado (pagos registrados)</div>
+            <div id="fin-cobrado" style="font-size:1.2rem;font-weight:700">$0</div>
           </div>
           <div class="card">
             <div class="muted small">Total pendiente</div>
             <div id="fin-pendiente" style="font-size:1.2rem;font-weight:700">$0</div>
           </div>
         </div>
+
+        <div style="margin-top:16px;display:grid;grid-template-columns:2fr 1.2fr;gap:12px;max-height:340px;">
+          <div class="card" style="overflow:auto;">
+            <div class="small muted" style="margin-bottom:6px;">Pedidos con deuda pendiente</div>
+            <div id="fin-pedidos-list" class="list" style="border:none;max-height:none;"></div>
+          </div>
+          <div class="card" style="overflow:auto;">
+            <div class="small muted" style="margin-bottom:6px;">Últimos pagos registrados</div>
+            <div id="fin-pagos-list" class="list" style="border:none;max-height:none;"></div>
+          </div>
+        </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- OVERLAY MENSAJE GRACIAS -->
+<div id="thanks-overlay" class="thanks-overlay">
+  <div class="thanks-card">
+    <h3>¡Gracias por tu pedido!</h3>
+    <p>Te contactaremos pronto para coordinar la entrega y el pago.</p>
   </div>
 </div>
 
@@ -417,7 +469,7 @@
 <div id="payment-modal" class="modal" aria-hidden="true">
   <div class="modal-box">
     <span class="close-modal" id="close-payment">&times;</span>
-    <h2><i class="fas fa-money-bill-wave"></i> Registrar pago</h2>
+    <h2><i class="fas fa-money-bill-wave"></i> Gestionar pago</h2>
     <div id="payment-client-info" class="muted small" style="margin-top:6px"></div>
 
     <div style="margin-top:8px">
@@ -437,9 +489,10 @@
     </div>
 
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-      <!-- Etiquetas más claras -->
-      <button id="register-payment" class="btn" style="background:linear-gradient(90deg,#2196f3,#1976d2)">Registrar abono</button>
-      <button id="mark-as-paid" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Marcar pagado</button>
+      <!-- Un solo botón que aplica según el monto -->
+      <button id="save-payment" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">
+        Guardar pago / marcar pagado
+      </button>
       <button id="toggle-payment-history" class="btn gray">Historial</button>
     </div>
 
@@ -503,7 +556,7 @@ function notify(msg, time=3000){
   }, time);
 }
 
-/* ====== Storage básico (productos/pedidos/pagos) ====== */
+/* ====== Storage ====== */
 function saveAll(){
   localStorage.setItem('productos', JSON.stringify(productos));
   localStorage.setItem('pedidos', JSON.stringify(pedidos));
@@ -592,13 +645,6 @@ function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
   renderAll();
   return pago;
 }
-function marcarTodoPagado(pedidoId){
-  const pedido = pedidos.find(p => p.id === pedidoId);
-  if(!pedido) return false;
-  const monto = Number(pedido.deudaPendiente || pedido.total);
-  if(monto <= 0) return false;
-  return registrarPago(pedidoId, { monto, metodo: 'transferencia', notas: 'Marcado pagado por admin', fecha: nowISO() });
-}
 
 /* ====== Render ====== */
 function renderProductGrid(){
@@ -618,16 +664,19 @@ function renderProductGrid(){
   });
 }
 
-function renderOrders(filterText = '', paymentFilter = 'all'){
+/* Pedidos activos (pendiente + parcial) */
+function renderOrders(filterText = '', paymentFilter = 'allActivos'){
   const tbody = $('orders-body'); if(!tbody) return;
   tbody.innerHTML = '';
   const ft = (filterText || '').toLowerCase();
   pedidos.forEach(p => {
+    if(p.estadoPago === 'pagado') return; // sólo activos
+
     if(ft){
       const found = (p.nombre || '').toLowerCase().includes(ft) || (p.telefono || '').toLowerCase().includes(ft);
       if(!found) return;
     }
-    if(paymentFilter && paymentFilter !== 'all'){
+    if(paymentFilter && paymentFilter !== 'allActivos'){
       if(paymentFilter === 'moroso'){
         const dias = (Date.now() - new Date(p.fecha).getTime()) / (1000*60*60*24);
         if(!(p.deudaPendiente > 0 && dias > 30)) return;
@@ -642,6 +691,7 @@ function renderOrders(filterText = '', paymentFilter = 'all'){
     if(p.items.frutillas && Number(p.items.frutillas.qty)) itemsLines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML(productos.frutillas.nombre)}`);
 
     const tr = document.createElement('tr');
+    tr.className = p.estadoPago === 'parcial' ? 'row-partial' : 'row-pending';
     tr.innerHTML = `
       <td><strong>${escapeHTML(p.nombre)}</strong></td>
       <td>${escapeHTML(p.telefono)}</td>
@@ -652,9 +702,68 @@ function renderOrders(filterText = '', paymentFilter = 'all'){
       <td>${new Date(p.fecha).toLocaleString()}</td>
       <td class="actions" style="text-align:right">
         <div class="order-actions">
-          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}" title="Registrar pago / abono"><i class="fas fa-money-bill-wave"></i></button>
-          <button class="icon-btn icon-view" data-action="view" data-id="${p.id}" title="Ver pedido"><i class="fas fa-eye"></i></button>
-          <button class="icon-btn icon-delete" data-action="delete" data-id="${p.id}" title="Eliminar pedido"><i class="fas fa-trash"></i></button>
+          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}">
+            <i class="fas fa-money-bill-wave"></i><span>Pago</span>
+          </button>
+          <button class="icon-btn icon-view" data-action="view" data-id="${p.id}">
+            <i class="fas fa-eye"></i>
+          </button>
+          <button class="icon-btn icon-delete" data-action="delete" data-id="${p.id}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* Tabla de pagos / pagados */
+function renderPaidOrders(searchText = '', filter = 'pagado'){
+  const tbody = $('paid-orders-body'); if(!tbody) return;
+  tbody.innerHTML = '';
+  const st = (searchText || '').toLowerCase();
+
+  pedidos.forEach(p => {
+    const includeEstado =
+      filter === 'todos'
+        ? (p.estadoPago === 'pagado' || p.estadoPago === 'parcial')
+        : p.estadoPago === filter;
+
+    if(!includeEstado) return;
+
+    if(st){
+      const found = (p.nombre || '').toLowerCase().includes(st) || (p.telefono || '').toLowerCase().includes(st);
+      if(!found) return;
+    }
+
+    const itemsLines = [];
+    if(p.items.paltas && Number(p.items.paltas.qty)) itemsLines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML(productos.paltas.nombre)}`);
+    if(p.items.champi && Number(p.items.champi.qty)) itemsLines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML(productos.champi.nombre)}`);
+    if(p.items.frutillas && Number(p.items.frutillas.qty)) itemsLines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML(productos.frutillas.nombre)}`);
+
+    const lastPayment = (p.pagos && p.pagos.length)
+      ? new Date(p.pagos[p.pagos.length-1].fecha).toLocaleString()
+      : '-';
+
+    const tr = document.createElement('tr');
+    tr.className = p.estadoPago === 'pagado' ? 'row-paid' : 'row-partial';
+    tr.innerHTML = `
+      <td><strong>${escapeHTML(p.nombre)}</strong></td>
+      <td>${escapeHTML(p.telefono)}</td>
+      <td class="orders-products">${itemsLines.join('<br>')}</td>
+      <td>${money(p.total)}</td>
+      <td><strong>${escapeHTML(p.estadoPago.toUpperCase())}</strong></td>
+      <td>${money(p.deudaPendiente || 0)}</td>
+      <td>${lastPayment}</td>
+      <td class="actions" style="text-align:right">
+        <div class="order-actions">
+          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}">
+            <i class="fas fa-money-bill-wave"></i><span>Pago</span>
+          </button>
+          <button class="icon-btn icon-view" data-action="view" data-id="${p.id}">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
       </td>
     `;
@@ -685,10 +794,39 @@ function renderProductsAdmin(){
 }
 
 function renderFinanzas(){
-  const total = pedidos.reduce((acc,p)=> acc + (Number(p.total)||0), 0);
-  const pendiente = pedidos.reduce((acc,p)=> acc + (Number(p.deudaPendiente)||0), 0);
-  if($('fin-total')) $('fin-total').textContent = money(total);
-  if($('fin-pendiente')) $('fin-pendiente').textContent = money(pendiente);
+  const totalPedidos = pedidos.reduce((acc,p)=> acc + (Number(p.total)||0), 0);
+  const totalPendiente = pedidos.reduce((acc,p)=> acc + (Number(p.deudaPendiente)||0), 0);
+  const totalCobrado = pagos.reduce((acc,pa)=> acc + (Number(pa.monto)||0), 0);
+  if($('fin-total')) $('fin-total').textContent = money(totalPedidos);
+  if($('fin-pendiente')) $('fin-pendiente').textContent = money(totalPendiente);
+  if($('fin-cobrado')) $('fin-cobrado').textContent = money(totalCobrado);
+
+  const lp = $('fin-pedidos-list'); if(lp){
+    lp.innerHTML = '';
+    pedidos
+      .filter(p => (p.deudaPendiente || 0) > 0)
+      .forEach(p => {
+        const d = document.createElement('div');
+        d.style.display='flex';
+        d.style.justifyContent='space-between';
+        d.style.padding='4px 0';
+        d.innerHTML = `<span>${escapeHTML(p.nombre)} (${money(p.total)})</span><span class="muted small">Pendiente: ${money(p.deudaPendiente)}</span>`;
+        lp.appendChild(d);
+      });
+  }
+  const lpa = $('fin-pagos-list'); if(lpa){
+    lpa.innerHTML = '';
+    pagos.slice(0,15).forEach(pa => {
+      const ped = pedidos.find(p=>p.id===pa.pedidoId);
+      const n = ped ? ped.nombre : 'Pedido';
+      const d = document.createElement('div');
+      d.style.display='flex';
+      d.style.justifyContent='space-between';
+      d.style.padding='4px 0';
+      d.innerHTML = `<span>${escapeHTML(n)}<br><span class="small muted">${new Date(pa.fecha).toLocaleString()} (${escapeHTML(pa.metodo)})</span></span><span style="font-weight:700">${money(pa.monto)}</span>`;
+      lpa.appendChild(d);
+    });
+  }
 }
 
 /* ====== Modales ====== */
@@ -769,6 +907,32 @@ function renderPaymentHistoryForPedido(pedidoId){
   });
 }
 
+/* ====== Guardar pago único (abono o total) ====== */
+function handleSavePayment(){
+  if(!currentPaymentPedidoId) return notify('No hay pedido seleccionado', 1600);
+  const pedido = pedidos.find(p => p.id === currentPaymentPedidoId);
+  if(!pedido) return notify('Pedido no encontrado', 1600);
+
+  const monto = Number($('payment-amount').value) || 0;
+  const metodo = $('payment-method').value;
+  const notas = $('payment-notes').value || '';
+
+  if(monto <= 0) return alert('Ingresa un monto válido');
+
+  const deudaAntes = Number(pedido.deudaPendiente || pedido.total);
+  const pago = registrarPago(currentPaymentPedidoId, { monto, metodo, notas, fecha: nowISO() });
+
+  if(!pago) return;
+
+  const deudaDespues = pedido.deudaPendiente;
+  if(deudaDespues <= 0){
+    notify('Pago registrado y pedido marcado como PAGADO');
+  } else {
+    notify('Abono registrado. Queda saldo pendiente.');
+  }
+  renderPaymentHistoryForPedido(currentPaymentPedidoId);
+}
+
 /* ====== CSV ====== */
 function buildOrdersCSV(){
   const header = ['ID','Nombre','Telefono','Fecha','Productos','Comentarios','Total','Estado','DeudaPendiente','PaymentMethod'];
@@ -827,7 +991,6 @@ function setupListeners(){
     $('summary-transfer-details').style.display = 'none';
     showModal('order-summary-modal');
 
-    // Guardamos temporalmente los items en el propio modal
     $('confirm-order').onclick = () => {
       const metodo = $('summary-payment-method').value;
       crearPedido({
@@ -839,11 +1002,10 @@ function setupListeners(){
       });
       hideModal('order-summary-modal');
 
-      // Mostrar mensaje centrado de gracias
-      const thanks = $('thanks-message');
-      if(thanks){
-        thanks.style.display = 'block';
-        setTimeout(()=>{ thanks.style.display = 'none'; }, 4000);
+      const ov = $('thanks-overlay');
+      if(ov){
+        ov.style.display = 'flex';
+        setTimeout(()=>{ ov.style.display = 'none'; }, 3500);
       }
 
       notify('Pedido enviado. ¡Gracias por comprar con nosotros!');
@@ -870,11 +1032,8 @@ function setupListeners(){
       sessionStorage.setItem('isAdmin','1');
       hideModal('login-modal'); $('admin-email').value = ''; $('admin-password').value = '';
       $('admin-container').style.display = 'block';
-
-      // NUEVO: ocultar sección cliente cuando es admin
       const clienteCard = $('cliente-card');
       if(clienteCard) clienteCard.style.display = 'none';
-
       setupTabs();
       renderAll();
       notify('Acceso administrador concedido');
@@ -887,33 +1046,14 @@ function setupListeners(){
     isAdmin = false;
     sessionStorage.removeItem('isAdmin');
     $('admin-container').style.display = 'none';
-
-    // Al salir, volver a mostrar el formulario de cliente
     const clienteCard = $('cliente-card');
     if(clienteCard) clienteCard.style.display = 'block';
-
     notify('Sesión cerrada');
   });
 
   /* Botones pago admin */
   $('close-payment').addEventListener('click', () => hideModal('payment-modal'));
-  $('register-payment').addEventListener('click', () => {
-    if(!currentPaymentPedidoId) return notify('No hay pedido seleccionado', 1600);
-    const monto = Number($('payment-amount').value) || 0;
-    const metodo = $('payment-method').value;
-    const notas = $('payment-notes').value || '';
-    if(monto <= 0) return alert('Ingresa un monto válido');
-    registrarPago(currentPaymentPedidoId, { monto, metodo, notas, fecha: nowISO() });
-    renderPaymentHistoryForPedido(currentPaymentPedidoId);
-    notify('Abono registrado');
-  });
-  $('mark-as-paid').addEventListener('click', () => {
-    if(!currentPaymentPedidoId) return notify('No hay pedido seleccionado', 1600);
-    if(!confirm('Marcar todo como pagado?')) return;
-    marcarTodoPagado(currentPaymentPedidoId);
-    renderPaymentHistoryForPedido(currentPaymentPedidoId);
-    notify('Pedido marcado como pagado');
-  });
+  $('save-payment').addEventListener('click', handleSavePayment);
   $('toggle-payment-history').addEventListener('click', () => {
     const el = $('payment-history-container');
     if(el.style.display === 'block') el.style.display = 'none';
@@ -936,10 +1076,15 @@ function setupListeners(){
     saveAll(); renderAll(); notify('Productos restaurados');
   });
 
-  /* Filtros tabla */
+  /* Filtros tabla pedidos activos */
   const si = $('search-input'); const pf = $('payment-filter');
-  if(si) si.addEventListener('input', e => renderOrders(e.target.value || '', pf?.value || 'all'));
-  if(pf) pf.addEventListener('change', () => renderOrders(si?.value || '', pf?.value || 'all'));
+  if(si) si.addEventListener('input', e => renderOrders(e.target.value || '', pf?.value || 'allActivos'));
+  if(pf) pf.addEventListener('change', () => renderOrders(si?.value || '', pf?.value || 'allActivos'));
+
+  /* Filtros tabla pagos */
+  const spi = $('search-paid-input'); const spf = $('paid-filter');
+  if(spi) spi.addEventListener('input', e => renderPaidOrders(e.target.value || '', spf?.value || 'pagado'));
+  if(spf) spf.addEventListener('change', () => renderPaidOrders(spi?.value || '', spf?.value || 'pagado'));
 
   /* Export CSV */
   $('export-btn').addEventListener('click', () => {
@@ -948,7 +1093,7 @@ function setupListeners(){
     notify('CSV exportado');
   });
 
-  /* Botón agregar pedido admin (simple: sólo crea desde prompt) */
+  /* Botón agregar pedido admin */
   $('add-order-btn').addEventListener('click', () => {
     if(!isAdmin) return notify('Debes iniciar sesión como admin', 2000);
     const nombre = prompt('Nombre cliente:');
@@ -965,7 +1110,8 @@ function renderAll(){
   renderProductGrid();
   if(isAdmin){
     renderProductsAdmin();
-    renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'all');
+    renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'allActivos');
+    renderPaidOrders($('search-paid-input')?.value || '', $('paid-filter')?.value || 'pagado');
     renderFinanzas();
   }
 }
