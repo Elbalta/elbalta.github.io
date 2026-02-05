@@ -6,7 +6,7 @@
   <title>Compras Grupales - Lazo Mercado</title>
 
   <!-- Fuentes e íconos -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -104,7 +104,7 @@
     }
     .btn:hover{filter:brightness(1.05)}
     .btn:active{transform:translateY(1px)}
-    .btn.gray{background:linear-gradient(90deg,#607d8b,#455a64)}
+    .btn.gray{background:linear-gradient(90deg,#607d8b,#455a64);color:#f9fafb;}
     .btn.danger{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
     .btn.small{padding:8px 10px;font-size:.92rem}
 
@@ -120,24 +120,25 @@
     .orders-products{color:var(--muted);font-size:.92rem;line-height:1.25}
     .order-actions{display:flex;gap:8px;justify-content:flex-end}
     .icon-btn{
-      min-width:40px;height:34px;border-radius:999px;border:0;
+      min-width:60px;height:30px;border-radius:999px;border:0;
       display:inline-flex;align-items:center;justify-content:center;
-      cursor:pointer;font-size:.8rem;font-weight:600;
-      padding:0 12px;gap:6px;
+      cursor:pointer;font-size:.78rem;font-weight:600;
+      padding:0 10px;gap:6px;
     }
+    .icon-btn span{white-space:nowrap;}
     .icon-pay{
       background:var(--btn-blue-bg);
       color:var(--btn-blue-text);
     }
     .icon-view{
-      background:#eceff1;
-      color:#374151;
+      background:var(--btn-green-bg);
+      color:var(--btn-green-text);
     }
     .icon-delete{
       background:var(--btn-red-bg);
       color:var(--btn-red-text);
     }
-    td.actions{width:180px;max-width:190px}
+    td.actions{width:210px;max-width:220px}
 
     .row-paid{background:var(--paid);}
     .row-partial{background:var(--partial);}
@@ -223,6 +224,7 @@
     .admin-controls .btn.small{
       border-radius:999px;
       padding:8px 14px;
+      color:#ffffff; /* texto blanco para ver bien */
     }
     .btn-pill-green{background:linear-gradient(90deg,#2e7d32,#1b5e20);}
     .btn-pill-gray{background:linear-gradient(90deg,#9ca3af,#6b7280);}
@@ -489,7 +491,6 @@
     </div>
 
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-      <!-- Un solo botón que aplica según el monto -->
       <button id="save-payment" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">
         Guardar pago / marcar pagado
       </button>
@@ -651,6 +652,7 @@ function renderProductGrid(){
   const grid = $('product-grid'); grid.innerHTML = '';
   Object.keys(productos).forEach(key => {
     const p = productos[key];
+    if(!p.disponible) return; // NO mostrar productos desactivados
     const card = document.createElement('div'); card.className = 'product-card';
     const step = (p.baseUnit === 'g') ? 100 : 1;
     card.innerHTML = `
@@ -706,10 +708,10 @@ function renderOrders(filterText = '', paymentFilter = 'allActivos'){
             <i class="fas fa-money-bill-wave"></i><span>Pago</span>
           </button>
           <button class="icon-btn icon-view" data-action="view" data-id="${p.id}">
-            <i class="fas fa-eye"></i>
+            <i class="fas fa-eye"></i><span>Ver</span>
           </button>
           <button class="icon-btn icon-delete" data-action="delete" data-id="${p.id}">
-            <i class="fas fa-trash"></i>
+            <i class="fas fa-trash"></i><span>Borrar</span>
           </button>
         </div>
       </td>
@@ -762,7 +764,7 @@ function renderPaidOrders(searchText = '', filter = 'pagado'){
             <i class="fas fa-money-bill-wave"></i><span>Pago</span>
           </button>
           <button class="icon-btn icon-view" data-action="view" data-id="${p.id}">
-            <i class="fas fa-eye"></i>
+            <i class="fas fa-eye"></i><span>Ver</span>
           </button>
         </div>
       </td>
@@ -797,6 +799,7 @@ function renderFinanzas(){
   const totalPedidos = pedidos.reduce((acc,p)=> acc + (Number(p.total)||0), 0);
   const totalPendiente = pedidos.reduce((acc,p)=> acc + (Number(p.deudaPendiente)||0), 0);
   const totalCobrado = pagos.reduce((acc,pa)=> acc + (Number(pa.monto)||0), 0);
+
   if($('fin-total')) $('fin-total').textContent = money(totalPedidos);
   if($('fin-pendiente')) $('fin-pendiente').textContent = money(totalPendiente);
   if($('fin-cobrado')) $('fin-cobrado').textContent = money(totalCobrado);
@@ -919,13 +922,8 @@ function handleSavePayment(){
 
   if(monto <= 0) return alert('Ingresa un monto válido');
 
-  const deudaAntes = Number(pedido.deudaPendiente || pedido.total);
-  const pago = registrarPago(currentPaymentPedidoId, { monto, metodo, notas, fecha: nowISO() });
-
-  if(!pago) return;
-
-  const deudaDespues = pedido.deudaPendiente;
-  if(deudaDespues <= 0){
+  registrarPago(currentPaymentPedidoId, { monto, metodo, notas, fecha: nowISO() });
+  if(pedido.deudaPendiente <= 0){
     notify('Pago registrado y pedido marcado como PAGADO');
   } else {
     notify('Abono registrado. Queda saldo pendiente.');
