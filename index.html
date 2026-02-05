@@ -13,37 +13,97 @@
     :root{
       --primary:#2e7d32;
       --primary-strong:#1b5e20;
-      --bg:#f6f4f0;
-      --card:#fff;
-      --muted:#666666;
+      --bg:#f7f7f5;
+      --card:#ffffff;
+      --muted:#6b7280;
       --danger:#d32f2f;
-      --success:#388e3c;
-      --glass: rgba(255,255,255,0.6);
+      --success:#2e7d32;
+      --glass: rgba(255,255,255,0.7);
+      --ring:#bde0bd;
     }
     *{box-sizing:border-box}
-    body{font-family:'Poppins',sans-serif;background:var(--bg);color:#222;margin:0;line-height:1.35}
-    header{background:linear-gradient(135deg,var(--primary),var(--primary-strong));color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    html,body{height:100%}
+    body{
+      font-family:'Poppins',sans-serif;
+      background:
+        radial-gradient(1000px 400px at -10% -10%, #eaf4ea 0%, transparent 60%),
+        radial-gradient(800px 300px at 110% 10%, #eaf4ea 0%, transparent 60%),
+        var(--bg);
+      color:#1f2937;margin:0;line-height:1.45
+    }
+    /* Header */
+    header{
+      background:linear-gradient(135deg,var(--primary),var(--primary-strong));
+      color:#fff;padding:16px 20px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      position:sticky;top:0;z-index:100;
+      box-shadow:0 10px 24px rgba(0,0,0,.12)
+    }
     .brand{display:flex;gap:12px;align-items:center}
-    .brand h1{font-size:1.1rem;margin:0}
+    .brand .logo{
+      width:40px;height:40px;border-radius:12px;
+      background:rgba(255,255,255,.2);
+      display:grid;place-items:center
+    }
+    .brand h1{font-size:1.15rem;margin:0}
     .brand p{margin:0;font-size:.9rem;opacity:.95}
-    .container{max-width:1120px;margin:18px auto;padding:12px}
-    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 22px rgba(0,0,0,.06)}
+    .header-actions{display:flex;gap:8px;align-items:center}
+
+    /* Layout */
+    .container{max-width:980px;margin:20px auto;padding:0 14px}
+    .card{
+      background:var(--card);
+      border-radius:14px;padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
+      backdrop-filter:saturate(1.1)
+    }
     .grid{display:grid;gap:12px}
-    /* PRODUCT GRID (CLIENT) */
-    .product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-    .product-card{border:1px solid #eee;border-radius:10px;padding:12px;background:#fff;display:flex;flex-direction:column;gap:8px}
+    .section-title{
+      margin:0 0 8px 0;color:var(--primary);
+      display:flex;align-items:center;gap:8px
+    }
+
+    /* Inputs */
+    label{display:block;margin-bottom:6px;font-weight:600}
+    input,select,textarea{
+      width:100%;padding:12px;border-radius:10px;border:1px solid #d1d5db;
+      background:#fff;transition:border-color .18s, box-shadow .18s
+    }
+    input:focus,select:focus,textarea:focus{
+      outline:none;border-color:var(--ring);
+      box-shadow:0 0 0 4px rgba(46,125,50,.12)
+    }
+
+    /* Product grid (client) */
+    .product-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px
+    }
+    .product-card{
+      border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff;
+      display:flex;flex-direction:column;gap:8px;transition:transform .15s, box-shadow .15s
+    }
+    .product-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.08)}
     .product-name{font-weight:700;font-size:1.02rem}
-    .product-unit{font-size:.9rem;color:var(--muted)}
-    .qty-row{display:flex;gap:8px;align-items:center;margin-top:6px}
-    .qty-row input{flex:1;padding:10px;border-radius:8px;border:1px solid #ddd}
-    /* BUTTONS */
-    .btn{background:linear-gradient(90deg,var(--primary),var(--primary-strong));color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer}
+    .product-unit{font-size:.92rem;color:var(--muted)}
+    .qty-row{display:flex;gap:10px;align-items:center;margin-top:6px}
+    .qty-row input{flex:1;padding:12px;border-radius:10px;border:1px solid #ddd}
+
+    /* Buttons */
+    .btn{
+      background:linear-gradient(90deg,var(--primary),var(--primary-strong));
+      color:#fff;border:0;padding:11px 16px;border-radius:10px;
+      font-weight:700;cursor:pointer;transition:filter .1s, transform .06s
+    }
+    .btn:hover{filter:brightness(1.05)}
+    .btn:active{transform:translateY(1px)}
     .btn.gray{background:linear-gradient(90deg,#607d8b,#455a64)}
     .btn.danger{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
     .btn.small{padding:8px 10px;font-size:.92rem}
+
     .muted{color:var(--muted)}
     .small{font-size:.88rem;color:var(--muted)}
-    /* ADMIN */
+
+    /* Admin table and controls (solo visible en admin) */
     .admin-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
     .admin-controls{display:flex;gap:8px;flex-wrap:wrap}
     .orders-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.95rem}
@@ -56,51 +116,63 @@
     .icon-view{background:linear-gradient(90deg,#607d8b,#455a64)}
     .icon-delete{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
     td.actions{width:140px;max-width:140px}
-    /* MODALS */
+
+    /* Modals */
     .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:12px}
     .modal.show{display:flex}
-    .modal-box{width:100%;max-width:760px;background:#fff;border-radius:10px;padding:16px;max-height:92vh;overflow:auto;position:relative}
-    .close-modal{position:absolute;right:14px;top:10px;font-size:18px;cursor:pointer}
+    .modal-box{
+      width:100%;max-width:760px;background:#fff;border-radius:12px;padding:16px;max-height:92vh;overflow:auto;position:relative;
+      box-shadow:0 16px 40px rgba(0,0,0,.2);animation:pop .16s ease-out
+    }
+    @keyframes pop{from{transform:scale(.98);opacity:.7}to{transform:scale(1);opacity:1}}
+    .close-modal{position:absolute;right:14px;top:10px;font-size:20px;cursor:pointer;color:#374151}
+
     /* Admin product row */
     .prod-admin-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
-    .prod-admin-row input, .prod-admin-row select{width:calc(100% / 4 - 8px);min-width:120px;padding:8px;border-radius:8px;border:1px solid #ddd}
-    .prod-admin-row .avail{width:120px}
-    /* FINANZAS */
+    .prod-admin-row input, .prod-admin-row select{width:calc(100% / 4 - 8px);min-width:140px;padding:10px;border-radius:10px;border:1px solid #ddd}
+    .prod-admin-row .avail{width:140px}
+
+    /* Finanzas */
     .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .list{max-height:300px;overflow:auto;padding:8px;border-radius:8px;border:1px solid #eee}
-    .list-item{padding:8px;border-bottom:1px solid #f2f2f2;display:flex;justify-content:space-between}
-    .badge{display:inline-block;padding:4px 8px;border-radius:6px;background:#f1f1f1}
-    @media (max-width:720px){ .prod-admin-row input, .prod-admin-row select{width:100%} .fin-grid{grid-template-columns:1fr} }
+    .list{max-height:300px;overflow:auto;padding:8px;border-radius:10px;border:1px solid #eee}
+    .badge{display:inline-block;padding:4px 8px;border-radius:8px;background:#f1f1f1}
+
+    /* Responsive */
+    @media (max-width:720px){
+      .prod-admin-row input, .prod-admin-row select{width:100%}
+      .fin-grid{grid-template-columns:1fr}
+      header{padding:14px}
+    }
   </style>
 </head>
 <body>
 <header>
   <div class="brand">
-    <i class="fas fa-shopping-basket" style="font-size:20px"></i>
+    <div class="logo"><i class="fas fa-shopping-basket"></i></div>
     <div>
       <h1>Compras Grupales — Lazo Mercado</h1>
-      <p class="small muted">Control de pedidos y pagos</p>
+      <p class="small muted">Pide fácil, paga al recibir o por transferencia</p>
     </div>
   </div>
-  <div>
+  <div class="header-actions">
     <button id="admin-login-link" class="btn"><i class="fas fa-user-shield" style="margin-right:8px"></i> Administrador</button>
   </div>
 </header>
 
 <div class="container">
-  <!-- CLIENT FORM -->
-  <div class="card">
-    <h2 style="margin:0 0 8px 0;color:var(--primary)"><i class="fas fa-cart-plus"></i> Realiza tu pedido</h2>
+  <!-- CLIENT FORM (SIEMPRE VISIBLE) -->
+  <div class="card" aria-label="Formulario de pedido">
+    <h2 class="section-title"><i class="fas fa-cart-plus"></i> Realiza tu pedido</h2>
 
     <div class="grid">
       <div>
         <label><strong>Nombre</strong></label>
-        <input id="nombre" type="text" placeholder="Juan Pérez">
+        <input id="nombre" type="text" placeholder="Ej: Juan Pérez" autocomplete="name">
       </div>
 
       <div>
         <label><strong>Teléfono</strong></label>
-        <input id="telefono" type="tel" placeholder="+56912345678">
+        <input id="telefono" type="tel" placeholder="+56912345678" autocomplete="tel">
       </div>
 
       <div>
@@ -113,13 +185,13 @@
         <textarea id="comentarios" rows="2" placeholder="Ej: departamento, dirección, referencia"></textarea>
       </div>
 
-      <div>
+      <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end">
         <button id="enviar-pedido" class="btn"><i class="fas fa-paper-plane" style="margin-right:8px"></i> Enviar pedido</button>
       </div>
     </div>
   </div>
 
-  <!-- ADMIN PANEL -->
+  <!-- ADMIN PANEL (OCULTO HASTA LOGIN) -->
   <div id="admin-container" class="card" style="display:none;margin-top:14px;">
     <div class="admin-header">
       <div>
@@ -135,8 +207,8 @@
     </div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <input id="search-input" placeholder="Buscar por nombre o teléfono..." style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd">
-      <select id="payment-filter" style="width:200px;padding:10px;border-radius:8px;border:1px solid #ddd">
+      <input id="search-input" placeholder="Buscar por nombre o teléfono..." style="flex:1;padding:10px;border-radius:10px;border:1px solid #ddd">
+      <select id="payment-filter" style="width:220px;padding:10px;border-radius:10px;border:1px solid #ddd">
         <option value="all">Todos</option>
         <option value="pendiente">Pendientes</option>
         <option value="parcial">Parciales</option>
@@ -172,7 +244,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -186,7 +257,7 @@
     <div style="display:flex;gap:12px;align-items:center;margin-top:12px;">
       <div style="flex:1">
         <label><strong>Método de pago</strong></label>
-        <select id="summary-payment-method" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd">
+        <select id="summary-payment-method" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd">
           <option value="efectivo">Efectivo (al recibir)</option>
           <option value="transferencia">Transferencia / Mercado Pago</option>
         </select>
@@ -272,19 +343,14 @@
 </div>
 
 <!-- Notification -->
-<div id="notification" style="position:fixed;right:16px;top:16px;background:var(--primary);color:#fff;padding:8px 12px;border-radius:8px;display:none;z-index:9999"></div>
+<div id="notification" style="position:fixed;right:16px;top:16px;background:var(--primary);color:#fff;padding:8px 12px;border-radius:10px;display:none;z-index:9999"></div>
 
 <script>
 /*
-  Consolidated index.html implementing:
-  - Admin product config: choose base selling unit (kg / caja / g / saco)
-  - Client view: shows all products (regardless of stock) with chosen unit, user inputs qty
-  - On "Enviar pedido": modal summary with 2 payment options (efectivo / transferencia)
-    - If transferencia selected, shows Mercado Pago transfer information
-    - Confirm creates order saved in localStorage and shows "Gracias por la compra" notification
-  - Admin panel: list orders, register payments (modal), export CSV, add manual orders
-  - All main buttons wired. No stock is shown to client.
-  - Orders are kept in localStorage; optional backend sending can be added later
+ Mejora de interfaz para clientes:
+ - Cliente solo ve el formulario "Realiza tu pedido".
+ - Panel admin permanece oculto hasta login (botón Administrador).
+ - Estilos modernizados, transiciones y foco en inputs.
 */
 
 /* ====== App State & Defaults ====== */
@@ -299,7 +365,7 @@ let pedidos = [];
 let pagos = [];
 let isAdmin = false;
 let currentPaymentPedidoId = null;
-let backendUrl = ''; // optional, can be configured in UI if you add an input
+let backendUrl = ''; // optional backend endpoint
 
 /* ====== Utils ====== */
 const $ = id => document.getElementById(id);
@@ -332,6 +398,7 @@ function loadAll(){
   } catch(e){
     console.error('loadAll error', e);
   }
+  // Ensure defaults
   productos.paltas = { ...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas || {}) };
   productos.champi = { ...DEFAULT_PRODUCTOS.champi, ...(productos.champi || {}) };
   productos.frutillas = { ...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas || {}) };
@@ -349,7 +416,7 @@ function calcTotalFromItems(items){
     else if(u === 'g') total += (q/1000) * (productos.paltas.precio || DEFAULT_PRODUCTOS.paltas.precio);
     else total += q * (productos.paltas.precio || DEFAULT_PRODUCTOS.paltas.precio);
   }
-  // champi
+  // champiñones
   if(items.champi && Number(items.champi.qty)){
     const q = Number(items.champi.qty)||0;
     const u = items.champi.unit;
@@ -417,17 +484,16 @@ function marcarTodoPagado(pedidoId){
 
 /* ====== Rendering UI ====== */
 
-/* Product grid (client) shows all products (no stock display) and the configured unit */
+/* Product grid (client) */
 function renderProductGrid(){
   const grid = $('product-grid'); grid.innerHTML = '';
   Object.keys(productos).forEach(key => {
     const p = productos[key];
-    // Show all products regardless of "disponible" if admin wants; the user requested to have products appear (they chose earlier)
     const card = document.createElement('div'); card.className = 'product-card';
     const step = (p.baseUnit === 'g') ? 100 : 1;
     card.innerHTML = `
       <div class="product-name">${escapeHTML(p.nombre)}</div>
-      <div class="product-unit">Unidad: <strong>${escapeHTML(p.baseUnit)}</strong> • Precio venta: <strong>${money(p.precio)}</strong></div>
+      <div class="product-unit">Unidad: <strong>${escapeHTML(p.baseUnit)}</strong> • Precio: <strong>${money(p.precio)}</strong></div>
       <div class="qty-row">
         <input type="number" min="0" step="${step}" value="${p.baseUnit === 'kg' ? 1 : 0}" data-product="${escapeHTML(key)}" class="client-qty" aria-label="Cantidad ${escapeHTML(p.nombre)}">
       </div>
@@ -438,7 +504,8 @@ function renderProductGrid(){
 
 /* Orders table (admin) */
 function renderOrders(filterText = '', paymentFilter = 'all'){
-  const tbody = $('orders-body'); tbody.innerHTML = '';
+  const tbody = $('orders-body'); if(!tbody) return;
+  tbody.innerHTML = '';
   const ft = (filterText || '').toLowerCase();
   pedidos.forEach(p => {
     if(ft){
@@ -548,7 +615,8 @@ function hideModal(id){ const el = $(id); if(!el) return; el.classList.remove('s
 
 /* ====== Product Admin UI ====== */
 function renderProductsAdmin(){
-  const container = $('products-admin'); container.innerHTML = '';
+  const container = $('products-admin'); if(!container) return;
+  container.innerHTML = '';
   Object.keys(productos).forEach(k => {
     const p = productos[k];
     const row = document.createElement('div'); row.className = 'prod-admin-row';
@@ -573,55 +641,50 @@ function setupListeners(){
   // Client: Enviar pedido -> open summary modal
   $('enviar-pedido').addEventListener('click', () => {
     const nombre = $('nombre').value.trim();
-    const telefono = $('telefono').value.trim();
+    const telefono = normPhone($('telefono').value.trim());
     if(!nombre || !telefono) return alert('Nombre y teléfono son requeridos');
-    const items = {
-      paltas: { qty: 0, unit: productos.paltas.baseUnit },
-      champi: { qty: 0, unit: productos.champi.baseUnit },
-      frutillas: { qty: 0, unit: productos.frutillas.baseUnit }
-    };
+    const items = {};
     document.querySelectorAll('.client-qty').forEach(input => {
       const key = input.getAttribute('data-product');
       const v = Number(input.value) || 0;
       if(v > 0) items[key] = { qty: v, unit: productos[key].baseUnit };
     });
-    // remove zeros:
-    const selectedItems = {};
-    Object.keys(items).forEach(k => { if(items[k].qty && items[k].qty > 0) selectedItems[k] = items[k]; });
 
-    if(Object.keys(selectedItems).length === 0) return alert('Selecciona al menos un producto');
+    if(Object.keys(items).length === 0) return alert('Selecciona al menos un producto');
 
     // Build summary
     const container = $('summary-items'); container.innerHTML = '';
-    Object.keys(selectedItems).forEach(k => {
+    Object.keys(items).forEach(k => {
       const p = productos[k];
-      const subtotal = calcTotalFromItems({ [k]: selectedItems[k] });
+      const subtotal = calcTotalFromItems({ [k]: items[k] });
       const row = document.createElement('div'); row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.padding = '6px 0';
-      row.innerHTML = `<div>${selectedItems[k].qty} ${selectedItems[k].unit} ${escapeHTML(p.nombre)}</div><div style="font-weight:800">${money(subtotal)}</div>`;
+      row.innerHTML = `<div>${items[k].qty} ${items[k].unit} ${escapeHTML(p.nombre)}</div><div style="font-weight:800">${money(subtotal)}</div>`;
       container.appendChild(row);
     });
     if($('comentarios').value.trim()){
-      const c = document.createElement('div'); c.className = 'muted small'; c.style.marginTop = '8px'; c.textContent = 'Comentarios / Despacho: ' + $('comentarios').value.trim(); container.appendChild(c);
+      const c = document.createElement('div');
+      c.className = 'muted small';
+      c.style.marginTop = '8px';
+      c.textContent = 'Comentarios / Despacho: ' + $('comentarios').value.trim();
+      container.appendChild(c);
     }
-    const total = calcTotalFromItems(Object.assign({}, selectedItems));
+    const total = calcTotalFromItems(Object.assign({}, items));
     $('summary-total').textContent = money(total);
     $('summary-payment-method').value = 'efectivo';
     $('summary-transfer-details').style.display = 'none';
     showModal('order-summary-modal');
 
-    // Rewire modal buttons safely by cloning nodes to avoid doubling listeners
+    // Safe rewire modal buttons
     const confirmBtn = $('confirm-order'); const confirmNew = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(confirmNew, confirmBtn);
     const rejectBtn = $('reject-order'); const rejectNew = rejectBtn.cloneNode(true); rejectBtn.parentNode.replaceChild(rejectNew, rejectBtn);
     const methodSel = $('summary-payment-method'); const methodNew = methodSel.cloneNode(true); methodSel.parentNode.replaceChild(methodNew, methodSel);
 
     methodNew.addEventListener('change', () => {
-      if(methodNew.value === 'transferencia') $('summary-transfer-details').style.display = 'block';
-      else $('summary-transfer-details').style.display = 'none';
+      $('summary-transfer-details').style.display = methodNew.value === 'transferencia' ? 'block' : 'none';
     });
 
     confirmNew.addEventListener('click', () => {
-      // create order
-      crearPedido({ nombre, telefono, items: selectedItems, comentarios: $('comentarios').value.trim(), creadoPorAdmin: false, paymentMethod: methodNew.value });
+      crearPedido({ nombre, telefono, items, comentarios: $('comentarios').value.trim(), creadoPorAdmin: false, paymentMethod: methodNew.value });
       hideModal('order-summary-modal');
       notify('Gracias por tu compra. Pedido registrado.');
       // reset client inputs
@@ -661,30 +724,45 @@ function setupListeners(){
     notify('CSV exportado');
   });
 
-  // Add manual order (opens small modal)
+  // Add manual order (modal simple)
   $('add-order-btn').addEventListener('click', () => {
     if(!isAdmin) return notify('Debes iniciar sesión como admin', 2000);
-    // Build inline modal for adding order manually
     const wrapper = document.createElement('div'); wrapper.className = 'modal show'; wrapper.style.display = 'flex';
     const box = document.createElement('div'); box.className = 'modal-box';
-    box.innerHTML = `<span class="close-modal tmp-close">&times;</span><h3>Agregar pedido (admin)</h3>
-      <div style="display:flex;gap:8px;margin-top:8px"><input id="tmp-name" placeholder="Nombre" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px"><input id="tmp-tel" placeholder="Teléfono" style="width:160px;padding:8px;border:1px solid #ddd;border-radius:6px"></div>
+    box.innerHTML = `
+      <span class="close-modal tmp-close">&times;</span>
+      <h3>Agregar pedido (admin)</h3>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="tmp-name" placeholder="Nombre" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:10px">
+        <input id="tmp-tel" placeholder="Teléfono" style="width:220px;padding:8px;border:1px solid #ddd;border-radius:10px">
+      </div>
       <div id="tmp-products" style="margin-top:10px"></div>
-      <div style="display:flex;gap:8px;margin-top:10px"><button id="tmp-create" class="btn">Crear</button><button id="tmp-cancel" class="btn gray">Cancelar</button></div>`;
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button id="tmp-create" class="btn">Crear</button>
+        <button id="tmp-cancel" class="btn gray">Cancelar</button>
+      </div>`;
     wrapper.appendChild(box); document.body.appendChild(wrapper);
     box.querySelector('.tmp-close').addEventListener('click', ()=> wrapper.remove());
     box.querySelector('#tmp-cancel').addEventListener('click', ()=> wrapper.remove());
     const tp = box.querySelector('#tmp-products');
     Object.keys(productos).forEach(k => {
       const p = productos[k];
-      const row = document.createElement('div'); row.style.display = 'flex'; row.style.gap = '8px'; row.style.marginTop = '8px';
-      row.innerHTML = `<div style="width:160px"><strong>${escapeHTML(p.nombre)}</strong></div>
-        <select id="tmp-${k}-unit" style="padding:8px;border-radius:6px;border:1px solid #ddd"><option value="${p.baseUnit}">${p.baseUnit}</option><option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option></select>
-        <input id="tmp-${k}-qty" type="number" min="0" step="1" placeholder="Cantidad" style="width:120px;padding:8px;border:1px solid #ddd;border-radius:6px">`;
+      const row = document.createElement('div'); row.style.display = 'flex'; row.style.gap = '8px'; row.style.marginTop = '8px'; row.style.alignItems = 'center';
+      row.innerHTML = `
+        <div style="width:180px"><strong>${escapeHTML(p.nombre)}</strong></div>
+        <select id="tmp-${k}-unit" style="padding:8px;border-radius:10px;border:1px solid #ddd">
+          <option value="${p.baseUnit}">${p.baseUnit}</option>
+          <option value="kg">kg</option>
+          <option value="g">g</option>
+          <option value="caja">caja</option>
+          <option value="saco">saco</option>
+        </select>
+        <input id="tmp-${k}-qty" type="number" min="0" step="1" placeholder="Cantidad" style="width:140px;padding:8px;border:1px solid #ddd;border-radius:10px">`;
       tp.appendChild(row);
     });
     box.querySelector('#tmp-create').addEventListener('click', () => {
-      const nombre = box.querySelector('#tmp-name').value.trim(); const telefono = box.querySelector('#tmp-tel').value.trim();
+      const nombre = box.querySelector('#tmp-name').value.trim();
+      const telefono = normPhone(box.querySelector('#tmp-tel').value.trim());
       if(!nombre || !telefono) return alert('Nombre y teléfono requeridos');
       const items = {};
       Object.keys(productos).forEach(k => {
@@ -741,8 +819,9 @@ function setupListeners(){
   });
 
   // Search/filter events
-  $('search-input').addEventListener('input', e => renderOrders(e.target.value || '', $('payment-filter').value || 'all'));
-  $('payment-filter').addEventListener('change', () => renderOrders($('search-input').value || '', $('payment-filter').value || 'all'));
+  const si = $('search-input'); const pf = $('payment-filter');
+  if(si) si.addEventListener('input', e => renderOrders(e.target.value || '', pf?.value || 'all'));
+  if(pf) pf.addEventListener('change', () => renderOrders(si?.value || '', pf?.value || 'all'));
 }
 
 /* ====== CSV export helpers ====== */
@@ -778,44 +857,17 @@ function exportCSV(filename, rows){
   setupListeners();
   renderAll();
 
-  // default paltas qty to 1 for convenience after render
-  setTimeout(()=> { document.querySelectorAll('.client-qty').forEach(i => { if(i && i.getAttribute('data-product') === 'paltas') i.value = 1; }); }, 200);
+  // default paltas qty a 1
+  setTimeout(()=> {
+    document.querySelectorAll('.client-qty').forEach(i => { if(i && i.getAttribute('data-product') === 'paltas') i.value = 1; });
+  }, 200);
 })();
 
-/* ====== renderAll wraps product/admin/ orders ====== */
+/* ====== renderAll wraps product/admin/orders ====== */
 function renderAll(){
   renderProductGrid();
   renderProductsAdmin();
   renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'all');
-}
-
-/* ====== Render products admin (build inputs) ====== */
-function renderProductsAdmin(){
-  const container = $('products-admin'); container.innerHTML = '';
-  Object.keys(productos).forEach(k => {
-    const p = productos[k];
-    const row = document.createElement('div'); row.className = 'prod-admin-row';
-    row.innerHTML = `
-      <input id="cfg-${k}-name" value="${escapeHTML(p.nombre)}">
-      <input id="cfg-${k}-price" type="number" value="${p.precio}">
-      <select id="cfg-${k}-baseunit">
-        <option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option>
-      </select>
-      <select id="cfg-${k}-avail" class="avail">
-        <option value="true">Disponible</option><option value="false">No</option>
-      </select>
-    `;
-    container.appendChild(row);
-    $(`cfg-${k}-baseunit`).value = p.baseUnit || 'kg';
-    $(`cfg-${k}-avail`).value = p.disponible ? 'true' : 'false';
-  });
-}
-
-/* ====== Safe helper for cloning nodes (to avoid duplicate listeners) ====== */
-function safeReplace(node){
-  const clone = node.cloneNode(true);
-  node.parentNode.replaceChild(clone, node);
-  return clone;
 }
 </script>
 </body>
