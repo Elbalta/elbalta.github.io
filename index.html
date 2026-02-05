@@ -146,6 +146,85 @@
     .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .list{max-height:300px;overflow:auto;padding:8px;border-radius:10px;border:1px solid #eee}
 
+    /* ====== NUEVO: estilos mensaje de gracias centrado ====== */
+    .thanks-wrapper{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-top:12px;
+    }
+    .thanks-message{
+      background:#e8f5e9;
+      color:var(--primary-strong);
+      padding:10px 14px;
+      border-radius:999px;
+      font-size:.9rem;
+      text-align:center;
+      box-shadow:0 4px 12px rgba(0,0,0,.04);
+    }
+
+    /* ====== NUEVO: modal de confirmación más agradable ====== */
+    #order-summary-modal .modal-box{
+      max-width:640px;
+      padding:20px;
+    }
+    #order-summary-modal h2{
+      margin:0;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:1.2rem;
+    }
+    #summary-items{
+      border-radius:12px;
+      border:1px solid #e5e7eb;
+      padding:10px 12px;
+      background:#fafafa;
+      font-size:.94rem;
+    }
+    #summary-items strong{
+      font-weight:600;
+    }
+    #order-summary-modal label{
+      font-size:.9rem;
+    }
+
+    /* ====== NUEVO: mejoras visuales panel admin ====== */
+    #admin-container{
+      border-radius:18px;
+      padding:18px 18px 16px;
+      box-shadow:0 18px 40px rgba(0,0,0,.12);
+    }
+    .admin-header-title{
+      font-size:1.1rem;
+      font-weight:700;
+    }
+    .admin-controls .btn.small{
+      border-radius:999px;
+      padding:8px 14px;
+    }
+    .btn-pill-green{
+      background:linear-gradient(90deg,#2e7d32,#1b5e20);
+    }
+    .btn-pill-gray{
+      background:linear-gradient(90deg,#9ca3af,#6b7280);
+    }
+    .btn-pill-red{
+      background:linear-gradient(90deg,#d32f2f,#b71c1c);
+    }
+
+    /* ====== NUEVO: botones dentro del modal de pago ====== */
+    #payment-modal h2{
+      margin:0;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      font-size:1.15rem;
+    }
+    #payment-modal .btn{
+      border-radius:999px;
+    }
+
     /* Responsive */
     @media (max-width:720px){
       .prod-admin-row input, .prod-admin-row select{width:100%}
@@ -170,7 +249,7 @@
 
 <div class="container">
   <!-- CLIENTE -->
-  <div class="card" aria-label="Formulario de pedido">
+  <div id="cliente-card" class="card" aria-label="Formulario de pedido">
     <h2 class="section-title"><i class="fas fa-cart-plus"></i> Realiza tu pedido</h2>
 
     <div class="grid">
@@ -197,6 +276,13 @@
       <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end">
         <button id="enviar-pedido" class="btn"><i class="fas fa-paper-plane" style="margin-right:8px"></i> Enviar pedido</button>
       </div>
+
+      <!-- NUEVO: mensaje centrado de agradecimiento -->
+      <div class="thanks-wrapper">
+        <div class="thanks-message" id="thanks-message" style="display:none;">
+          ¡Gracias por comprar con nosotros! Te contactaremos pronto para coordinar la entrega y el pago.
+        </div>
+      </div>
     </div>
   </div>
 
@@ -204,14 +290,14 @@
   <div id="admin-container" class="card" style="display:none;margin-top:14px;">
     <div class="admin-header">
       <div>
-        <h3 style="margin:0">Panel Administrador</h3>
+        <h3 class="admin-header-title" style="margin:0">Panel Administrador</h3>
         <div class="small muted">Gestiona productos y pedidos</div>
       </div>
       <div class="admin-controls">
-        <button id="add-order-btn" class="btn small">Agregar pedido</button>
-        <button id="export-btn" class="btn small gray">Exportar CSV</button>
-        <button id="refresh-btn" class="btn small" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Actualizar</button>
-        <button id="logout-btn" class="btn small danger">Salir</button>
+        <button id="add-order-btn" class="btn small btn-pill-green">Agregar pedido</button>
+        <button id="export-btn" class="btn small btn-pill-gray">Exportar CSV</button>
+        <button id="refresh-btn" class="btn small btn-pill-green" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Actualizar</button>
+        <button id="logout-btn" class="btn small btn-pill-red">Salir</button>
       </div>
     </div>
 
@@ -286,11 +372,14 @@
 <div id="order-summary-modal" class="modal" aria-hidden="true">
   <div class="modal-box">
     <span class="close-modal" id="close-order-summary">&times;</span>
-    <h2><i class="fas fa-receipt"></i> Resumen de tu pedido</h2>
+    <h2><i class="fas fa-receipt"></i> Confirma tu compra</h2>
+    <p class="small muted" style="margin-top:4px;margin-bottom:4px;">
+      Revisa que los productos y el método de pago sean correctos antes de enviar tu pedido.
+    </p>
     <div id="summary-items" style="margin-top:10px"></div>
 
-    <div style="display:flex;gap:12px;align-items:center;margin-top:12px;">
-      <div style="flex:1">
+    <div style="display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;">
         <label><strong>Método de pago</strong></label>
         <select id="summary-payment-method" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd">
           <option value="efectivo">Efectivo (al recibir)</option>
@@ -298,7 +387,7 @@
         </select>
       </div>
 
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
         <button id="confirm-order" class="btn">Confirmar pedido</button>
         <button id="reject-order" class="btn gray">Cancelar</button>
       </div>
@@ -317,7 +406,10 @@
       </div>
     </div>
 
-    <div style="text-align:right;margin-top:12px;">Total: <span id="summary-total" style="font-weight:800;color:var(--primary)">$0</span></div>
+    <div style="text-align:right;margin-top:12px;">
+      <span class="muted small">Total a pagar</span>
+      <div id="summary-total" style="font-weight:800;color:var(--primary);font-size:1.1rem">$0</div>
+    </div>
   </div>
 </div>
 
@@ -329,7 +421,7 @@
     <div id="payment-client-info" class="muted small" style="margin-top:6px"></div>
 
     <div style="margin-top:8px">
-      <label>Monto</label>
+      <label>Monto (abono o pago total)</label>
       <input id="payment-amount" type="number" min="0" step="100">
     </div>
     <div style="margin-top:8px">
@@ -341,11 +433,12 @@
     </div>
     <div style="margin-top:8px">
       <label>Notas</label>
-      <textarea id="payment-notes" rows="2"></textarea>
+      <textarea id="payment-notes" rows="2" placeholder="Ej: abono, transferencia confirmada, etc."></textarea>
     </div>
 
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button id="register-payment" class="btn">Registrar</button>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <!-- Etiquetas más claras -->
+      <button id="register-payment" class="btn" style="background:linear-gradient(90deg,#2196f3,#1976d2)">Registrar abono</button>
       <button id="mark-as-paid" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Marcar pagado</button>
       <button id="toggle-payment-history" class="btn gray">Historial</button>
     </div>
@@ -378,7 +471,7 @@
 </div>
 
 <!-- Notification -->
-<div id="notification" style="position:fixed;right:16px;top:16px;background:var(--primary);color:#fff;padding:8px 12px;border-radius:10px;display:none;z-index:9999"></div>
+<div id="notification" style="position:fixed;right:16px;top:16px;background:var(--primary);color:#fff;padding:8px 12px;border-radius:10px;display:none;z-index:9999;transition:opacity .25s;"></div>
 
 <script>
 /* ====== Estado ====== */
@@ -399,7 +492,16 @@ const money = n => `$${(Number(n)||0).toLocaleString('es-CL')}`;
 const nowISO = () => new Date().toISOString();
 const normPhone = s => (s||'').replace(/\s|-/g,'').trim();
 function escapeHTML(s=''){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-function notify(msg, time=3000){ const el = $('notification'); el.textContent = msg; el.style.display = 'block'; setTimeout(()=> el.style.display = 'none', time); }
+function notify(msg, time=3000){
+  const el = $('notification');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.opacity = '1';
+  setTimeout(()=> {
+    el.style.opacity = '0';
+    setTimeout(()=>{ el.style.display = 'none'; el.style.opacity = '1'; }, 250);
+  }, time);
+}
 
 /* ====== Storage básico (productos/pedidos/pagos) ====== */
 function saveAll(){
@@ -472,7 +574,14 @@ function crearPedido({ nombre, telefono, items, comentarios, paymentMethod='' })
 function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
   const pedido = pedidos.find(p => p.id === pedidoId);
   if(!pedido) return false;
-  const pago = { id: String(Date.now()) + Math.random().toString(36).slice(2,8), pedidoId, monto: Number(monto)||0, metodo: metodo || 'efectivo', notas: notas || '', fecha: fecha || nowISO() };
+  const pago = {
+    id: String(Date.now()) + Math.random().toString(36).slice(2,8),
+    pedidoId,
+    monto: Number(monto)||0,
+    metodo: metodo || 'efectivo',
+    notas: notas || '',
+    fecha: fecha || nowISO()
+  };
   pagos.unshift(pago);
   pedido.pagos = pedido.pagos || [];
   pedido.pagos.push(pago);
@@ -543,7 +652,7 @@ function renderOrders(filterText = '', paymentFilter = 'all'){
       <td>${new Date(p.fecha).toLocaleString()}</td>
       <td class="actions" style="text-align:right">
         <div class="order-actions">
-          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}" title="Registrar pago"><i class="fas fa-money-bill-wave"></i></button>
+          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}" title="Registrar pago / abono"><i class="fas fa-money-bill-wave"></i></button>
           <button class="icon-btn icon-view" data-action="view" data-id="${p.id}" title="Ver pedido"><i class="fas fa-eye"></i></button>
           <button class="icon-btn icon-delete" data-action="delete" data-id="${p.id}" title="Eliminar pedido"><i class="fas fa-trash"></i></button>
         </div>
@@ -729,7 +838,15 @@ function setupListeners(){
         paymentMethod: metodo
       });
       hideModal('order-summary-modal');
-      notify('Gracias por comprar con nosotros');
+
+      // Mostrar mensaje centrado de gracias
+      const thanks = $('thanks-message');
+      if(thanks){
+        thanks.style.display = 'block';
+        setTimeout(()=>{ thanks.style.display = 'none'; }, 4000);
+      }
+
+      notify('Pedido enviado. ¡Gracias por comprar con nosotros!');
       document.querySelectorAll('.client-qty').forEach(i => { if(i.getAttribute('data-product') === 'paltas') i.value = 1; else i.value = 0; });
       $('nombre').value = ''; $('telefono').value = ''; $('comentarios').value = '';
     };
@@ -753,6 +870,11 @@ function setupListeners(){
       sessionStorage.setItem('isAdmin','1');
       hideModal('login-modal'); $('admin-email').value = ''; $('admin-password').value = '';
       $('admin-container').style.display = 'block';
+
+      // NUEVO: ocultar sección cliente cuando es admin
+      const clienteCard = $('cliente-card');
+      if(clienteCard) clienteCard.style.display = 'none';
+
       setupTabs();
       renderAll();
       notify('Acceso administrador concedido');
@@ -765,6 +887,11 @@ function setupListeners(){
     isAdmin = false;
     sessionStorage.removeItem('isAdmin');
     $('admin-container').style.display = 'none';
+
+    // Al salir, volver a mostrar el formulario de cliente
+    const clienteCard = $('cliente-card');
+    if(clienteCard) clienteCard.style.display = 'block';
+
     notify('Sesión cerrada');
   });
 
@@ -778,7 +905,7 @@ function setupListeners(){
     if(monto <= 0) return alert('Ingresa un monto válido');
     registrarPago(currentPaymentPedidoId, { monto, metodo, notas, fecha: nowISO() });
     renderPaymentHistoryForPedido(currentPaymentPedidoId);
-    notify('Pago registrado');
+    notify('Abono registrado');
   });
   $('mark-as-paid').addEventListener('click', () => {
     if(!currentPaymentPedidoId) return notify('No hay pedido seleccionado', 1600);
@@ -849,6 +976,8 @@ function renderAll(){
   if(sessionStorage.getItem('isAdmin')){
     isAdmin = true;
     $('admin-container').style.display = 'block';
+    const clienteCard = $('cliente-card');
+    if(clienteCard) clienteCard.style.display = 'none';
     setupTabs();
   } else {
     $('admin-container').style.display = 'none';
