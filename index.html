@@ -23,7 +23,7 @@
       --shadow: 0 10px 30px rgba(0,0,0,0.08);
       --shadow-hover: 0 15px 40px rgba(0,0,0,0.12);
     }
-    *{box-sizing:border-box;transition:all 0.3s ease}
+    *{box-sizing:border-box}
     body{font-family:'Poppins',sans-serif;background:var(--bg);color:#333;margin:0;line-height:1.6;min-height:100vh}
     header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-strong) 100%);color:#fff;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
     .brand{display:flex;gap:16px;align-items:center}
@@ -40,7 +40,7 @@
     .product-name{font-weight:600;font-size:1.1rem;color:var(--primary-strong)}
     .product-unit{font-size:.95rem;color:var(--muted);background:rgba(76,175,80,0.1);padding:6px 12px;border-radius:8px;display:inline-block}
     .qty-row{display:flex;gap:10px;align-items:center;margin-top:10px}
-    .qty-row input{flex:1;padding:12px;border-radius:12px;border:2px solid rgba(76,175,80,0.2);font-size:1rem;transition:border-color 0.3s ease}
+    .qty-row input{flex:1;padding:12px;border-radius:12px;border:2px solid rgba(76,175,80,0.2);font-size:1rem;transition:border-color 0.3s ease, box-shadow 0.3s ease}
     .qty-row input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(76,175,80,0.1)}
     /* BUTTONS */
     .btn{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-strong) 100%);color:#fff;border:0;padding:14px 24px;border-radius:12px;font-weight:600;cursor:pointer;font-size:1rem;box-shadow:0 4px 12px rgba(76,175,80,0.3);transition:all 0.3s ease}
@@ -71,13 +71,13 @@
     .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:16px;animation:fadeIn 0.3s ease}
     .modal.show{display:flex}
     .modal-box{width:100%;max-width:800px;background:#fff;border-radius:20px;padding:28px;max-height:92vh;overflow:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:slideUp 0.3s ease}
-    .close-modal{position:absolute;right:20px;top:16px;font-size:24px;cursor:pointer;color:var(--muted);transition:color 0.3s ease,transform 0.3s ease}
+    .close-modal{position:absolute;right:20px;top:16px;font-size:24px;cursor:pointer;color:var(--muted);transition:color 0.3s ease, transform 0.3s ease}
     .close-modal:hover{color:var(--danger);transform:rotate(90deg)}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
     @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
     /* Admin product row */
     .prod-admin-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
-    .prod-admin-row input, .prod-admin-row select{width:calc(100% / 4 - 10px);min-width:140px;padding:12px;border-radius:12px;border:2px solid rgba(76,175,80,0.2);transition:border-color 0.3s ease}
+    .prod-admin-row input, .prod-admin-row select{width:calc(100% / 4 - 10px);min-width:140px;padding:12px;border-radius:12px;border:2px solid rgba(76,175,80,0.2);transition:border-color 0.3s ease, box-shadow 0.3s ease}
     .prod-admin-row input:focus, .prod-admin-row select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(76,175,80,0.1)}
     .prod-admin-row .avail{width:140px}
     /* FINANZAS */
@@ -355,7 +355,7 @@ const money = n => `$${(Number(n)||0).toLocaleString('es-CL')}`;
 const nowISO = () => new Date().toISOString();
 const normPhone = s => (s||'').replace(/\s|-/g,'').trim();
 function escapeHTML(s=''){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-function notify(msg, time=3000){ const el = $('notification'); const textEl = $('notification-text'); if(textEl) textEl.textContent = msg; else el.textContent = msg; el.style.display = 'block'; setTimeout(()=> el.style.display = 'none', time); }
+function notify(msg, time=3000){ const el = $('notification'); const textEl = $('notification-text'); textEl.textContent = msg; el.style.display = 'block'; setTimeout(()=> el.style.display = 'none', time); }
 
 /* ====== Persistence ====== */
 function saveAll(){
@@ -690,15 +690,20 @@ function setupListeners(){
     if(email === 'admin@valledor.com' && pass === 'admin123'){
       isAdmin = true; localStorage.setItem('isAdmin','1');
       hideModal('login-modal'); $('admin-email').value = ''; $('admin-password').value = '';
+      $('login-error').style.display = 'none';
       const adminContainer = $('admin-container');
       adminContainer.style.display = 'block';
       setTimeout(() => { adminContainer.style.opacity = '1'; }, 50);
       renderAll();
       notify('Acceso administrador concedido');
     } else {
-      $('login-error').style.display = 'block'; setTimeout(()=> {$('login-error').style.display = 'none';}, 3000);
+      $('login-error').style.display = 'block';
     }
   });
+
+  // Hide error when user starts typing
+  $('admin-email').addEventListener('input', () => { $('login-error').style.display = 'none'; });
+  $('admin-password').addEventListener('input', () => { $('login-error').style.display = 'none'; });
 
   // Admin panel buttons
   $('logout-btn').addEventListener('click', () => {
