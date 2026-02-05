@@ -7,33 +7,45 @@
 
   <!-- Fuentes e íconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --primary:#2e7d32; --primary-dark:#1b5e20; --bg:#f6f4f0; --card:#fff; --muted:#666666; --danger:#d32f2f;
+      --primary:#2e7d32;
+      --primary-strong:#1b5e20;
+      --bg:#f6f4f0;
+      --card:#fff;
+      --muted:#666666;
+      --danger:#d32f2f;
+      --success:#388e3c;
+      --glass: rgba(255,255,255,0.6);
     }
     *{box-sizing:border-box}
-    body{font-family:'Poppins',sans-serif;background:var(--bg);color:#222;margin:0}
-    header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;justify-content:space-between}
-    header .brand{display:flex;gap:12px;align-items:center}
-    header h1{font-size:1.05rem;margin:0}
-    header .small{opacity:.9;font-weight:600}
-    .container{max-width:1100px;margin:18px auto;padding:12px}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:#222;margin:0;line-height:1.35}
+    header{background:linear-gradient(135deg,var(--primary),var(--primary-strong));color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand h1{font-size:1.1rem;margin:0}
+    .brand p{margin:0;font-size:.9rem;opacity:.95}
+    .container{max-width:1120px;margin:18px auto;padding:12px}
     .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 22px rgba(0,0,0,.06)}
     .grid{display:grid;gap:12px}
+    /* PRODUCT GRID (CLIENT) */
     .product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-    .product-card{border:1px solid #eee;border-radius:10px;padding:12px;background:#fff}
-    .product-name{font-weight:700;margin-bottom:6px}
-    .product-meta{color:var(--muted);font-size:.9rem;margin-bottom:8px}
-    input[type="number"], input[type="text"], input[type="tel"], select, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:.95rem}
-    textarea{resize:vertical}
-    .btn{background:linear-gradient(90deg,var(--primary),var(--primary-dark));color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer}
+    .product-card{border:1px solid #eee;border-radius:10px;padding:12px;background:#fff;display:flex;flex-direction:column;gap:8px}
+    .product-name{font-weight:700;font-size:1.02rem}
+    .product-unit{font-size:.9rem;color:var(--muted)}
+    .qty-row{display:flex;gap:8px;align-items:center;margin-top:6px}
+    .qty-row input{flex:1;padding:10px;border-radius:8px;border:1px solid #ddd}
+    /* BUTTONS */
+    .btn{background:linear-gradient(90deg,var(--primary),var(--primary-strong));color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer}
     .btn.gray{background:linear-gradient(90deg,#607d8b,#455a64)}
     .btn.danger{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .muted{color:var(--muted);font-size:.9rem}
+    .btn.small{padding:8px 10px;font-size:.92rem}
+    .muted{color:var(--muted)}
     .small{font-size:.88rem;color:var(--muted)}
+    /* ADMIN */
+    .admin-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+    .admin-controls{display:flex;gap:8px;flex-wrap:wrap}
     .orders-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.95rem}
     .orders-table th{background:rgba(46,125,50,.08);padding:10px;text-align:left;border-bottom:1px solid #e9f3ea}
     .orders-table td{padding:10px;border-bottom:1px solid #f2f2f2;vertical-align:middle}
@@ -44,13 +56,16 @@
     .icon-view{background:linear-gradient(90deg,#607d8b,#455a64)}
     .icon-delete{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
     td.actions{width:140px;max-width:140px}
+    /* MODALS */
     .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:12px}
     .modal.show{display:flex}
-    .modal-box{width:100%;max-width:800px;background:#fff;border-radius:10px;padding:16px;max-height:92vh;overflow:auto;position:relative}
+    .modal-box{width:100%;max-width:760px;background:#fff;border-radius:10px;padding:16px;max-height:92vh;overflow:auto;position:relative}
     .close-modal{position:absolute;right:14px;top:10px;font-size:18px;cursor:pointer}
+    /* Admin product row */
     .prod-admin-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
-    .prod-admin-row input, .prod-admin-row select{width:calc(100% / 4 - 8px);min-width:120px}
+    .prod-admin-row input, .prod-admin-row select{width:calc(100% / 4 - 8px);min-width:120px;padding:8px;border-radius:8px;border:1px solid #ddd}
     .prod-admin-row .avail{width:120px}
+    /* FINANZAS */
     .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .list{max-height:300px;overflow:auto;padding:8px;border-radius:8px;border:1px solid #eee}
     .list-item{padding:8px;border-bottom:1px solid #f2f2f2;display:flex;justify-content:space-between}
@@ -64,31 +79,33 @@
     <i class="fas fa-shopping-basket" style="font-size:20px"></i>
     <div>
       <h1>Compras Grupales — Lazo Mercado</h1>
-      <div class="small muted">Control de pedidos, pagos y finanzas</div>
+      <p class="small muted">Control de pedidos y pagos</p>
     </div>
   </div>
   <div>
-    <button id="admin-login-link" class="btn" style="background:linear-gradient(90deg,#1565c0,#0d47a1)"><i class="fas fa-user-shield" style="margin-right:8px"></i>Administrador</button>
+    <button id="admin-login-link" class="btn"><i class="fas fa-user-shield" style="margin-right:8px"></i> Administrador</button>
   </div>
 </header>
 
 <div class="container">
   <!-- CLIENT FORM -->
   <div class="card">
-    <h2 style="margin:0 0 8px 0;color:var(--primary)">Realiza tu pedido</h2>
+    <h2 style="margin:0 0 8px 0;color:var(--primary)"><i class="fas fa-cart-plus"></i> Realiza tu pedido</h2>
+
     <div class="grid">
       <div>
         <label><strong>Nombre</strong></label>
         <input id="nombre" type="text" placeholder="Juan Pérez">
       </div>
+
       <div>
         <label><strong>Teléfono</strong></label>
         <input id="telefono" type="tel" placeholder="+56912345678">
       </div>
 
       <div>
-        <label><strong>Productos disponibles</strong></label>
-        <div id="product-grid" class="product-grid" style="margin-top:8px"></div>
+        <label><strong>Productos</strong></label>
+        <div id="product-grid" class="product-grid"></div>
       </div>
 
       <div>
@@ -96,28 +113,28 @@
         <textarea id="comentarios" rows="2" placeholder="Ej: departamento, dirección, referencia"></textarea>
       </div>
 
-      <div style="margin-top:8px">
-        <button id="enviar-pedido" class="btn"><i class="fas fa-paper-plane" style="margin-right:8px"></i>Enviar pedido</button>
+      <div>
+        <button id="enviar-pedido" class="btn"><i class="fas fa-paper-plane" style="margin-right:8px"></i> Enviar pedido</button>
       </div>
     </div>
   </div>
 
   <!-- ADMIN PANEL -->
-  <div id="admin-container" class="card" style="display:none;margin-top:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+  <div id="admin-container" class="card" style="display:none;margin-top:14px;">
+    <div class="admin-header">
       <div>
         <h3 style="margin:0">Panel Administrador</h3>
-        <div class="muted small">Gestiona pedidos, pagos y finanzas</div>
+        <div class="small muted">Gestiona productos y pedidos</div>
       </div>
-      <div class="row">
-        <button id="add-order-btn" class="btn" title="Agregar pedido manual">Agregar</button>
-        <button id="export-btn" class="btn gray">Exportar CSV</button>
-        <button id="refresh-btn" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Actualizar</button>
-        <button id="logout-btn" class="btn danger">Salir</button>
+      <div class="admin-controls">
+        <button id="add-order-btn" class="btn small">Agregar pedido</button>
+        <button id="export-btn" class="btn small gray">Exportar CSV</button>
+        <button id="refresh-btn" class="btn small" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Actualizar</button>
+        <button id="logout-btn" class="btn small danger">Salir</button>
       </div>
     </div>
 
-    <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       <input id="search-input" placeholder="Buscar por nombre o teléfono..." style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd">
       <select id="payment-filter" style="width:200px;padding:10px;border-radius:8px;border:1px solid #ddd">
         <option value="all">Todos</option>
@@ -144,8 +161,8 @@
       <tbody id="orders-body"></tbody>
     </table>
 
-    <!-- Admin: Products & Finances -->
-    <div style="margin-top:14px;display:flex;gap:12px;flex-direction:column">
+    <!-- PRODUCTS ADMIN -->
+    <div style="margin-top:12px;">
       <div class="card">
         <h4 style="margin:0">Configuración de productos (Administrador)</h4>
         <div id="products-admin" style="margin-top:10px"></div>
@@ -154,85 +171,37 @@
           <button id="reset-products-btn" class="btn danger">Reset</button>
         </div>
       </div>
-
-      <div class="card">
-        <h4 style="margin:0">Finanzas</h4>
-        <div class="fin-grid" style="margin-top:10px">
-          <div>
-            <strong>Registrar compra (costo)</strong>
-            <div style="margin-top:8px">
-              <select id="fin-prod" style="padding:8px;border-radius:8px;border:1px solid #ddd">
-                <option value="paltas">Paltas</option>
-                <option value="champi">Champiñones</option>
-                <option value="frutillas">Frutillas</option>
-              </select>
-            </div>
-            <div style="margin-top:8px" class="row">
-              <input id="fin-qty" type="number" min="0" step="0.1" placeholder="Cantidad (ej: kg)">
-              <select id="fin-unit" style="padding:8px;border-radius:8px;border:1px solid #ddd">
-                <option value="kg">kg</option>
-                <option value="g">g</option>
-                <option value="caja">caja</option>
-                <option value="saco">saco</option>
-              </select>
-              <input id="fin-price" type="number" min="0" placeholder="Precio compra (por unidad)" style="width:160px">
-            </div>
-            <div style="margin-top:8px;display:flex;gap:8px">
-              <button id="add-purchase-btn" class="btn">Añadir compra</button>
-              <button id="clear-purchases-btn" class="btn gray">Limpiar compras</button>
-            </div>
-          </div>
-
-          <div>
-            <strong>Resumen compras e inventario</strong>
-            <div id="purchases-list" class="list" style="margin-top:8px"></div>
-
-            <div style="margin-top:12px">
-              <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                <div class="muted">Total costo: <strong id="fin-total-cost">$0</strong></div>
-                <div class="muted">Total ventas: <strong id="fin-total-sales">$0</strong></div>
-                <div class="muted">Ganancia realizada (ventas - costo vendido): <strong id="fin-profit">$0</strong></div>
-              </div>
-
-              <div style="margin-top:12px">
-                <h4 style="margin:0 0 6px 0">Inventario por producto</h4>
-                <div id="inventory-list" class="list"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
   </div>
 </div>
 
-<!-- Modals -->
+<!-- ORDER SUMMARY MODAL -->
 <div id="order-summary-modal" class="modal" aria-hidden="true">
   <div class="modal-box">
     <span class="close-modal" id="close-order-summary">&times;</span>
-    <h2>Resumen de tu pedido</h2>
+    <h2><i class="fas fa-receipt"></i> Resumen de tu pedido</h2>
     <div id="summary-items" style="margin-top:10px"></div>
 
-    <div style="display:flex;gap:12px;margin-top:12px;align-items:center">
+    <div style="display:flex;gap:12px;align-items:center;margin-top:12px;">
       <div style="flex:1">
-        <label>Método de pago</label>
-        <select id="summary-payment-method" style="padding:10px;border-radius:8px;border:1px solid #ddd">
+        <label><strong>Método de pago</strong></label>
+        <select id="summary-payment-method" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd">
           <option value="efectivo">Efectivo (al recibir)</option>
           <option value="transferencia">Transferencia / Mercado Pago</option>
         </select>
       </div>
-      <div style="display:flex;gap:8px">
+
+      <div style="display:flex;gap:8px;">
         <button id="confirm-order" class="btn">Aceptar</button>
         <button id="reject-order" class="btn gray">Rechazar</button>
       </div>
     </div>
 
-    <div id="summary-transfer-details" style="display:none;margin-top:12px">
+    <div id="summary-transfer-details" style="display:none;margin-top:12px;">
       <div class="card">
         <strong>Datos para transferencia / Mercado Pago</strong>
-        <div class="muted small" style="margin-top:6px">Sólo si seleccionas transferencia</div>
+        <div class="muted small" style="margin-top:6px;">Sólo si seleccionas transferencia</div>
         <div style="margin-top:8px;font-weight:700">
           Álvaro Aaron Lazo Reyes<br>
           RUT: 168400896<br>
@@ -242,15 +211,16 @@
       </div>
     </div>
 
-    <div style="text-align:right;margin-top:12px">Total: <span id="summary-total" style="font-weight:800;color:var(--primary)">$0</span></div>
+    <div style="text-align:right;margin-top:12px;">Total: <span id="summary-total" style="font-weight:800;color:var(--primary)">$0</span></div>
   </div>
 </div>
 
+<!-- PAYMENT MODAL (ADMIN) -->
 <div id="payment-modal" class="modal" aria-hidden="true">
   <div class="modal-box">
     <span class="close-modal" id="close-payment">&times;</span>
-    <h2>Registrar pago</h2>
-    <div id="payment-client-info" class="muted small"></div>
+    <h2><i class="fas fa-money-bill-wave"></i> Registrar pago</h2>
+    <div id="payment-client-info" class="muted small" style="margin-top:6px"></div>
 
     <div style="margin-top:8px">
       <label>Monto</label>
@@ -268,18 +238,19 @@
       <textarea id="payment-notes" rows="2"></textarea>
     </div>
 
-    <div style="display:flex;gap:8px;margin-top:12px">
+    <div style="display:flex;gap:8px;margin-top:12px;">
       <button id="register-payment" class="btn">Registrar</button>
       <button id="mark-as-paid" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Marcar pagado</button>
       <button id="toggle-payment-history" class="btn gray">Historial</button>
     </div>
 
-    <div id="payment-history-container" style="display:none;margin-top:12px">
+    <div id="payment-history-container" style="display:none;margin-top:12px;">
       <div id="modal-payment-history" class="list"></div>
     </div>
   </div>
 </div>
 
+<!-- LOGIN MODAL -->
 <div id="login-modal" class="modal">
   <div class="modal-box">
     <span class="close-modal" id="close-login">&times;</span>
@@ -292,138 +263,129 @@
       <label>Contraseña</label>
       <input id="admin-password" type="password" placeholder="admin123">
     </div>
-    <div style="display:flex;gap:8px;margin-top:12px">
+    <div style="display:flex;gap:8px;margin-top:12px;">
       <button id="login-btn" class="btn">Iniciar sesión</button>
       <button id="cancel-login" class="btn gray">Cancelar</button>
     </div>
-    <div id="login-error" class="muted" style="color:var(--danger);display:none;margin-top:8px">Credenciales incorrectas</div>
+    <div id="login-error" class="muted" style="color:var(--danger);display:none;margin-top:8px;">Credenciales incorrectas</div>
   </div>
 </div>
 
-<div id="notification" style="position:fixed;right:16px;top:16px;background:var(--primary);color:#fff;padding:8px 12px;border-radius:8px;display:none;z-index:99999"></div>
+<!-- Notification -->
+<div id="notification" style="position:fixed;right:16px;top:16px;background:var(--primary);color:#fff;padding:8px 12px;border-radius:8px;display:none;z-index:9999"></div>
 
 <script>
-/* Mejoras en Finanzas:
-   - purchases: {id, prod, qty, unit, costPerUnit, totalCost, remainingQty, fecha}
-   - inventario calculado sum(remainingQty) por producto (con conversión simple según unidad)
-   - potentialRevenue = availableQty * sellingPrice
-   - potentialProfit = potentialRevenue - costOfAvailable
-   - botón 'Usar' en cada compra para reducir remainingQty (registrar salida/venta manual)
-   - se mantiene persistencia en localStorage
+/*
+  Consolidated index.html implementing:
+  - Admin product config: choose base selling unit (kg / caja / g / saco)
+  - Client view: shows all products (regardless of stock) with chosen unit, user inputs qty
+  - On "Enviar pedido": modal summary with 2 payment options (efectivo / transferencia)
+    - If transferencia selected, shows Mercado Pago transfer information
+    - Confirm creates order saved in localStorage and shows "Gracias por la compra" notification
+  - Admin panel: list orders, register payments (modal), export CSV, add manual orders
+  - All main buttons wired. No stock is shown to client.
+  - Orders are kept in localStorage; optional backend sending can be added later
 */
 
+/* ====== App State & Defaults ====== */
 const DEFAULT_PRODUCTOS = {
-  paltas:{key:'paltas',nombre:'Paltas',precio:3500,baseUnit:'kg',sacoKg:25,disponible:true},
-  champi:{key:'champi',nombre:'Champiñones',precio:2500,baseUnit:'caja',packGramos:250,disponible:true},
-  frutillas:{key:'frutillas',nombre:'Frutillas',precio:1200,baseUnit:'g',bloqueGramos:100,disponible:true}
+  paltas: { key:'paltas', nombre:'Paltas', precio:3500, baseUnit:'kg', sacoKg:25, disponible:true },
+  champi: { key:'champi', nombre:'Champiñones', precio:2500, baseUnit:'caja', packGramos:250, disponible:true },
+  frutillas: { key:'frutillas', nombre:'Frutillas', precio:1200, baseUnit:'g', bloqueGramos:100, disponible:true }
 };
 
 let productos = structuredClone(DEFAULT_PRODUCTOS);
 let pedidos = [];
 let pagos = [];
-let purchases = []; // purchases list with remainingQty
 let isAdmin = false;
 let currentPaymentPedidoId = null;
+let backendUrl = ''; // optional, can be configured in UI if you add an input
 
-// DOM shortcuts
+/* ====== Utils ====== */
 const $ = id => document.getElementById(id);
 const money = n => `$${(Number(n)||0).toLocaleString('es-CL')}`;
 const nowISO = () => new Date().toISOString();
 const normPhone = s => (s||'').replace(/\s|-/g,'').trim();
 function escapeHTML(s=''){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-function notify(msg,t=3000){ const n=$('notification'); n.textContent = msg; n.style.display='block'; setTimeout(()=>n.style.display='none',t); }
+function notify(msg, time=3000){ const el = $('notification'); el.textContent = msg; el.style.display = 'block'; setTimeout(()=> el.style.display = 'none', time); }
 
-// persistence
-function saveAll(){ localStorage.setItem('productos', JSON.stringify(productos)); localStorage.setItem('pedidos', JSON.stringify(pedidos)); localStorage.setItem('pagos', JSON.stringify(pagos)); localStorage.setItem('purchases', JSON.stringify(purchases)); localStorage.setItem('isAdmin', isAdmin ? '1' : ''); }
+/* ====== Persistence ====== */
+function saveAll(){
+  localStorage.setItem('productos', JSON.stringify(productos));
+  localStorage.setItem('pedidos', JSON.stringify(pedidos));
+  localStorage.setItem('pagos', JSON.stringify(pagos));
+  localStorage.setItem('backendUrl', backendUrl || '');
+  localStorage.setItem('isAdmin', isAdmin ? '1' : '');
+}
 function loadAll(){
   try{
     const pr = localStorage.getItem('productos');
     const p = localStorage.getItem('pedidos');
     const pay = localStorage.getItem('pagos');
-    const pur = localStorage.getItem('purchases');
+    const bu = localStorage.getItem('backendUrl');
     const adm = localStorage.getItem('isAdmin');
     if(pr) productos = {...DEFAULT_PRODUCTOS, ...JSON.parse(pr)};
     if(p) pedidos = JSON.parse(p);
     if(pay) pagos = JSON.parse(pay);
-    if(pur) purchases = JSON.parse(pur);
+    if(bu) backendUrl = bu;
     isAdmin = !!adm;
-  }catch(e){ console.error(e) }
-  productos.paltas = {...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas||{})};
-  productos.champi = {...DEFAULT_PRODUCTOS.champi, ...(productos.champi||{})};
-  productos.frutillas = {...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas||{})};
+  } catch(e){
+    console.error('loadAll error', e);
+  }
+  productos.paltas = { ...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas || {}) };
+  productos.champi = { ...DEFAULT_PRODUCTOS.champi, ...(productos.champi || {}) };
+  productos.frutillas = { ...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas || {}) };
 }
 
-// rebuild helper (not used for customers here)
-function rebuildClientesFromPedidos(){
-  // optional if needed later
-  saveAll();
-}
-
-// Calculation: convert quantity to base unit for comparison
-// We'll use a simple conversion function that returns quantity in base unit of product where base is:
-// - paltas: kg
-// - champi: caja (we will convert g/kg to 'caja' by packGramos if needed for potential inventory calc)
-// - frutillas: grams / block logic (we compute using g)
-function qtyToBase(productKey, qty, unit){
-  const prod = productos[productKey];
-  if(!prod) return 0;
-  // For paltas base kg:
-  if(productKey === 'paltas'){
-    if(unit === 'kg') return qty; // kg
-    if(unit === 'saco') return qty * (prod.sacoKg || 25); // convert sack to kg
-    if(unit === 'g') return qty / 1000;
-    if(unit === 'caja') return qty * 1; // fallback
-  }
-  // For champi base we'll keep as 'cajas' for inventory display; convert g/kg to cajas using packGramos
-  if(productKey === 'champi'){
-    if(unit === 'caja') return qty; // number of cajas
-    if(unit === 'g') return qty / (prod.packGramos || 250);
-    if(unit === 'kg') return (qty * 1000) / (prod.packGramos || 250);
-    if(unit === 'saco') return qty * ((prod.sacoKg||25) * 1000 / (prod.packGramos || 250)); // rough
-  }
-  // For frutillas base gram-block; we'll express inventory in grams and blocks
-  if(productKey === 'frutillas'){
-    if(unit === 'g') return qty;
-    if(unit === 'kg') return qty * 1000;
-    if(unit === 'caja') return (qty * (prod.bloqueGramos || 100)); // fallback
-    if(unit === 'saco') return qty * (prod.sacoKg||25) * 1000;
-  }
-  return qty;
-}
-
-// calcTotalFromItems (as earlier)
+/* ====== Calculation helpers ====== */
 function calcTotalFromItems(items){
   let total = 0;
+  // paltas
   if(items.paltas && Number(items.paltas.qty)){
-    const q = Number(items.paltas.qty)||0; const u = items.paltas.unit;
-    if(u==='kg') total += q * (productos.paltas.precio||DEFAULT_PRODUCTOS.paltas.precio);
-    else if(u==='saco') total += q * ((productos.paltas.sacoKg||25)*(productos.paltas.precio||DEFAULT_PRODUCTOS.paltas.precio));
-    else if(u==='g') total += (q/1000) * (productos.paltas.precio||DEFAULT_PRODUCTOS.paltas.precio);
-    else total += q * (productos.paltas.precio||DEFAULT_PRODUCTOS.paltas.precio);
+    const q = Number(items.paltas.qty)||0;
+    const u = items.paltas.unit;
+    if(u === 'kg') total += q * (productos.paltas.precio || DEFAULT_PRODUCTOS.paltas.precio);
+    else if(u === 'saco') total += q * ((productos.paltas.sacoKg||25) * (productos.paltas.precio||DEFAULT_PRODUCTOS.paltas.precio));
+    else if(u === 'g') total += (q/1000) * (productos.paltas.precio || DEFAULT_PRODUCTOS.paltas.precio);
+    else total += q * (productos.paltas.precio || DEFAULT_PRODUCTOS.paltas.precio);
   }
+  // champi
   if(items.champi && Number(items.champi.qty)){
-    const q = Number(items.champi.qty)||0; const u = items.champi.unit;
-    if(u==='caja') total += q * (productos.champi.precio||DEFAULT_PRODUCTOS.champi.precio);
-    else if(u==='g') total += (q / (productos.champi.packGramos||250)) * (productos.champi.precio||DEFAULT_PRODUCTOS.champi.precio);
-    else if(u==='kg') total += ((q*1000)/(productos.champi.packGramos||250)) * (productos.champi.precio||DEFAULT_PRODUCTOS.champi.precio);
-    else total += q * (productos.champi.precio||DEFAULT_PRODUCTOS.champi.precio);
+    const q = Number(items.champi.qty)||0;
+    const u = items.champi.unit;
+    if(u === 'caja') total += q * (productos.champi.precio || DEFAULT_PRODUCTOS.champi.precio);
+    else if(u === 'g') total += (q / (productos.champi.packGramos || DEFAULT_PRODUCTOS.champi.packGramos)) * (productos.champi.precio || DEFAULT_PRODUCTOS.champi.precio);
+    else if(u === 'kg') total += ((q*1000) / (productos.champi.packGramos || DEFAULT_PRODUCTOS.champi.packGramos)) * (productos.champi.precio || DEFAULT_PRODUCTOS.champi.precio);
+    else total += q * (productos.champi.precio || DEFAULT_PRODUCTOS.champi.precio);
   }
+  // frutillas
   if(items.frutillas && Number(items.frutillas.qty)){
-    const q = Number(items.frutillas.qty)||0; const u = items.frutillas.unit; const bloque = productos.frutillas.bloqueGramos||100;
-    if(u==='g') total += (q / bloque) * (productos.frutillas.precio||DEFAULT_PRODUCTOS.frutillas.precio);
-    else if(u==='kg') total += ((q*1000) / bloque) * (productos.frutillas.precio||DEFAULT_PRODUCTOS.frutillas.precio);
-    else total += q * (productos.frutillas.precio||DEFAULT_PRODUCTOS.frutillas.precio);
+    const q = Number(items.frutillas.qty)||0;
+    const u = items.frutillas.unit;
+    const bloque = productos.frutillas.bloqueGramos || DEFAULT_PRODUCTOS.frutillas.bloqueGramos;
+    if(u === 'g') total += (q / bloque) * (productos.frutillas.precio || DEFAULT_PRODUCTOS.frutillas.precio);
+    else if(u === 'kg') total += ((q*1000) / bloque) * (productos.frutillas.precio || DEFAULT_PRODUCTOS.frutillas.precio);
+    else total += q * (productos.frutillas.precio || DEFAULT_PRODUCTOS.frutillas.precio);
   }
   return Math.round(total);
 }
 
-// Create order (client or admin)
-function crearPedido({nombre,telefono,items,comentarios,creadoPorAdmin=false,paymentMethod='' }){
+/* ====== Order creation & payments ====== */
+function crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin=false, paymentMethod='' }){
+  const total = calcTotalFromItems(items);
   const pedido = {
     id: String(Date.now()) + Math.random().toString(36).slice(2,8),
-    nombre:nombre||'', telefono:telefono||'', items, total:calcTotalFromItems(items),
-    estadoPago:'pendiente', fecha: nowISO(), comentarios:comentarios||'', deudaPendiente: calcTotalFromItems(items),
-    pagos:[], creadoPorAdmin, paymentMethod
+    nombre: nombre || '',
+    telefono: telefono || '',
+    items,
+    total,
+    estadoPago: 'pendiente',
+    fecha: nowISO(),
+    comentarios: comentarios || '',
+    deudaPendiente: total,
+    pagos: [],
+    creadoPorAdmin,
+    paymentMethod
   };
   pedidos.unshift(pedido);
   saveAll();
@@ -431,218 +393,86 @@ function crearPedido({nombre,telefono,items,comentarios,creadoPorAdmin=false,pay
   return pedido;
 }
 
-// Registrar pago
-function registrarPago(pedidoId,{monto,metodo,notas,fecha}){
-  const pedido = pedidos.find(p=>p.id===pedidoId); if(!pedido) return false;
-  const pago = { id:String(Date.now())+Math.random().toString(36).slice(2,8), pedidoId, monto:Number(monto)||0, metodo:metodo||'efectivo', notas:notas||'', fecha:fecha||nowISO() };
-  pagos.unshift(pago); pedido.pagos = pedido.pagos || []; pedido.pagos.push(pago);
-  pedido.deudaPendiente = Math.max(0, Number(pedido.deudaPendiente||pedido.total) - Number(pago.monto||0));
-  if(pedido.deudaPendiente <= 0) pedido.estadoPago = 'pagado'; else if(pedido.deudaPendiente < pedido.total) pedido.estadoPago = 'parcial';
-  saveAll(); renderAll(); return pago;
-}
-function marcarTodoPagado(pedidoId){ const pedido = pedidos.find(p=>p.id===pedidoId); if(!pedido) return false; const monto = Number(pedido.deudaPendiente||pedido.total); if(monto<=0) return false; return registrarPago(pedidoId, {monto,metodo:'transferencia',notas:'Marcado pagado por admin',fecha:nowISO()}); }
-
-// Purchases handling (improved)
-// purchase: {id, prod, qty, unit, costPerUnit, totalCost, remainingQty, fecha}
-function addPurchase(prod, qty, unit, costPerUnit){
-  const totalCost = Math.round(Number(qty || 0) * Number(costPerUnit || 0));
-  const p = { id:String(Date.now())+Math.random().toString(36).slice(2,6), prod, qty:Number(qty)||0, unit, costPerUnit:Number(costPerUnit)||0, totalCost, remainingQty:Number(qty)||0, fecha: nowISO() };
-  purchases.unshift(p);
+function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
+  const pedido = pedidos.find(p => p.id === pedidoId);
+  if(!pedido) return false;
+  const pago = { id: String(Date.now()) + Math.random().toString(36).slice(2,8), pedidoId, monto: Number(monto)||0, metodo: metodo || 'efectivo', notas: notas || '', fecha: fecha || nowISO() };
+  pagos.unshift(pago);
+  pedido.pagos = pedido.pagos || [];
+  pedido.pagos.push(pago);
+  pedido.deudaPendiente = Math.max(0, Number(pedido.deudaPendiente || pedido.total) - Number(pago.monto || 0));
+  if(pedido.deudaPendiente <= 0) pedido.estadoPago = 'pagado';
+  else if(pedido.deudaPendiente < pedido.total) pedido.estadoPago = 'parcial';
   saveAll();
-  renderPurchases();
-  notify('Compra registrada');
+  renderAll();
+  return pago;
 }
-function useFromPurchase(purchaseId, qtyToUse){
-  const purchase = purchases.find(x=>x.id===purchaseId);
-  if(!purchase) return alert('Compra no encontrada');
-  const q = Number(qtyToUse)||0;
-  if(q <= 0) return alert('Cantidad inválida');
-  if(q > purchase.remainingQty) return alert('No hay suficiente cantidad disponible en esta compra');
-  purchase.remainingQty = Math.max(0, purchase.remainingQty - q);
-  saveAll();
-  renderPurchases();
-  notify('Inventario actualizado (consumo registrado)');
+function marcarTodoPagado(pedidoId){
+  const pedido = pedidos.find(p => p.id === pedidoId);
+  if(!pedido) return false;
+  const monto = Number(pedido.deudaPendiente || pedido.total);
+  if(monto <= 0) return false;
+  return registrarPago(pedidoId, { monto, metodo: 'transferencia', notas: 'Marcado pagado por admin', fecha: nowISO() });
 }
 
-// Inventory summary and finances calculations
-function computeInventorySummary(){
-  // We'll compute per product: totalAvailable (in product's main display unit), totalCostOfAvailable, averageCostPerUnit
-  const summary = {};
-  Object.keys(productos).forEach(k => {
-    summary[k] = { productName: productos[k].nombre, totalAvailableRaw:0, totalCostOfAvailable:0, entries:[] };
-  });
-  purchases.forEach(p => {
-    const prodKey = p.prod;
-    if(!summary[prodKey]) return;
-    // For consolidation we use product-specific unit conversions:
-    // For paltas -> we store available in kg (convert p.remainingQty from its unit to kg using qtyToBase)
-    const availableInBase = qtyToBase(prodKey, p.remainingQty, p.unit); // base: kg for paltas, cajas for champi (approx), grams for frutillas
-    // cost per base unit: if purchase costPerUnit is per its unit, convert to base cost per baseUnit:
-    // costPerBase = costPerUnit * (1 / conversionFactor)
-    // e.g., if p.unit === 'kg' costPerBase = costPerUnit; if p.unit === 'g' costPerBase = costPerUnit * 1000 (then divide by 1000)
-    // We'll convert cost to the base quantity used by qtyToBase above:
-    let costOfAvailable = 0;
-    // costPerBaseUnit = costPerUnit * (unit -> base factor)
-    // To avoid complicated factors, compute costOfAvailable proportionally:
-    // costOfAvailable = (availableInBase / qtyToBase(prodKey, p.qty, p.unit)) * p.totalCost  (if original qty > 0)
-    const originalQtyBase = qtyToBase(prodKey, p.qty, p.unit) || 0;
-    if(originalQtyBase > 0){
-      costOfAvailable = (availableInBase / originalQtyBase) * p.totalCost;
-    } else {
-      costOfAvailable = 0;
-    }
-    summary[prodKey].totalAvailableRaw += availableInBase;
-    summary[prodKey].totalCostOfAvailable += costOfAvailable;
-    summary[prodKey].entries.push({ purchaseId: p.id, remainingInBase: availableInBase, costOfAvailable });
-  });
-  // Add derived values like potentialRevenue and profit using current selling price and units
-  Object.keys(summary).forEach(k=>{
-    const s = summary[k];
-    const prod = productos[k];
-    // Determine sellable quantity in same base used above:
-    // For paltas: base is kg -> s.totalAvailableRaw in kg -> potential revenue = kg * selling price per kg
-    // For champi: base is 'caja' count -> s.totalAvailableRaw is count of cajas -> potential revenue = cajas * price per caja
-    // For frutillas: s.totalAvailableRaw in grams -> determine blocks = grams / bloqueGramos, potential revenue = blocks * price
-    let potentialRevenue = 0, potentialProfit = 0, avgCostPerBase = 0;
-    if(k === 'paltas'){
-      const availableKg = s.totalAvailableRaw;
-      potentialRevenue = availableKg * (prod.precio || 0);
-      const cost = s.totalCostOfAvailable || 0;
-      potentialProfit = potentialRevenue - cost;
-      avgCostPerBase = (availableKg > 0) ? (cost / availableKg) : 0; // cost per kg
-    } else if(k === 'champi'){
-      const availableCajas = s.totalAvailableRaw;
-      potentialRevenue = availableCajas * (prod.precio || 0);
-      const cost = s.totalCostOfAvailable || 0;
-      potentialProfit = potentialRevenue - cost;
-      avgCostPerBase = (availableCajas > 0) ? (cost / availableCajas) : 0; // cost per caja
-    } else if(k === 'frutillas'){
-      const availableGr = s.totalAvailableRaw;
-      const bloque = prod.bloqueGramos || 100;
-      const bloques = availableGr / bloque;
-      potentialRevenue = bloques * (prod.precio || 0);
-      const cost = s.totalCostOfAvailable || 0;
-      potentialProfit = potentialRevenue - cost;
-      avgCostPerBase = (availableGr > 0) ? (cost / (availableGr/1000)) : 0; // cost per kg approx
-    }
-    s.potentialRevenue = Math.round(potentialRevenue);
-    s.potentialProfit = Math.round(potentialProfit);
-    s.avgCostPerBase = avgCostPerBase;
-  });
-  return summary;
-}
+/* ====== Rendering UI ====== */
 
-// Render purchases list and inventory summary
-function renderPurchases(){
-  const list = $('purchases-list'); list.innerHTML = '';
-  purchases.forEach(p=>{
-    const div = document.createElement('div'); div.className = 'list-item';
-    div.innerHTML = `<div>
-      <div><strong>${escapeHTML(productos[p.prod]?.nombre || p.prod)}</strong> • ${p.qty} ${escapeHTML(p.unit)}</div>
-      <div class="muted small">Costo unit: ${money(p.costPerUnit)} • Total: ${money(p.totalCost)} • restante: ${p.remainingQty} ${escapeHTML(p.unit)}</div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-      <button class="btn gray" data-action="use" data-id="${p.id}" style="padding:6px 8px">Usar</button>
-      <div class="muted small">${new Date(p.fecha).toLocaleString()}</div>
-    </div>`;
-    list.appendChild(div);
-  });
-
-  // attach use buttons
-  list.querySelectorAll('button[data-action="use"]').forEach(btn=>{
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-id');
-      const qty = prompt('Cantidad a consumir (en la misma unidad de la compra):', '1');
-      if(qty === null) return;
-      const qnum = Number(qty);
-      if(isNaN(qnum) || qnum <= 0) return alert('Cantidad inválida');
-      useFromPurchase(id, qnum);
-    });
-  });
-
-  // inventory summary
-  const inv = computeInventorySummary();
-  const invList = $('inventory-list'); invList.innerHTML = '';
-  Object.keys(inv).forEach(k=>{
-    const s = inv[k];
-    // Display different units nicely:
-    let availLabel = '';
-    if(k === 'paltas') availLabel = `${Math.round((s.totalAvailableRaw + Number.EPSILON)*100)/100} kg`;
-    else if(k === 'champi') availLabel = `${Math.round((s.totalAvailableRaw + Number.EPSILON)*100)/100} caja(s)`;
-    else if(k === 'frutillas') availLabel = `${Math.round(s.totalAvailableRaw)} g`;
-    const div = document.createElement('div'); div.className='list-item';
-    div.innerHTML = `<div>
-      <div><strong>${escapeHTML(s.productName)}</strong> • Disponible: <span class="badge">${escapeHTML(availLabel)}</span></div>
-      <div class="muted small">Costo disponible: ${money(Math.round(s.totalCostOfAvailable||0))} • Ingreso potencial: ${money(s.potentialRevenue||0)} • Ganancia potencial: ${money(s.potentialProfit||0)}</div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-      <div class="muted small">Costo medio por base: ${s.avgCostPerBase ? money(Math.round(s.avgCostPerBase)) : '-'}</div>
-    </div>`;
-    invList.appendChild(div);
-  });
-
-  // update totals (cost, sales, profit realized)
-  const totalCost = purchases.reduce((sum,p)=>sum + Number(p.totalCost||0), 0);
-  const totalSales = pedidos.reduce((s,p)=>s + Number(p.total||0), 0);
-  const profitRealized = totalSales - totalCost; // crude realized profit if you consider all sales costed by purchases (simple)
-  $('fin-total-cost').textContent = money(totalCost);
-  $('fin-total-sales').textContent = money(totalSales);
-  $('fin-profit').textContent = money(profitRealized);
-}
-
-// ---------- Rendering product grid and orders ----------
+/* Product grid (client) shows all products (no stock display) and the configured unit */
 function renderProductGrid(){
   const grid = $('product-grid'); grid.innerHTML = '';
-  Object.keys(productos).forEach(key=>{
-    const prod = productos[key];
-    if(!prod.disponible) return;
-    const el = document.createElement('div'); el.className = 'product-card';
-    const step = (prod.baseUnit === 'g') ? 100 : 1;
-    el.innerHTML = `
-      <div class="product-name">${escapeHTML(prod.nombre)}</div>
-      <div class="product-meta">Unidad: <strong>${escapeHTML(prod.baseUnit)}</strong> • Precio venta: <strong>${money(prod.precio)}</strong></div>
-      <div style="display:flex;gap:8px">
-        <input type="number" min="0" step="${step}" value="${prod.baseUnit === 'kg' ? 1 : 0}" data-product="${key}" class="client-qty" aria-label="Cantidad ${escapeHTML(prod.nombre)}">
+  Object.keys(productos).forEach(key => {
+    const p = productos[key];
+    // Show all products regardless of "disponible" if admin wants; the user requested to have products appear (they chose earlier)
+    const card = document.createElement('div'); card.className = 'product-card';
+    const step = (p.baseUnit === 'g') ? 100 : 1;
+    card.innerHTML = `
+      <div class="product-name">${escapeHTML(p.nombre)}</div>
+      <div class="product-unit">Unidad: <strong>${escapeHTML(p.baseUnit)}</strong> • Precio venta: <strong>${money(p.precio)}</strong></div>
+      <div class="qty-row">
+        <input type="number" min="0" step="${step}" value="${p.baseUnit === 'kg' ? 1 : 0}" data-product="${escapeHTML(key)}" class="client-qty" aria-label="Cantidad ${escapeHTML(p.nombre)}">
       </div>
     `;
-    grid.appendChild(el);
+    grid.appendChild(card);
   });
 }
 
-function renderOrders(filterText='', paymentFilter='all'){
+/* Orders table (admin) */
+function renderOrders(filterText = '', paymentFilter = 'all'){
   const tbody = $('orders-body'); tbody.innerHTML = '';
-  const ft = (filterText||'').toLowerCase();
-  pedidos.forEach(p=>{
+  const ft = (filterText || '').toLowerCase();
+  pedidos.forEach(p => {
     if(ft){
-      const found = (p.nombre||'').toLowerCase().includes(ft) || (p.telefono||'').toLowerCase().includes(ft);
+      const found = (p.nombre || '').toLowerCase().includes(ft) || (p.telefono || '').toLowerCase().includes(ft);
       if(!found) return;
     }
-    if(paymentFilter && paymentFilter!=='all'){
-      if(paymentFilter==='moroso'){
-        const dias = (Date.now() - new Date(p.fecha).getTime())/(1000*60*60*24);
-        if(!(p.deudaPendiente>0 && dias>30)) return;
+    if(paymentFilter && paymentFilter !== 'all'){
+      if(paymentFilter === 'moroso'){
+        const dias = (Date.now() - new Date(p.fecha).getTime()) / (1000*60*60*24);
+        if(!(p.deudaPendiente > 0 && dias > 30)) return;
       } else {
         if(p.estadoPago !== paymentFilter) return;
       }
     }
-    const lines = [];
-    if(p.items.paltas && Number(p.items.paltas.qty)) lines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML(productos.paltas.nombre)}`);
-    if(p.items.champi && Number(p.items.champi.qty)) lines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML(productos.champi.nombre)}`);
-    if(p.items.frutillas && Number(p.items.frutillas.qty)) lines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML(productos.frutillas.nombre)}`);
+
+    const itemsLines = [];
+    if(p.items.paltas && Number(p.items.paltas.qty)) itemsLines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML(productos.paltas.nombre)}`);
+    if(p.items.champi && Number(p.items.champi.qty)) itemsLines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML(productos.champi.nombre)}`);
+    if(p.items.frutillas && Number(p.items.frutillas.qty)) itemsLines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML(productos.frutillas.nombre)}`);
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${escapeHTML(p.nombre)}</strong></td>
       <td>${escapeHTML(p.telefono)}</td>
-      <td class="orders-products">${lines.join('<br>')}</td>
-      <td>${escapeHTML(p.comentarios||'')}</td>
+      <td class="orders-products">${itemsLines.join('<br>')}</td>
+      <td>${escapeHTML(p.comentarios || '')}</td>
       <td>${money(p.total)}</td>
-      <td><strong>${escapeHTML(p.estadoPago.toUpperCase())}</strong><div class="muted small">Pendiente: ${money(p.deudaPendiente||0)}</div></td>
+      <td><strong>${escapeHTML(p.estadoPago.toUpperCase())}</strong><div class="muted small">Pendiente: ${money(p.deudaPendiente || 0)}</div></td>
       <td>${new Date(p.fecha).toLocaleString()}</td>
       <td class="actions" style="text-align:right">
         <div class="order-actions">
           <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}" title="Registrar pago"><i class="fas fa-money-bill-wave"></i></button>
           <button class="icon-btn icon-view" data-action="view" data-id="${p.id}" title="Ver pedido"><i class="fas fa-eye"></i></button>
-          <button class="icon-btn icon-delete" data-action="delete" data-id="${p.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+          <button class="icon-btn icon-delete" data-action="delete" data-id="${p.id}" title="Eliminar pedido"><i class="fas fa-trash"></i></button>
         </div>
       </td>
     `;
@@ -650,180 +480,343 @@ function renderOrders(filterText='', paymentFilter='all'){
   });
 }
 
-// Delegated actions (orders)
-document.addEventListener('click', (e)=>{
+/* ====== Delegated event handling for table actions ====== */
+document.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-action]');
   if(!btn) return;
-  const action = btn.getAttribute('data-action'); const id = btn.getAttribute('data-id');
-  if(action === 'open-pay') openPaymentModal(id);
-  if(action === 'view') viewPedidoDetails(id);
-  if(action === 'delete'){ if(confirm('Eliminar pedido?')){ pedidos = pedidos.filter(p=>p.id !== id); saveAll(); renderAll(); notify('Pedido eliminado'); } }
+  const action = btn.getAttribute('data-action');
+  const id = btn.getAttribute('data-id');
+  if(action === 'open-pay') {
+    openPaymentModal(id);
+  } else if(action === 'view') {
+    viewPedidoDetails(id);
+  } else if(action === 'delete') {
+    if(confirm('Eliminar pedido? Esta acción es irreversible.')) {
+      pedidos = pedidos.filter(pp => pp.id !== id);
+      saveAll();
+      renderAll();
+      notify('Pedido eliminado');
+    }
+  }
 });
 
-// Payment modal & order details
-function viewPedidoDetails(id){ const p = pedidos.find(x=>x.id===id); if(!p) return notify('Pedido no encontrado'); let s = `Pedido: ${p.nombre}\nTel: ${p.telefono}\nFecha: ${new Date(p.fecha).toLocaleString()}\nProductos:\n`; if(p.items.paltas && p.items.paltas.qty) s += ` - ${p.items.paltas.qty} ${p.items.paltas.unit} ${productos.paltas.nombre}\n`; if(p.items.champi && p.items.champi.qty) s += ` - ${p.items.champi.qty} ${p.items.champi.unit} ${productos.champi.nombre}\n`; if(p.items.frutillas && p.items.frutillas.qty) s += ` - ${p.items.frutillas.qty} ${p.items.frutillas.unit} ${productos.frutillas.nombre}\n`; s += `Total: ${money(p.total)}\nPendiente: ${money(p.deudaPendiente)}\nComentarios: ${p.comentarios||'-'}`; alert(s); }
+/* ====== View details (simple) ====== */
+function viewPedidoDetails(id){
+  const p = pedidos.find(x => x.id === id);
+  if(!p) return notify('Pedido no encontrado', 2500);
+  let text = `Pedido: ${p.nombre}\nTel: ${p.telefono}\nFecha: ${new Date(p.fecha).toLocaleString()}\nProductos:\n`;
+  if(p.items.paltas && p.items.paltas.qty) text += ` - ${p.items.paltas.qty} ${p.items.paltas.unit} Paltas\n`;
+  if(p.items.champi && p.items.champi.qty) text += ` - ${p.items.champi.qty} ${p.items.champi.unit} Champiñones\n`;
+  if(p.items.frutillas && p.items.frutillas.qty) text += ` - ${p.items.frutillas.qty} ${p.items.frutillas.unit} Frutillas\n`;
+  text += `Total: ${money(p.total)}\nPendiente: ${money(p.deudaPendiente)}\nComentarios: ${p.comentarios || '-'}`;
+  alert(text);
+}
 
-function openPaymentModal(pedidoId){ const p = pedidos.find(x=>x.id===pedidoId); if(!p) return notify('Pedido no encontrado'); currentPaymentPedidoId = pedidoId; $('payment-client-info').textContent = `${p.nombre} (${p.telefono}) — ${new Date(p.fecha).toLocaleString()}`; $('payment-amount').value = Math.min(p.deudaPendiente || p.total || 0, p.deudaPendiente || p.total || 0); $('payment-notes').value = ''; $('payment-history-container').style.display = 'none'; renderPaymentHistoryForPedido(pedidoId); showModal('payment-modal'); }
-function renderPaymentHistoryForPedido(pedidoId){ const p = pedidos.find(x=>x.id===pedidoId); const cont = $('modal-payment-history'); cont.innerHTML = ''; if(!p || !p.pagos || p.pagos.length===0){ cont.textContent = 'No hay pagos registrados'; return; } p.pagos.slice().reverse().forEach(pa=>{ const div = document.createElement('div'); div.style.display='flex'; div.style.justifyContent='space-between'; div.style.padding='6px 0'; div.innerHTML = `<div>${new Date(pa.fecha).toLocaleString()} <span class="muted small">(${pa.metodo})</span></div><div style="font-weight:700">${money(pa.monto)}</div>`; cont.appendChild(div); }); }
+/* ====== Payment modal (admin) ====== */
+function openPaymentModal(pedidoId){
+  const p = pedidos.find(x => x.id === pedidoId);
+  if(!p) return notify('Pedido no encontrado', 2500);
+  currentPaymentPedidoId = pedidoId;
+  $('payment-client-info').textContent = `${p.nombre} (${p.telefono}) — ${new Date(p.fecha).toLocaleString()}`;
+  $('payment-amount').value = Math.min(p.deudaPendiente || p.total || 0, p.deudaPendiente || p.total || 0);
+  $('payment-notes').value = '';
+  $('payment-history-container').style.display = 'none';
+  renderPaymentHistoryForPedido(pedidoId);
+  showModal('payment-modal');
+}
+function renderPaymentHistoryForPedido(pedidoId){
+  const p = pedidos.find(x => x.id === pedidoId);
+  const cont = $('modal-payment-history');
+  cont.innerHTML = '';
+  if(!p || !p.pagos || p.pagos.length === 0){
+    cont.textContent = 'No hay pagos registrados';
+    return;
+  }
+  p.pagos.slice().reverse().forEach(pa => {
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.justifyContent = 'space-between';
+    div.style.padding = '6px 0';
+    div.innerHTML = `<div>${new Date(pa.fecha).toLocaleString()} <span class="muted small">(${escapeHTML(pa.metodo)})</span></div><div style="font-weight:700">${money(pa.monto)}</div>`;
+    cont.appendChild(div);
+  });
+}
 
-// Modal helpers
+/* ====== Modal helpers ====== */
 function showModal(id){ const el = $(id); if(!el) return; el.classList.add('show'); el.style.display = 'flex'; }
 function hideModal(id){ const el = $(id); if(!el) return; el.classList.remove('show'); el.style.display = 'none'; }
 
-// Products admin rendering and save/reset
+/* ====== Product Admin UI ====== */
 function renderProductsAdmin(){
   const container = $('products-admin'); container.innerHTML = '';
-  Object.keys(productos).forEach(k=>{
+  Object.keys(productos).forEach(k => {
     const p = productos[k];
     const row = document.createElement('div'); row.className = 'prod-admin-row';
-    row.innerHTML = `<input id="cfg-${k}-name" value="${escapeHTML(p.nombre)}">
+    row.innerHTML = `
+      <input id="cfg-${k}-name" value="${escapeHTML(p.nombre)}">
       <input id="cfg-${k}-price" type="number" value="${p.precio}">
-      <select id="cfg-${k}-baseunit"><option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option></select>
-      <select id="cfg-${k}-avail" class="avail"><option value="true">Disponible</option><option value="false">No</option></select>`;
+      <select id="cfg-${k}-baseunit">
+        <option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option>
+      </select>
+      <select id="cfg-${k}-avail" class="avail">
+        <option value="true">Disponible</option><option value="false">No</option>
+      </select>
+    `;
     container.appendChild(row);
     $(`cfg-${k}-baseunit`).value = p.baseUnit || 'kg';
     $(`cfg-${k}-avail`).value = p.disponible ? 'true' : 'false';
   });
 }
 
-// Purchases UI wiring (Add purchase + render)
+/* ====== Event wiring & app init ====== */
 function setupListeners(){
-  // Enviar pedido (cliente)
-  $('enviar-pedido').addEventListener('click', ()=>{
-    const nombre = $('nombre').value.trim(); const telefono = $('telefono').value.trim();
+  // Client: Enviar pedido -> open summary modal
+  $('enviar-pedido').addEventListener('click', () => {
+    const nombre = $('nombre').value.trim();
+    const telefono = $('telefono').value.trim();
     if(!nombre || !telefono) return alert('Nombre y teléfono son requeridos');
-    const items = {};
-    document.querySelectorAll('.client-qty').forEach(input=>{
-      const key = input.getAttribute('data-product'); const qty = Number(input.value) || 0;
-      if(qty > 0) items[key] = { qty, unit: productos[key].baseUnit || 'kg' };
+    const items = {
+      paltas: { qty: 0, unit: productos.paltas.baseUnit },
+      champi: { qty: 0, unit: productos.champi.baseUnit },
+      frutillas: { qty: 0, unit: productos.frutillas.baseUnit }
+    };
+    document.querySelectorAll('.client-qty').forEach(input => {
+      const key = input.getAttribute('data-product');
+      const v = Number(input.value) || 0;
+      if(v > 0) items[key] = { qty: v, unit: productos[key].baseUnit };
     });
-    if(Object.keys(items).length === 0) return alert('Selecciona al menos un producto');
-    const comentarios = $('comentarios').value.trim();
+    // remove zeros:
+    const selectedItems = {};
+    Object.keys(items).forEach(k => { if(items[k].qty && items[k].qty > 0) selectedItems[k] = items[k]; });
 
-    const summaryItemsEl = $('summary-items'); summaryItemsEl.innerHTML = '';
-    Object.keys(items).forEach(k=>{
+    if(Object.keys(selectedItems).length === 0) return alert('Selecciona al menos un producto');
+
+    // Build summary
+    const container = $('summary-items'); container.innerHTML = '';
+    Object.keys(selectedItems).forEach(k => {
       const p = productos[k];
-      const partial = {}; partial[k] = items[k];
-      const subtotal = calcTotalFromItems(partial);
-      const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.padding='6px 0';
-      row.innerHTML = `<div>${items[k].qty} ${items[k].unit} ${escapeHTML(p.nombre)}</div><div style="font-weight:800">${money(subtotal)}</div>`;
-      summaryItemsEl.appendChild(row);
+      const subtotal = calcTotalFromItems({ [k]: selectedItems[k] });
+      const row = document.createElement('div'); row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.padding = '6px 0';
+      row.innerHTML = `<div>${selectedItems[k].qty} ${selectedItems[k].unit} ${escapeHTML(p.nombre)}</div><div style="font-weight:800">${money(subtotal)}</div>`;
+      container.appendChild(row);
     });
-    if(comentarios){ const c = document.createElement('div'); c.className='muted small'; c.style.marginTop='8px'; c.textContent = 'Comentarios / Despacho: ' + comentarios; summaryItemsEl.appendChild(c); }
-    const total = calcTotalFromItems(items); $('summary-total').textContent = money(total);
-    $('summary-payment-method').value = 'efectivo'; $('summary-transfer-details').style.display = 'none';
+    if($('comentarios').value.trim()){
+      const c = document.createElement('div'); c.className = 'muted small'; c.style.marginTop = '8px'; c.textContent = 'Comentarios / Despacho: ' + $('comentarios').value.trim(); container.appendChild(c);
+    }
+    const total = calcTotalFromItems(Object.assign({}, selectedItems));
+    $('summary-total').textContent = money(total);
+    $('summary-payment-method').value = 'efectivo';
+    $('summary-transfer-details').style.display = 'none';
     showModal('order-summary-modal');
 
-    // rewire confirm/reject safely
-    const confirmOld = $('confirm-order'); const confirmNew = confirmOld.cloneNode(true); confirmOld.parentNode.replaceChild(confirmNew, confirmOld);
-    const rejectOld = $('reject-order'); const rejectNew = rejectOld.cloneNode(true); rejectOld.parentNode.replaceChild(rejectNew, rejectOld);
-    const methodOld = $('summary-payment-method'); const methodNew = methodOld.cloneNode(true); methodOld.parentNode.replaceChild(methodNew, methodOld);
+    // Rewire modal buttons safely by cloning nodes to avoid doubling listeners
+    const confirmBtn = $('confirm-order'); const confirmNew = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(confirmNew, confirmBtn);
+    const rejectBtn = $('reject-order'); const rejectNew = rejectBtn.cloneNode(true); rejectBtn.parentNode.replaceChild(rejectNew, rejectBtn);
+    const methodSel = $('summary-payment-method'); const methodNew = methodSel.cloneNode(true); methodSel.parentNode.replaceChild(methodNew, methodSel);
 
-    methodNew.addEventListener('change', ()=> { if(methodNew.value === 'transferencia') $('summary-transfer-details').style.display = 'block'; else $('summary-transfer-details').style.display = 'none'; });
-    confirmNew.addEventListener('click', ()=>{ crearPedido({ nombre, telefono, items, comentarios, creadoPorAdmin:false, paymentMethod: methodNew.value }); hideModal('order-summary-modal'); notify('Pedido enviado'); document.querySelectorAll('.client-qty').forEach(i=>{ if(i.getAttribute('data-product')==='paltas') i.value = 1; else i.value = 0; }); $('nombre').value=''; $('telefono').value=''; $('comentarios').value=''; });
-    rejectNew.addEventListener('click', ()=> hideModal('order-summary-modal'));
+    methodNew.addEventListener('change', () => {
+      if(methodNew.value === 'transferencia') $('summary-transfer-details').style.display = 'block';
+      else $('summary-transfer-details').style.display = 'none';
+    });
+
+    confirmNew.addEventListener('click', () => {
+      // create order
+      crearPedido({ nombre, telefono, items: selectedItems, comentarios: $('comentarios').value.trim(), creadoPorAdmin: false, paymentMethod: methodNew.value });
+      hideModal('order-summary-modal');
+      notify('Gracias por tu compra. Pedido registrado.');
+      // reset client inputs
+      document.querySelectorAll('.client-qty').forEach(i => { if(i.getAttribute('data-product') === 'paltas') i.value = 1; else i.value = 0; });
+      $('nombre').value = ''; $('telefono').value = ''; $('comentarios').value = '';
+    });
+
+    rejectNew.addEventListener('click', () => hideModal('order-summary-modal'));
   });
 
-  // Admin login
-  $('admin-login-link').addEventListener('click', ()=> showModal('login-modal'));
-  $('close-login').addEventListener('click', ()=> hideModal('login-modal'));
-  $('cancel-login').addEventListener('click', ()=> hideModal('login-modal'));
-  $('login-btn').addEventListener('click', ()=> {
-    const email = $('admin-email').value.trim(); const pass = $('admin-password').value;
-    if(email === 'admin@valledor.com' && pass === 'admin123'){ isAdmin = true; localStorage.setItem('isAdmin','1'); hideModal('login-modal'); $('admin-email').value=''; $('admin-password').value=''; $('admin-container').style.display = 'block'; notify('Acceso admin'); renderAll(); } else { $('login-error').style.display='block'; setTimeout(()=> $('login-error').style.display='none',2000); }
+  // Admin login modal wiring
+  $('admin-login-link').addEventListener('click', () => showModal('login-modal'));
+  $('close-login').addEventListener('click', () => hideModal('login-modal'));
+  $('cancel-login').addEventListener('click', () => hideModal('login-modal'));
+  $('login-btn').addEventListener('click', () => {
+    const email = $('admin-email').value.trim();
+    const pass = $('admin-password').value;
+    if(email === 'admin@valledor.com' && pass === 'admin123'){
+      isAdmin = true; localStorage.setItem('isAdmin','1');
+      hideModal('login-modal'); $('admin-email').value = ''; $('admin-password').value = '';
+      $('admin-container').style.display = 'block';
+      renderAll();
+      notify('Acceso administrador concedido');
+    } else {
+      $('login-error').style.display = 'block'; setTimeout(()=> {$('login-error').style.display = 'none';}, 2000);
+    }
   });
-  $('logout-btn').addEventListener('click', ()=> { isAdmin=false; localStorage.removeItem('isAdmin'); $('admin-container').style.display='none'; notify('Sesión cerrada'); });
 
-  // Search / filter
-  $('search-input').addEventListener('input', e => renderOrders(e.target.value || '', $('payment-filter').value || 'all'));
-  $('payment-filter').addEventListener('change', ()=> renderOrders($('search-input').value || '', $('payment-filter').value || 'all'));
+  // Admin panel buttons
+  $('logout-btn').addEventListener('click', () => {
+    isAdmin = false; localStorage.removeItem('isAdmin'); $('admin-container').style.display = 'none'; notify('Sesión cerrada');
+  });
+  $('refresh-btn').addEventListener('click', () => { renderAll(); notify('Vista actualizada'); });
+  $('export-btn').addEventListener('click', () => {
+    const rows = buildOrdersCSV();
+    exportCSV('pedidos.csv', rows);
+    notify('CSV exportado');
+  });
 
-  // Add order admin (modal) - small flow for manual creation
-  $('add-order-btn').addEventListener('click', ()=>{
-    if(!isAdmin) return notify('Debes iniciar sesi��n como admin');
-    const wrapper = document.createElement('div'); wrapper.className='modal show'; wrapper.style.display='flex';
-    const box = document.createElement('div'); box.className='modal-box';
+  // Add manual order (opens small modal)
+  $('add-order-btn').addEventListener('click', () => {
+    if(!isAdmin) return notify('Debes iniciar sesión como admin', 2000);
+    // Build inline modal for adding order manually
+    const wrapper = document.createElement('div'); wrapper.className = 'modal show'; wrapper.style.display = 'flex';
+    const box = document.createElement('div'); box.className = 'modal-box';
     box.innerHTML = `<span class="close-modal tmp-close">&times;</span><h3>Agregar pedido (admin)</h3>
-      <div style="display:flex;gap:8px;margin-top:8px"><input id="tmp-name" placeholder="Nombre" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px"><input id="tmp-tel" placeholder="Teléfono" style="width:180px;padding:8px;border:1px solid #ddd;border-radius:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:8px"><input id="tmp-name" placeholder="Nombre" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px"><input id="tmp-tel" placeholder="Teléfono" style="width:160px;padding:8px;border:1px solid #ddd;border-radius:6px"></div>
       <div id="tmp-products" style="margin-top:10px"></div>
       <div style="display:flex;gap:8px;margin-top:10px"><button id="tmp-create" class="btn">Crear</button><button id="tmp-cancel" class="btn gray">Cancelar</button></div>`;
     wrapper.appendChild(box); document.body.appendChild(wrapper);
     box.querySelector('.tmp-close').addEventListener('click', ()=> wrapper.remove());
     box.querySelector('#tmp-cancel').addEventListener('click', ()=> wrapper.remove());
     const tp = box.querySelector('#tmp-products');
-    Object.keys(productos).forEach(k=>{
+    Object.keys(productos).forEach(k => {
       const p = productos[k];
-      const row = document.createElement('div'); row.style.display='flex'; row.style.gap='8px'; row.style.marginTop='8px';
+      const row = document.createElement('div'); row.style.display = 'flex'; row.style.gap = '8px'; row.style.marginTop = '8px';
       row.innerHTML = `<div style="width:160px"><strong>${escapeHTML(p.nombre)}</strong></div>
         <select id="tmp-${k}-unit" style="padding:8px;border-radius:6px;border:1px solid #ddd"><option value="${p.baseUnit}">${p.baseUnit}</option><option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option></select>
         <input id="tmp-${k}-qty" type="number" min="0" step="1" placeholder="Cantidad" style="width:120px;padding:8px;border:1px solid #ddd;border-radius:6px">`;
       tp.appendChild(row);
     });
-    box.querySelector('#tmp-create').addEventListener('click', ()=>{
+    box.querySelector('#tmp-create').addEventListener('click', () => {
       const nombre = box.querySelector('#tmp-name').value.trim(); const telefono = box.querySelector('#tmp-tel').value.trim();
       if(!nombre || !telefono) return alert('Nombre y teléfono requeridos');
       const items = {};
-      Object.keys(productos).forEach(k=>{
-        const q = Number(box.querySelector(`#tmp-${k}-qty`).value) || 0; const u = box.querySelector(`#tmp-${k}-unit`).value || productos[k].baseUnit;
-        if(q>0) items[k] = { qty: q, unit: u };
+      Object.keys(productos).forEach(k => {
+        const q = Number(box.querySelector(`#tmp-${k}-qty`).value) || 0;
+        const u = box.querySelector(`#tmp-${k}-unit`).value || productos[k].baseUnit;
+        if(q > 0) items[k] = { qty: q, unit: u };
       });
-      if(Object.keys(items).length===0) return alert('Añade al menos un producto');
-      crearPedido({ nombre, telefono, items, comentarios:'Creado por admin', creadoPorAdmin:true });
+      if(Object.keys(items).length === 0) return alert('Añade al menos un producto');
+      crearPedido({ nombre, telefono, items, comentarios: 'Creado por admin', creadoPorAdmin: true });
       wrapper.remove();
       notify('Pedido creado (admin)');
     });
   });
 
-  // Export CSV
-  $('export-btn').addEventListener('click', ()=>{ const rows = buildOrdersCSV(); exportCSV('pedidos.csv', rows); notify('CSV exportado'); });
-
-  // Refresh
-  $('refresh-btn').addEventListener('click', ()=>{ renderAll(); notify('Vista actualizada'); });
-
-  // Products admin save/reset
-  $('save-products-btn').addEventListener('click', ()=>{ Object.keys(productos).forEach(k=>{ productos[k].nombre = $(`cfg-${k}-name`).value || productos[k].nombre; productos[k].precio = Number($(`cfg-${k}-price`).value) || productos[k].precio; productos[k].baseUnit = $(`cfg-${k}-baseunit`).value || productos[k].baseUnit; productos[k].disponible = $(`cfg-${k}-avail`).value === 'true'; }); saveAll(); renderAll(); notify('Productos guardados'); });
-  $('reset-products-btn').addEventListener('click', ()=>{ if(!confirm('Resetear productos a por defecto?')) return; productos = structuredClone(DEFAULT_PRODUCTOS); saveAll(); renderAll(); notify('Productos restaurados'); });
-
-  // Purchases listeners
-  $('add-purchase-btn').addEventListener('click', ()=> {
-    const prod = $('fin-prod').value; const qty = Number($('fin-qty').value) || 0; const unit = $('fin-unit').value; const price = Number($('fin-price').value) || 0;
-    if(!qty || !price) return alert('Cantidad y precio son requeridos');
-    addPurchase(prod, qty, unit, price);
+  // Payment modal controls
+  $('close-payment').addEventListener('click', () => hideModal('payment-modal'));
+  $('register-payment').addEventListener('click', () => {
+    if(!currentPaymentPedidoId) return notify('No hay pedido seleccionado', 1600);
+    const monto = Number($('payment-amount').value) || 0;
+    const metodo = $('payment-method').value;
+    const notas = $('payment-notes').value || '';
+    if(monto <= 0) return alert('Ingresa un monto válido');
+    registrarPago(currentPaymentPedidoId, { monto, metodo, notas, fecha: nowISO() });
+    renderPaymentHistoryForPedido(currentPaymentPedidoId);
+    notify('Pago registrado');
   });
-  $('clear-purchases-btn').addEventListener('click', ()=> { if(!confirm('Limpiar compras?')) return; purchases = []; saveAll(); renderPurchases(); notify('Compras limpiadas'); });
-
-  // Payments modal
-  $('close-payment').addEventListener('click', ()=> hideModal('payment-modal'));
-  $('register-payment').addEventListener('click', ()=> {
-    if(!currentPaymentPedidoId) return notify('Seleccione pedido'); const monto = Number($('payment-amount').value) || 0; const metodo = $('payment-method').value; const notas = $('payment-notes').value.trim();
-    if(monto<=0) return alert('Ingrese monto válido'); registrarPago(currentPaymentPedidoId,{monto,metodo,notas,fecha:nowISO()}); renderPaymentHistoryForPedido(currentPaymentPedidoId); notify('Pago registrado');
+  $('mark-as-paid').addEventListener('click', () => {
+    if(!currentPaymentPedidoId) return notify('No hay pedido seleccionado', 1600);
+    if(!confirm('Marcar todo como pagado?')) return;
+    marcarTodoPagado(currentPaymentPedidoId);
+    renderPaymentHistoryForPedido(currentPaymentPedidoId);
+    notify('Pedido marcado como pagado');
   });
-  $('mark-as-paid').addEventListener('click', ()=> { if(!currentPaymentPedidoId) return notify('Seleccione pedido'); if(!confirm('Marcar todo como pagado?')) return; marcarTodoPagado(currentPaymentPedidoId); notify('Marcado pagado'); });
-  $('toggle-payment-history').addEventListener('click', ()=> { const el = $('payment-history-container'); el.style.display = (el.style.display==='block') ? 'none' : 'block'; if(el.style.display==='block') renderPaymentHistoryForPedido(currentPaymentPedidoId); });
+  $('toggle-payment-history').addEventListener('click', () => {
+    const el = $('payment-history-container');
+    if(el.style.display === 'block') el.style.display = 'none';
+    else { el.style.display = 'block'; if(currentPaymentPedidoId) renderPaymentHistoryForPedido(currentPaymentPedidoId); }
+  });
 
-  // Order summary modal close
-  $('close-order-summary').addEventListener('click', ()=> hideModal('order-summary-modal'));
+  // Save/Reset products
+  $('save-products-btn').addEventListener('click', () => {
+    Object.keys(productos).forEach(k => {
+      productos[k].nombre = $(`cfg-${k}-name`).value || productos[k].nombre;
+      productos[k].precio = Number($(`cfg-${k}-price`).value) || productos[k].precio;
+      productos[k].baseUnit = $(`cfg-${k}-baseunit`).value || productos[k].baseUnit;
+      productos[k].disponible = $(`cfg-${k}-avail`).value === 'true';
+    });
+    saveAll(); renderAll(); notify('Productos guardados');
+  });
+  $('reset-products-btn').addEventListener('click', () => {
+    if(!confirm('Restablecer productos a valores por defecto?')) return;
+    productos = structuredClone(DEFAULT_PRODUCTOS);
+    saveAll(); renderAll(); notify('Productos restaurados');
+  });
+
+  // Search/filter events
+  $('search-input').addEventListener('input', e => renderOrders(e.target.value || '', $('payment-filter').value || 'all'));
+  $('payment-filter').addEventListener('change', () => renderOrders($('search-input').value || '', $('payment-filter').value || 'all'));
 }
 
-// CSV export utilities
-function buildOrdersCSV(){ const header = ['ID','Nombre','Telefono','Fecha','Productos','Total','Estado','DeudaPendiente','Comentarios']; const rows = [header]; pedidos.forEach(p=>{ const prod=[]; if(p.items.paltas && p.items.paltas.qty) prod.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${productos.paltas.nombre}`); if(p.items.champi && p.items.champi.qty) prod.push(`${p.items.champi.qty} ${p.items.champi.unit} ${productos.champi.nombre}`); if(p.items.frutillas && p.items.frutillas.qty) prod.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${productos.frutillas.nombre}`); rows.push([p.id,p.nombre,p.telefono,p.fecha,prod.join(' | '),p.total,p.estadoPago,p.deudaPendiente,p.comentarios||'']); }); return rows; }
-function exportCSV(filename, rows){ const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n'); const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url); }
+/* ====== CSV export helpers ====== */
+function buildOrdersCSV(){
+  const header = ['ID','Nombre','Telefono','Fecha','Productos','Comentarios','Total','Estado','DeudaPendiente','PaymentMethod'];
+  const rows = [header];
+  pedidos.forEach(p => {
+    const items = [];
+    if(p.items.paltas && p.items.paltas.qty) items.push(`${p.items.paltas.qty} ${p.items.paltas.unit} Paltas`);
+    if(p.items.champi && p.items.champi.qty) items.push(`${p.items.champi.qty} ${p.items.champi.unit} Champiñones`);
+    if(p.items.frutillas && p.items.frutillas.qty) items.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} Frutillas`);
+    rows.push([p.id, p.nombre, p.telefono, p.fecha, items.join(' | '), p.comentarios || '', p.total, p.estadoPago, p.deudaPendiente, p.paymentMethod || '']);
+  });
+  return rows;
+}
+function exportCSV(filename, rows){
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
 
-// Render all components
-function renderAll(){ renderProductGrid(); renderProductsAdmin(); renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'all'); renderPurchases(); }
-
-// render product admin
-function renderProductsAdmin(){ const container = $('products-admin'); container.innerHTML = ''; Object.keys(productos).forEach(k=>{ const p = productos[k]; const row = document.createElement('div'); row.className='prod-admin-row'; row.innerHTML = `<input id="cfg-${k}-name" value="${escapeHTML(p.nombre)}"><input id="cfg-${k}-price" type="number" value="${p.precio}"><select id="cfg-${k}-baseunit"><option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option></select><select id="cfg-${k}-avail" class="avail"><option value="true">Disponible</option><option value="false">No</option></select>`; container.appendChild(row); $(`cfg-${k}-baseunit`).value = p.baseUnit || 'kg'; $(`cfg-${k}-avail`).value = p.disponible ? 'true' : 'false'; }); }
-
-// init
+/* ====== Initial load & render ====== */
 (function init(){
   loadAll();
-  if(localStorage.getItem('isAdmin')){ isAdmin = true; $('admin-container').style.display = 'block'; } else { $('admin-container').style.display = 'none'; }
+  if(localStorage.getItem('isAdmin')){
+    isAdmin = true;
+    $('admin-container').style.display = 'block';
+  } else {
+    $('admin-container').style.display = 'none';
+  }
   setupListeners();
   renderAll();
-  // set default client paltas qty to 1 for convenience (if visible)
-  setTimeout(()=>{ document.querySelectorAll('.client-qty').forEach(i=>{ if(i && i.getAttribute('data-product')==='paltas') i.value = 1; }) }, 200);
+
+  // default paltas qty to 1 for convenience after render
+  setTimeout(()=> { document.querySelectorAll('.client-qty').forEach(i => { if(i && i.getAttribute('data-product') === 'paltas') i.value = 1; }); }, 200);
 })();
+
+/* ====== renderAll wraps product/admin/ orders ====== */
+function renderAll(){
+  renderProductGrid();
+  renderProductsAdmin();
+  renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'all');
+}
+
+/* ====== Render products admin (build inputs) ====== */
+function renderProductsAdmin(){
+  const container = $('products-admin'); container.innerHTML = '';
+  Object.keys(productos).forEach(k => {
+    const p = productos[k];
+    const row = document.createElement('div'); row.className = 'prod-admin-row';
+    row.innerHTML = `
+      <input id="cfg-${k}-name" value="${escapeHTML(p.nombre)}">
+      <input id="cfg-${k}-price" type="number" value="${p.precio}">
+      <select id="cfg-${k}-baseunit">
+        <option value="kg">kg</option><option value="g">g</option><option value="caja">caja</option><option value="saco">saco</option>
+      </select>
+      <select id="cfg-${k}-avail" class="avail">
+        <option value="true">Disponible</option><option value="false">No</option>
+      </select>
+    `;
+    container.appendChild(row);
+    $(`cfg-${k}-baseunit`).value = p.baseUnit || 'kg';
+    $(`cfg-${k}-avail`).value = p.disponible ? 'true' : 'false';
+  });
+}
+
+/* ====== Safe helper for cloning nodes (to avoid duplicate listeners) ====== */
+function safeReplace(node){
+  const clone = node.cloneNode(true);
+  node.parentNode.replaceChild(clone, node);
+  return clone;
+}
 </script>
 </body>
 </html>
