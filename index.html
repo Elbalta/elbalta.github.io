@@ -11,65 +11,84 @@
 
   <style>
     :root{
-      --primary:#2e7d32;
-      --primary-strong:#1b5e20;
-      --bg:#f6f4f0;
+      --primary:#4CAF50;
+      --primary-light:#66BB6A;
+      --primary-strong:#2E7D32;
+      --bg:linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
       --card:#fff;
-      --muted:#666666;
-      --danger:#d32f2f;
-      --success:#388e3c;
-      --glass: rgba(255,255,255,0.6);
+      --muted:#757575;
+      --danger:#EF5350;
+      --success:#66BB6A;
+      --glass: rgba(255,255,255,0.95);
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --shadow-hover: 0 15px 40px rgba(0,0,0,0.12);
     }
-    *{box-sizing:border-box}
-    body{font-family:'Poppins',sans-serif;background:var(--bg);color:#222;margin:0;line-height:1.35}
-    header{background:linear-gradient(135deg,var(--primary),var(--primary-strong));color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .brand{display:flex;gap:12px;align-items:center}
-    .brand h1{font-size:1.1rem;margin:0}
-    .brand p{margin:0;font-size:.9rem;opacity:.95}
-    .container{max-width:1120px;margin:18px auto;padding:12px}
-    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 22px rgba(0,0,0,.06)}
-    .grid{display:grid;gap:12px}
+    *{box-sizing:border-box;transition:all 0.3s ease}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:#333;margin:0;line-height:1.6;min-height:100vh}
+    header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-strong) 100%);color:#fff;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
+    .brand{display:flex;gap:16px;align-items:center}
+    .brand h1{font-size:1.4rem;margin:0;font-weight:600}
+    .brand p{margin:0;font-size:.95rem;opacity:.9}
+    .container{max-width:1200px;margin:32px auto;padding:20px}
+    .card{background:var(--glass);border-radius:20px;padding:28px;box-shadow:var(--shadow);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.3);transition:transform 0.3s ease, box-shadow 0.3s ease}
+    .card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+    .grid{display:grid;gap:16px}
     /* PRODUCT GRID (CLIENT) */
-    .product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-    .product-card{border:1px solid #eee;border-radius:10px;padding:12px;background:#fff;display:flex;flex-direction:column;gap:8px}
-    .product-name{font-weight:700;font-size:1.02rem}
-    .product-unit{font-size:.9rem;color:var(--muted)}
-    .qty-row{display:flex;gap:8px;align-items:center;margin-top:6px}
-    .qty-row input{flex:1;padding:10px;border-radius:8px;border:1px solid #ddd}
+    .product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:20px}
+    .product-card{border:2px solid rgba(76,175,80,0.2);border-radius:16px;padding:20px;background:linear-gradient(135deg, #fff 0%, #f1f8f4 100%);display:flex;flex-direction:column;gap:12px;transition:all 0.3s ease;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+    .product-card:hover{border-color:var(--primary);transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.1)}
+    .product-name{font-weight:600;font-size:1.1rem;color:var(--primary-strong)}
+    .product-unit{font-size:.95rem;color:var(--muted);background:rgba(76,175,80,0.1);padding:6px 12px;border-radius:8px;display:inline-block}
+    .qty-row{display:flex;gap:10px;align-items:center;margin-top:10px}
+    .qty-row input{flex:1;padding:12px;border-radius:12px;border:2px solid rgba(76,175,80,0.2);font-size:1rem;transition:border-color 0.3s ease}
+    .qty-row input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(76,175,80,0.1)}
     /* BUTTONS */
-    .btn{background:linear-gradient(90deg,var(--primary),var(--primary-strong));color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer}
-    .btn.gray{background:linear-gradient(90deg,#607d8b,#455a64)}
-    .btn.danger{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
-    .btn.small{padding:8px 10px;font-size:.92rem}
+    .btn{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-strong) 100%);color:#fff;border:0;padding:14px 24px;border-radius:12px;font-weight:600;cursor:pointer;font-size:1rem;box-shadow:0 4px 12px rgba(76,175,80,0.3);transition:all 0.3s ease}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(76,175,80,0.4)}
+    .btn:active{transform:translateY(0)}
+    .btn.gray{background:linear-gradient(135deg,#78909C 0%,#546E7A 100%);box-shadow:0 4px 12px rgba(120,144,156,0.3)}
+    .btn.danger{background:linear-gradient(135deg,#EF5350 0%,#C62828 100%);box-shadow:0 4px 12px rgba(239,83,80,0.3)}
+    .btn.small{padding:10px 16px;font-size:.9rem}
     .muted{color:var(--muted)}
-    .small{font-size:.88rem;color:var(--muted)}
+    .small{font-size:.9rem;color:var(--muted)}
     /* ADMIN */
-    .admin-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
-    .admin-controls{display:flex;gap:8px;flex-wrap:wrap}
-    .orders-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.95rem}
-    .orders-table th{background:rgba(46,125,50,.08);padding:10px;text-align:left;border-bottom:1px solid #e9f3ea}
-    .orders-table td{padding:10px;border-bottom:1px solid #f2f2f2;vertical-align:middle}
-    .orders-products{color:var(--muted);font-size:.92rem;line-height:1.25}
-    .order-actions{display:flex;gap:8px;justify-content:flex-end}
-    .icon-btn{width:40px;height:40px;border-radius:8px;border:0;color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 12px rgba(0,0,0,.06)}
-    .icon-pay{background:linear-gradient(90deg,#2196f3,#1976d2)}
-    .icon-view{background:linear-gradient(90deg,#607d8b,#455a64)}
-    .icon-delete{background:linear-gradient(90deg,#d32f2f,#b71c1c)}
-    td.actions{width:140px;max-width:140px}
+    .admin-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:16px;border-bottom:2px solid rgba(76,175,80,0.2)}
+    .admin-controls{display:flex;gap:10px;flex-wrap:wrap}
+    .orders-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:.95rem;border-radius:12px;overflow:hidden}
+    .orders-table th{background:linear-gradient(135deg,rgba(76,175,80,.12) 0%,rgba(76,175,80,.08) 100%);padding:14px;text-align:left;border-bottom:2px solid rgba(76,175,80,0.2);font-weight:600;color:var(--primary-strong)}
+    .orders-table td{padding:14px;border-bottom:1px solid rgba(0,0,0,0.05);vertical-align:middle}
+    .orders-table tr{transition:background 0.2s ease}
+    .orders-table tr:hover{background:rgba(76,175,80,0.04)}
+    .orders-products{color:var(--muted);font-size:.92rem;line-height:1.4}
+    .order-actions{display:flex;gap:10px;justify-content:flex-end}
+    .icon-btn{width:42px;height:42px;border-radius:12px;border:0;color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.1);transition:all 0.3s ease}
+    .icon-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.15)}
+    .icon-pay{background:linear-gradient(135deg,#42A5F5 0%,#1E88E5 100%)}
+    .icon-view{background:linear-gradient(135deg,#78909C 0%,#546E7A 100%)}
+    .icon-delete{background:linear-gradient(135deg,#EF5350 0%,#C62828 100%)}
+    td.actions{width:160px;max-width:160px}
     /* MODALS */
-    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:12px}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:16px;animation:fadeIn 0.3s ease}
     .modal.show{display:flex}
-    .modal-box{width:100%;max-width:760px;background:#fff;border-radius:10px;padding:16px;max-height:92vh;overflow:auto;position:relative}
-    .close-modal{position:absolute;right:14px;top:10px;font-size:18px;cursor:pointer}
+    .modal-box{width:100%;max-width:800px;background:#fff;border-radius:20px;padding:28px;max-height:92vh;overflow:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:slideUp 0.3s ease}
+    .close-modal{position:absolute;right:20px;top:16px;font-size:24px;cursor:pointer;color:var(--muted);transition:color 0.3s ease,transform 0.3s ease}
+    .close-modal:hover{color:var(--danger);transform:rotate(90deg)}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
     /* Admin product row */
-    .prod-admin-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
-    .prod-admin-row input, .prod-admin-row select{width:calc(100% / 4 - 8px);min-width:120px;padding:8px;border-radius:8px;border:1px solid #ddd}
-    .prod-admin-row .avail{width:120px}
+    .prod-admin-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+    .prod-admin-row input, .prod-admin-row select{width:calc(100% / 4 - 10px);min-width:140px;padding:12px;border-radius:12px;border:2px solid rgba(76,175,80,0.2);transition:border-color 0.3s ease}
+    .prod-admin-row input:focus, .prod-admin-row select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(76,175,80,0.1)}
+    .prod-admin-row .avail{width:140px}
     /* FINANZAS */
-    .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .list{max-height:300px;overflow:auto;padding:8px;border-radius:8px;border:1px solid #eee}
-    .list-item{padding:8px;border-bottom:1px solid #f2f2f2;display:flex;justify-content:space-between}
-    .badge{display:inline-block;padding:4px 8px;border-radius:6px;background:#f1f1f1}
+    .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .list{max-height:320px;overflow:auto;padding:12px;border-radius:12px;border:2px solid rgba(0,0,0,0.08);background:rgba(255,255,255,0.5)}
+    .list-item{padding:10px;border-bottom:1px solid rgba(0,0,0,0.05);display:flex;justify-content:space-between}
+    .badge{display:inline-block;padding:6px 12px;border-radius:8px;background:rgba(76,175,80,0.1);color:var(--primary-strong);font-weight:500}
+    /* Improved input and textarea styles */
+    input[type="text"], input[type="tel"], input[type="email"], input[type="password"], input[type="number"], textarea, select{width:100%;padding:14px;border-radius:12px;border:2px solid rgba(76,175,80,0.2);font-family:'Poppins',sans-serif;font-size:1rem;transition:all 0.3s ease}
+    input:focus, textarea:focus, select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(76,175,80,0.1)}
+    label{display:block;margin-bottom:8px;font-weight:500;color:var(--primary-strong);font-size:.95rem}
     @media (max-width:720px){ .prod-admin-row input, .prod-admin-row select{width:100%} .fin-grid{grid-template-columns:1fr} }
   </style>
 </head>
@@ -89,59 +108,68 @@
 
 <div class="container">
   <!-- CLIENT FORM -->
-  <div class="card">
-    <h2 style="margin:0 0 8px 0;color:var(--primary)"><i class="fas fa-cart-plus"></i> Realiza tu pedido</h2>
+  <div class="card" style="background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(241,248,244,0.95) 100%);border:2px solid rgba(76,175,80,0.3)">
+    <div style="text-align:center;margin-bottom:24px">
+      <h2 style="margin:0 0 8px 0;color:var(--primary-strong);font-size:2rem;font-weight:600">
+        <i class="fas fa-shopping-cart" style="margin-right:12px;color:var(--primary)"></i>Realiza tu pedido
+      </h2>
+      <p style="color:var(--muted);font-size:1.05rem;margin:0">Completa el formulario y confirma tu compra</p>
+    </div>
 
     <div class="grid">
       <div>
-        <label><strong>Nombre</strong></label>
-        <input id="nombre" type="text" placeholder="Juan Pérez">
+        <label><i class="fas fa-user" style="margin-right:8px;color:var(--primary)"></i>Nombre completo</label>
+        <input id="nombre" type="text" placeholder="Ej: Juan Pérez García">
       </div>
 
       <div>
-        <label><strong>Teléfono</strong></label>
-        <input id="telefono" type="tel" placeholder="+56912345678">
+        <label><i class="fas fa-phone" style="margin-right:8px;color:var(--primary)"></i>Teléfono de contacto</label>
+        <input id="telefono" type="tel" placeholder="Ej: +56912345678">
       </div>
 
       <div>
-        <label><strong>Productos</strong></label>
+        <label><i class="fas fa-box-open" style="margin-right:8px;color:var(--primary)"></i>Selecciona tus productos</label>
         <div id="product-grid" class="product-grid"></div>
       </div>
 
       <div>
-        <label><strong>Comentarios / Destino despacho</strong></label>
-        <textarea id="comentarios" rows="2" placeholder="Ej: departamento, dirección, referencia"></textarea>
+        <label><i class="fas fa-comment-dots" style="margin-right:8px;color:var(--primary)"></i>Comentarios adicionales / Dirección de despacho</label>
+        <textarea id="comentarios" rows="3" placeholder="Ej: Departamento 302, Edificio Las Flores, Calle Principal #123" style="resize:vertical"></textarea>
       </div>
 
-      <div>
-        <button id="enviar-pedido" class="btn"><i class="fas fa-paper-plane" style="margin-right:8px"></i> Enviar pedido</button>
+      <div style="text-align:center;margin-top:12px">
+        <button id="enviar-pedido" class="btn" style="font-size:1.1rem;padding:16px 40px">
+          <i class="fas fa-paper-plane" style="margin-right:10px"></i>Enviar mi pedido
+        </button>
       </div>
     </div>
   </div>
 
   <!-- ADMIN PANEL -->
-  <div id="admin-container" class="card" style="display:none;margin-top:14px;">
+  <div id="admin-container" class="card" style="display:none;margin-top:24px;opacity:0;transition:opacity 0.5s ease">
     <div class="admin-header">
       <div>
-        <h3 style="margin:0">Panel Administrador</h3>
-        <div class="small muted">Gestiona productos y pedidos</div>
+        <h3 style="margin:0;color:var(--primary-strong);font-size:1.5rem;font-weight:600">
+          <i class="fas fa-user-shield" style="margin-right:10px;color:var(--primary)"></i>Panel Administrador
+        </h3>
+        <div class="small muted" style="margin-top:4px">Gestiona productos y pedidos de forma eficiente</div>
       </div>
       <div class="admin-controls">
-        <button id="add-order-btn" class="btn small">Agregar pedido</button>
-        <button id="export-btn" class="btn small gray">Exportar CSV</button>
-        <button id="refresh-btn" class="btn small" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Actualizar</button>
-        <button id="logout-btn" class="btn small danger">Salir</button>
+        <button id="add-order-btn" class="btn small"><i class="fas fa-plus-circle" style="margin-right:6px"></i>Agregar pedido</button>
+        <button id="export-btn" class="btn small gray"><i class="fas fa-file-csv" style="margin-right:6px"></i>Exportar CSV</button>
+        <button id="refresh-btn" class="btn small" style="background:linear-gradient(135deg,#66BB6A 0%,#2E7D32 100%)"><i class="fas fa-sync-alt" style="margin-right:6px"></i>Actualizar</button>
+        <button id="logout-btn" class="btn small danger"><i class="fas fa-sign-out-alt" style="margin-right:6px"></i>Salir</button>
       </div>
     </div>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <input id="search-input" placeholder="Buscar por nombre o teléfono..." style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd">
-      <select id="payment-filter" style="width:200px;padding:10px;border-radius:8px;border:1px solid #ddd">
-        <option value="all">Todos</option>
-        <option value="pendiente">Pendientes</option>
-        <option value="parcial">Parciales</option>
-        <option value="pagado">Pagados</option>
-        <option value="moroso">Morosos (+30 días)</option>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <input id="search-input" placeholder="🔍 Buscar por nombre o teléfono..." style="flex:1;padding:14px;border-radius:12px;border:2px solid rgba(76,175,80,0.2)">
+      <select id="payment-filter" style="min-width:220px;padding:14px;border-radius:12px;border:2px solid rgba(76,175,80,0.2)">
+        <option value="all">📋 Todos los pedidos</option>
+        <option value="pendiente">⏳ Pendientes</option>
+        <option value="parcial">📊 Parciales</option>
+        <option value="pagado">✅ Pagados</option>
+        <option value="moroso">⚠️ Morosos (+30 días)</option>
       </select>
     </div>
 
@@ -162,13 +190,16 @@
     </table>
 
     <!-- PRODUCTS ADMIN -->
-    <div style="margin-top:12px;">
-      <div class="card">
-        <h4 style="margin:0">Configuración de productos (Administrador)</h4>
-        <div id="products-admin" style="margin-top:10px"></div>
-        <div style="margin-top:10px;display:flex;gap:8px;">
-          <button id="save-products-btn" class="btn">Guardar productos</button>
-          <button id="reset-products-btn" class="btn danger">Reset</button>
+    <div style="margin-top:20px;">
+      <div class="card" style="background:linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(241,248,244,0.95) 100%)">
+        <h4 style="margin:0;color:var(--primary-strong);font-size:1.2rem;font-weight:600">
+          <i class="fas fa-cogs" style="margin-right:10px;color:var(--primary)"></i>Configuración de productos
+        </h4>
+        <p style="color:var(--muted);font-size:.9rem;margin:8px 0 0 0">Administra los productos disponibles en la plataforma</p>
+        <div id="products-admin" style="margin-top:16px"></div>
+        <div style="margin-top:16px;display:flex;gap:12px;">
+          <button id="save-products-btn" class="btn"><i class="fas fa-save" style="margin-right:8px"></i>Guardar productos</button>
+          <button id="reset-products-btn" class="btn danger"><i class="fas fa-undo" style="margin-right:8px"></i>Restablecer</button>
         </div>
       </div>
     </div>
@@ -180,38 +211,41 @@
 <div id="order-summary-modal" class="modal" aria-hidden="true">
   <div class="modal-box">
     <span class="close-modal" id="close-order-summary">&times;</span>
-    <h2><i class="fas fa-receipt"></i> Resumen de tu pedido</h2>
-    <div id="summary-items" style="margin-top:10px"></div>
+    <h2 style="color:var(--primary-strong);font-weight:600"><i class="fas fa-receipt" style="margin-right:10px;color:var(--primary)"></i>Resumen de tu pedido</h2>
+    <div id="summary-items" style="margin-top:16px;border:2px solid rgba(76,175,80,0.2);border-radius:12px;padding:16px;background:rgba(241,248,244,0.3)"></div>
 
-    <div style="display:flex;gap:12px;align-items:center;margin-top:12px;">
-      <div style="flex:1">
-        <label><strong>Método de pago</strong></label>
-        <select id="summary-payment-method" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd">
-          <option value="efectivo">Efectivo (al recibir)</option>
-          <option value="transferencia">Transferencia / Mercado Pago</option>
+    <div style="display:flex;gap:16px;align-items:center;margin-top:20px;flex-wrap:wrap">
+      <div style="flex:1;min-width:250px">
+        <label><i class="fas fa-credit-card" style="margin-right:8px;color:var(--primary)"></i>Método de pago</label>
+        <select id="summary-payment-method" style="width:100%;padding:14px;border-radius:12px;border:2px solid rgba(76,175,80,0.2)">
+          <option value="efectivo">💵 Efectivo (al recibir)</option>
+          <option value="transferencia">💳 Transferencia / Mercado Pago</option>
         </select>
       </div>
 
-      <div style="display:flex;gap:8px;">
-        <button id="confirm-order" class="btn">Aceptar</button>
-        <button id="reject-order" class="btn gray">Rechazar</button>
+      <div style="display:flex;gap:12px;">
+        <button id="confirm-order" class="btn"><i class="fas fa-check-circle" style="margin-right:8px"></i>Confirmar</button>
+        <button id="reject-order" class="btn gray"><i class="fas fa-times-circle" style="margin-right:8px"></i>Cancelar</button>
       </div>
     </div>
 
-    <div id="summary-transfer-details" style="display:none;margin-top:12px;">
-      <div class="card">
-        <strong>Datos para transferencia / Mercado Pago</strong>
-        <div class="muted small" style="margin-top:6px;">Sólo si seleccionas transferencia</div>
-        <div style="margin-top:8px;font-weight:700">
-          Álvaro Aaron Lazo Reyes<br>
-          RUT: 168400896<br>
-          Cuenta Vista - Número de cuenta: <b>1014726096</b><br>
-          Email Mercado Pago: <b>alvarolazo18@gmail.com</b>
+    <div id="summary-transfer-details" style="display:none;margin-top:20px;">
+      <div class="card" style="background:linear-gradient(135deg,rgba(33,150,243,0.1) 0%,rgba(30,136,229,0.05) 100%);border:2px solid rgba(33,150,243,0.3)">
+        <strong style="color:var(--primary-strong);font-size:1.1rem"><i class="fas fa-info-circle" style="margin-right:8px;color:#2196F3"></i>Datos para transferencia / Mercado Pago</strong>
+        <div class="muted small" style="margin-top:8px;">Usa estos datos solo si seleccionas transferencia</div>
+        <div style="margin-top:12px;font-weight:600;line-height:1.8">
+          👤 Álvaro Aaron Lazo Reyes<br>
+          🆔 RUT: 168400896<br>
+          🏦 Cuenta Vista - Número de cuenta: <b style="color:var(--primary-strong)">1014726096</b><br>
+          📧 Email Mercado Pago: <b style="color:var(--primary-strong)">alvarolazo18@gmail.com</b>
         </div>
       </div>
     </div>
 
-    <div style="text-align:right;margin-top:12px;">Total: <span id="summary-total" style="font-weight:800;color:var(--primary)">$0</span></div>
+    <div style="text-align:right;margin-top:20px;padding:16px;background:linear-gradient(135deg,rgba(76,175,80,0.1) 0%,rgba(46,125,50,0.05) 100%);border-radius:12px">
+      <span style="font-size:1.1rem;color:var(--muted)">Total a pagar: </span>
+      <span id="summary-total" style="font-weight:700;color:var(--primary-strong);font-size:1.8rem">$0</span>
+    </div>
   </div>
 </div>
 
@@ -219,32 +253,33 @@
 <div id="payment-modal" class="modal" aria-hidden="true">
   <div class="modal-box">
     <span class="close-modal" id="close-payment">&times;</span>
-    <h2><i class="fas fa-money-bill-wave"></i> Registrar pago</h2>
-    <div id="payment-client-info" class="muted small" style="margin-top:6px"></div>
+    <h2 style="color:var(--primary-strong);font-weight:600"><i class="fas fa-money-bill-wave" style="margin-right:10px;color:var(--primary)"></i>Registrar pago</h2>
+    <div id="payment-client-info" class="muted small" style="margin-top:10px;padding:12px;background:rgba(76,175,80,0.1);border-radius:8px"></div>
 
-    <div style="margin-top:8px">
-      <label>Monto</label>
-      <input id="payment-amount" type="number" min="0" step="100">
+    <div style="margin-top:16px">
+      <label><i class="fas fa-dollar-sign" style="margin-right:8px;color:var(--primary)"></i>Monto del pago</label>
+      <input id="payment-amount" type="number" min="0" step="100" placeholder="Ingrese el monto">
     </div>
-    <div style="margin-top:8px">
-      <label>Método</label>
+    <div style="margin-top:16px">
+      <label><i class="fas fa-wallet" style="margin-right:8px;color:var(--primary)"></i>Método de pago</label>
       <select id="payment-method">
-        <option value="efectivo">Efectivo</option>
-        <option value="transferencia">Transferencia</option>
+        <option value="efectivo">💵 Efectivo</option>
+        <option value="transferencia">💳 Transferencia</option>
       </select>
     </div>
-    <div style="margin-top:8px">
-      <label>Notas</label>
-      <textarea id="payment-notes" rows="2"></textarea>
+    <div style="margin-top:16px">
+      <label><i class="fas fa-sticky-note" style="margin-right:8px;color:var(--primary)"></i>Notas adicionales</label>
+      <textarea id="payment-notes" rows="2" placeholder="Notas o comentarios sobre el pago"></textarea>
     </div>
 
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button id="register-payment" class="btn">Registrar</button>
-      <button id="mark-as-paid" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Marcar pagado</button>
-      <button id="toggle-payment-history" class="btn gray">Historial</button>
+    <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
+      <button id="register-payment" class="btn"><i class="fas fa-save" style="margin-right:8px"></i>Registrar pago</button>
+      <button id="mark-as-paid" class="btn" style="background:linear-gradient(135deg,#66BB6A 0%,#2E7D32 100%)"><i class="fas fa-check-double" style="margin-right:8px"></i>Marcar como pagado</button>
+      <button id="toggle-payment-history" class="btn gray"><i class="fas fa-history" style="margin-right:8px"></i>Ver historial</button>
     </div>
 
-    <div id="payment-history-container" style="display:none;margin-top:12px;">
+    <div id="payment-history-container" style="display:none;margin-top:20px;">
+      <h4 style="color:var(--primary-strong);margin:0 0 12px 0"><i class="fas fa-list" style="margin-right:8px"></i>Historial de pagos</h4>
       <div id="modal-payment-history" class="list"></div>
     </div>
   </div>
@@ -252,27 +287,40 @@
 
 <!-- LOGIN MODAL -->
 <div id="login-modal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:500px">
     <span class="close-modal" id="close-login">&times;</span>
-    <h2>Acceso Administrador</h2>
-    <div style="margin-top:8px">
-      <label>Correo</label>
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="width:80px;height:80px;margin:0 auto 16px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-strong) 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(76,175,80,0.3)">
+        <i class="fas fa-user-shield" style="font-size:40px;color:#fff"></i>
+      </div>
+      <h2 style="margin:0;color:var(--primary-strong);font-weight:600">Acceso Administrador</h2>
+      <p style="color:var(--muted);margin:8px 0 0 0">Ingresa tus credenciales para continuar</p>
+    </div>
+    <div style="margin-top:20px">
+      <label><i class="fas fa-envelope" style="margin-right:8px;color:var(--primary)"></i>Correo electrónico</label>
       <input id="admin-email" type="email" placeholder="admin@valledor.com">
     </div>
-    <div style="margin-top:8px">
-      <label>Contraseña</label>
-      <input id="admin-password" type="password" placeholder="admin123">
+    <div style="margin-top:20px">
+      <label><i class="fas fa-lock" style="margin-right:8px;color:var(--primary)"></i>Contraseña</label>
+      <input id="admin-password" type="password" placeholder="••••••••">
     </div>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button id="login-btn" class="btn">Iniciar sesión</button>
-      <button id="cancel-login" class="btn gray">Cancelar</button>
+    <div style="display:flex;gap:12px;margin-top:24px;">
+      <button id="login-btn" class="btn" style="flex:1"><i class="fas fa-sign-in-alt" style="margin-right:8px"></i>Iniciar sesión</button>
+      <button id="cancel-login" class="btn gray"><i class="fas fa-times" style="margin-right:8px"></i>Cancelar</button>
     </div>
-    <div id="login-error" class="muted" style="color:var(--danger);display:none;margin-top:8px;">Credenciales incorrectas</div>
+    <div id="login-error" class="muted" style="color:var(--danger);display:none;margin-top:16px;padding:12px;background:rgba(239,83,80,0.1);border-radius:8px;text-align:center">
+      <i class="fas fa-exclamation-triangle" style="margin-right:8px"></i>Credenciales incorrectas. Inténtalo de nuevo.
+    </div>
   </div>
 </div>
 
 <!-- Notification -->
-<div id="notification" style="position:fixed;right:16px;top:16px;background:var(--primary);color:#fff;padding:8px 12px;border-radius:8px;display:none;z-index:9999"></div>
+<div id="notification" style="position:fixed;right:20px;top:20px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-strong) 100%);color:#fff;padding:16px 24px;border-radius:12px;display:none;z-index:9999;box-shadow:0 8px 24px rgba(76,175,80,0.4);font-weight:500;animation:slideIn 0.3s ease">
+  <i class="fas fa-check-circle" style="margin-right:10px"></i><span id="notification-text"></span>
+</div>
+<style>
+@keyframes slideIn{from{opacity:0;transform:translateX(100px)}to{opacity:1;transform:translateX(0)}}
+</style>
 
 <script>
 /*
@@ -307,7 +355,7 @@ const money = n => `$${(Number(n)||0).toLocaleString('es-CL')}`;
 const nowISO = () => new Date().toISOString();
 const normPhone = s => (s||'').replace(/\s|-/g,'').trim();
 function escapeHTML(s=''){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-function notify(msg, time=3000){ const el = $('notification'); el.textContent = msg; el.style.display = 'block'; setTimeout(()=> el.style.display = 'none', time); }
+function notify(msg, time=3000){ const el = $('notification'); const textEl = $('notification-text'); if(textEl) textEl.textContent = msg; else el.textContent = msg; el.style.display = 'block'; setTimeout(()=> el.style.display = 'none', time); }
 
 /* ====== Persistence ====== */
 function saveAll(){
@@ -642,17 +690,26 @@ function setupListeners(){
     if(email === 'admin@valledor.com' && pass === 'admin123'){
       isAdmin = true; localStorage.setItem('isAdmin','1');
       hideModal('login-modal'); $('admin-email').value = ''; $('admin-password').value = '';
-      $('admin-container').style.display = 'block';
+      const adminContainer = $('admin-container');
+      adminContainer.style.display = 'block';
+      setTimeout(() => { adminContainer.style.opacity = '1'; }, 50);
       renderAll();
       notify('Acceso administrador concedido');
     } else {
-      $('login-error').style.display = 'block'; setTimeout(()=> {$('login-error').style.display = 'none';}, 2000);
+      $('login-error').style.display = 'block'; setTimeout(()=> {$('login-error').style.display = 'none';}, 3000);
     }
   });
 
   // Admin panel buttons
   $('logout-btn').addEventListener('click', () => {
-    isAdmin = false; localStorage.removeItem('isAdmin'); $('admin-container').style.display = 'none'; notify('Sesión cerrada');
+    const adminContainer = $('admin-container');
+    adminContainer.style.opacity = '0';
+    setTimeout(() => {
+      isAdmin = false; 
+      localStorage.removeItem('isAdmin'); 
+      adminContainer.style.display = 'none';
+      notify('Sesión cerrada');
+    }, 300);
   });
   $('refresh-btn').addEventListener('click', () => { renderAll(); notify('Vista actualizada'); });
   $('export-btn').addEventListener('click', () => {
@@ -771,7 +828,9 @@ function exportCSV(filename, rows){
   loadAll();
   if(localStorage.getItem('isAdmin')){
     isAdmin = true;
-    $('admin-container').style.display = 'block';
+    const adminContainer = $('admin-container');
+    adminContainer.style.display = 'block';
+    setTimeout(() => { adminContainer.style.opacity = '1'; }, 50);
   } else {
     $('admin-container').style.display = 'none';
   }
