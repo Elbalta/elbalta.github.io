@@ -103,7 +103,6 @@
     .product-unit{font-size:.92rem;color:var(--muted)}
     .qty-row{display:flex;gap:10px;align-items:center;margin-top:6px}
     .qty-row input{flex:1;padding:12px;border-radius:10px;border:1px solid #ddd}
-    .qty-row select{min-width:110px}
 
     /* Buttons */
     .btn{
@@ -518,7 +517,8 @@
     </div>
 
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-      <button id="save-payment" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">
+      <!-- onclick directo para asegurar cierre inmediato -->
+      <button id="save-payment" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)" onclick="handleSavePayment()">
         Guardar pago / marcar pagado
       </button>
       <button id="toggle-payment-history" class="btn gray">Historial</button>
@@ -562,10 +562,7 @@ const DEFAULT_PRODUCTOS = {
   frutillas: { key:'frutillas', nombre:'Frutillas', precio:1200, baseUnit:'g', bloqueGramos:100, disponible:true }
 };
 
-// Polyfill simple para structuredClone si no existe
-const deepClone = obj => JSON.parse(JSON.stringify(obj));
-
-let productos = deepClone(DEFAULT_PRODUCTOS);
+let productos = structuredClone(DEFAULT_PRODUCTOS);
 let pedidos = [];
 let pagos = [];
 let isAdmin = false;
@@ -610,7 +607,7 @@ function loadAll(){
     const pr = localStorage.getItem('productos');
     const p = localStorage.getItem('pedidos');
     const pay = localStorage.getItem('pagos');
-    if(pr) productos = { ...deepClone(DEFAULT_PRODUCTOS), ...JSON.parse(pr) };
+    if(pr) productos = {...DEFAULT_PRODUCTOS, ...JSON.parse(pr)};
     if(p) pedidos = JSON.parse(p);
     if(pay) pagos = JSON.parse(pay);
   } catch(e){
@@ -684,7 +681,6 @@ function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
   pedido.deudaPendiente = Math.max(0, Number(pedido.deudaPendiente || pedido.total) - Number(pago.monto || 0));
   if(pedido.deudaPendiente <= 0) pedido.estadoPago = 'pagado';
   else if(pedido.deudaPendiente < pedido.total) pedido.estadoPago = 'parcial';
-  else pedido.estadoPago = 'pendiente';
   saveAll();
   renderAll();
   return pago;
@@ -692,34 +688,24 @@ function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
 
 /* ====== Render ====== */
 function renderProductGrid(){
-  const grid = $('product-grid'); if(!grid) return;
-  grid.innerHTML = '';
+  const grid = $('product-grid'); grid.innerHTML = '';
   Object.keys(productos).forEach(key => {
     const p = productos[key];
-    if(!p.disponible) return;
+    if(!p.disponible) return; // NO mostrar productos desactivados
     const card = document.createElement('div'); card.className = 'product-card';
-    // Unidades permitidas según producto
-    const unitOptions = (() => {
-      if(key === 'paltas') return ['kg','saco'];
-      if(key === 'champi') return ['caja','g'];
-      if(key === 'frutillas') return ['g'];
-      return [p.baseUnit || 'kg'];
-    })();
-    const step = (unitOptions.includes('g') || p.baseUnit === 'g') ? 100 : 1;
+    const step = (p.baseUnit === 'g') ? 100 : 1;
     card.innerHTML = `
       <div class="product-name">${escapeHTML(p.nombre)}</div>
-      <div class="product-unit">Precio base: <strong>${money(p.precio)}</strong> por <strong>${escapeHTML(p.baseUnit)}</strong></div>
+      <div class="product-unit">Unidad: <strong>${escapeHTML(p.baseUnit)}</strong> • Precio: <strong>${money(p.precio)}</strong></div>
       <div class="qty-row">
-        <input type="number" min="0" step="${step}" value="${p.baseUnit === 'kg' || p.baseUnit === 'caja' ? 1 : 0}" data-product="${escapeHTML(key)}" class="client-qty" aria-label="Cantidad ${escapeHTML(p.nombre)}">
-        <select class="client-unit" data-product="${escapeHTML(key)}">
-          ${unitOptions.map(u=>`<option value="${u}" ${u===p.baseUnit?'selected':''}>${u}</option>`).join('')}
-        </select>
+        <input type="number" min="0" step="${step}" value="${p.baseUnit === 'kg' ? 1 : 0}" data-product="${escapeHTML(key)}" class="client-qty" aria-label="Cantidad ${escapeHTML(p.nombre)}">
       </div>
     `;
     grid.appendChild(card);
   });
 }
 
+/* Pedidos activos (pendiente + parcial) */
 function renderOrders(filterText = '', paymentFilter = 'allActivos'){
   const tbody = $('orders-body'); if(!tbody) return;
   tbody.innerHTML = '';
@@ -773,6 +759,7 @@ function renderOrders(filterText = '', paymentFilter = 'allActivos'){
   });
 }
 
+/* Tabla de pagos / pagados */
 function renderPaidOrders(searchText = '', filter = 'pagado'){
   const tbody = $('paid-orders-body'); if(!tbody) return;
   tbody.innerHTML = '';
@@ -830,12 +817,6 @@ function renderProductsAdmin(){
   container.innerHTML = '';
   Object.keys(productos).forEach(k => {
     const p = productos[k];
-    const extraFields = (() => {
-      if(k === 'paltas') return `<input id="cfg-${k}-sacokg" type="number" value="${p.sacoKg || 25}" placeholder="sacoKg (kg)">`;
-      if(k === 'champi') return `<input id="cfg-${k}-packg" type="number" value="${p.packGramos || 250}" placeholder="packGramos (g)">`;
-      if(k === 'frutillas') return `<input id="cfg-${k}-bloque" type="number" value="${p.bloqueGramos || 100}" placeholder="bloqueGramos (g)">`;
-      return '';
-    })();
     const row = document.createElement('div'); row.className = 'prod-admin-row';
     row.innerHTML = `
       <input id="cfg-${k}-name" value="${escapeHTML(p.nombre)}">
@@ -846,7 +827,6 @@ function renderProductsAdmin(){
       <select id="cfg-${k}-avail" class="avail">
         <option value="true">Disponible</option><option value="false">No</option>
       </select>
-      ${extraFields}
     `;
     container.appendChild(row);
     $(`cfg-${k}-baseunit`).value = p.baseUnit || 'kg';
@@ -906,6 +886,7 @@ function renderFinanzas(){
     if(totalPedidos > 0){
       cobradoPct = Math.max(0, Math.min(100, Math.round((totalCobrado / totalPedidos) * 100)));
       pendientePct = Math.max(0, Math.min(100, Math.round((totalPendiente / totalPedidos) * 100)));
+      /* Ajuste si por redondeo se excede 100 */
       const sum = cobradoPct + pendientePct;
       if(sum > 100){
         const factor = 100 / sum;
@@ -1014,229 +995,337 @@ function handleSavePayment(){
   registrarPago(currentPaymentPedidoId, { monto, metodo, notas, fecha: nowISO() });
   if(pedido.deudaPendiente <= 0){
     notify('Pago registrado y pedido marcado como PAGADO');
-    hideModal('payment-modal');
   } else {
     notify('Abono registrado. Queda saldo pendiente.');
   }
+  renderPaymentHistoryForPedido(currentPaymentPedidoId);
+
+  // Cerrar el modal automáticamente
+  hideModal('payment-modal');
 }
 
-/* ====== Utilidades Cliente: recoger items y resumen ====== */
-function getClientOrderItems(){
-  const items = {};
-  document.querySelectorAll('.product-card').forEach(card => {
-    const qtyInput = card.querySelector('.client-qty');
-    const unitSel = card.querySelector('.client-unit');
-    const key = qtyInput?.dataset.product;
-    const qty = Number(qtyInput?.value || 0);
-    const unit = unitSel?.value || productos[key]?.baseUnit;
-    if(key && qty > 0){
-      items[key] = { qty, unit };
-    }
+/* ====== CSV ====== */
+function buildOrdersCSV(){
+  const headers = [
+    'id','nombre','telefono','total','estadoPago','deudaPendiente','fecha','comentarios','paymentMethod',
+    'items_paltas','items_champi','items_frutillas'
+  ];
+  const rows = pedidos.map(p => {
+    const ip = p.items.paltas && Number(p.items.paltas.qty) ? `${p.items.paltas.qty} ${p.items.paltas.unit}` : '';
+    const ic = p.items.champi && Number(p.items.champi.qty) ? `${p.items.champi.qty} ${p.items.champi.unit}` : '';
+    const ifr = p.items.frutillas && Number(p.items.frutillas.qty) ? `${p.items.frutillas.qty} ${p.items.frutillas.unit}` : '';
+    return [
+      p.id,
+      (p.nombre||'').replace(/"/g,'""'),
+      (p.telefono||'').replace(/"/g,'""'),
+      p.total,
+      p.estadoPago,
+      p.deudaPendiente||0,
+      p.fecha,
+      (p.comentarios||'').replace(/"/g,'""'),
+      p.paymentMethod||'',
+      ip,
+      ic,
+      ifr
+    ];
   });
-  return items;
+  const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
+  return csv;
 }
-
-function renderOrderSummary(items){
-  const cont = $('summary-items');
-  cont.innerHTML = '';
-  const lines = [];
-  if(items.paltas) lines.push(`<div><strong>Paltas:</strong> ${items.paltas.qty} ${items.paltas.unit}</div>`);
-  if(items.champi) lines.push(`<div><strong>Champiñones:</strong> ${items.champi.qty} ${items.champi.unit}</div>`);
-  if(items.frutillas) lines.push(`<div><strong>Frutillas:</strong> ${items.frutillas.qty} ${items.frutillas.unit}</div>`);
-  cont.innerHTML = lines.length ? lines.join('') : '<div class="muted">No has seleccionado productos.</div>';
-  $('summary-total').textContent = money(calcTotalFromItems(items));
+function buildPaymentsCSV(){
+  const headers = ['id','pedidoId','monto','metodo','notas','fecha','cliente'];
+  const rows = pagos.map(pa => {
+    const ped = pedidos.find(p=>p.id===pa.pedidoId);
+    return [
+      pa.id,
+      pa.pedidoId,
+      pa.monto,
+      pa.metodo,
+      (pa.notas||'').replace(/"/g,'""'),
+      pa.fecha,
+      ped ? ped.nombre.replace(/"/g,'""') : ''
+    ];
+  });
+  const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
+  return csv;
+}
+function downloadCSV(filename, contents){
+  const blob = new Blob([contents], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /* ====== Render All ====== */
 function renderAll(){
   renderProductGrid();
-  renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'allActivos');
-  renderPaidOrders($('search-paid-input')?.value || '', $('paid-filter')?.value || 'pagado');
+  renderOrders($('search-input') ? $('search-input').value : '', $('payment-filter') ? $('payment-filter').value : 'allActivos');
+  renderPaidOrders($('search-paid-input') ? $('search-paid-input').value : '', $('paid-filter') ? $('paid-filter').value : 'pagado');
   renderProductsAdmin();
   renderFinanzas();
 }
 
-/* ====== Export CSV ====== */
-function exportCSV(){
-  const ordersHeader = ['id','nombre','telefono','total','estadoPago','deudaPendiente','fecha','comentarios','paymentMethod','items'];
-  const ordersRows = pedidos.map(p => {
-    const itemsStr = [
-      p.items.paltas && Number(p.items.paltas.qty) ? `paltas:${p.items.paltas.qty}${p.items.paltas.unit}` : '',
-      p.items.champi && Number(p.items.champi.qty) ? `champi:${p.items.champi.qty}${p.items.champi.unit}` : '',
-      p.items.frutillas && Number(p.items.frutillas.qty) ? `frutillas:${p.items.frutillas.qty}${p.items.frutillas.unit}` : '',
-    ].filter(Boolean).join('|');
-    return [
-      p.id, p.nombre, p.telefono, p.total, p.estadoPago, p.deudaPendiente, p.fecha, (p.comentarios||'').replace(/\n/g,' '), p.paymentMethod||'', itemsStr
-    ];
-  });
-  const ordersCSV = [ordersHeader.join(','), ...ordersRows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
+/* ====== Inicialización y eventos ====== */
+let pendingOrderData = null;
 
-  const paymentsHeader = ['id','pedidoId','monto','metodo','notas','fecha'];
-  const paymentsRows = pagos.map(pa => [pa.id, pa.pedidoId, pa.monto, pa.metodo, (pa.notas||'').replace(/\n/g,' '), pa.fecha]);
-  const paymentsCSV = [paymentsHeader.join(','), ...paymentsRows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
+function setupClientEvents(){
+  // Enviar pedido -> abre modal resumen
+  const enviarBtn = $('enviar-pedido');
+  if(enviarBtn){
+    enviarBtn.addEventListener('click', () => {
+      const nombre = $('nombre').value.trim();
+      const telefono = $('telefono').value.trim();
+      const comentarios = $('comentarios').value.trim();
 
-  const dl = (name, data) => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([data], {type:'text/csv'}));
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 100);
-  };
-  dl(`pedidos_${new Date().toISOString().slice(0,10)}.csv`, ordersCSV);
-  dl(`pagos_${new Date().toISOString().slice(0,10)}.csv`, paymentsCSV);
-  notify('CSV exportado: pedidos y pagos');
-}
+      if(!nombre){
+        alert('Por favor ingresa tu nombre.');
+        return;
+      }
 
-/* ====== Eventos iniciales ====== */
-document.addEventListener('DOMContentLoaded', () => {
-  loadAll();
-  renderAll();
+      // Construir items desde inputs
+      const qtyInputs = document.querySelectorAll('.client-qty');
+      const items = {};
+      qtyInputs.forEach(inp => {
+        const key = inp.getAttribute('data-product');
+        const qty = Number(inp.value) || 0;
+        if(qty > 0){
+          const prod = productos[key];
+          const unit = prod.baseUnit || 'kg';
+          items[key] = { qty, unit };
+        }
+      });
 
-  // Cliente: abrir resumen
-  $('enviar-pedido')?.addEventListener('click', () => {
-    const nombre = $('nombre').value.trim();
-    const telefono = normPhone($('telefono').value.trim());
-    if(!nombre){ alert('Ingresa tu nombre'); return; }
-    if(!telefono){ alert('Ingresa tu teléfono'); return; }
-    const items = getClientOrderItems();
-    const hasItems = Object.keys(items).length > 0;
-    if(!hasItems){ alert('Selecciona al menos un producto'); return; }
-    renderOrderSummary(items);
-    $('summary-payment-method').value = 'efectivo';
-    $('summary-transfer-details').style.display = 'none';
-    showModal('order-summary-modal');
-  });
+      const total = calcTotalFromItems(items);
+      if(total <= 0){
+        alert('Ingresa cantidades mayores a 0 para al menos un producto.');
+        return;
+      }
 
-  // Resumen: método pago
-  $('summary-payment-method')?.addEventListener('change', (e) => {
-    const isTransfer = e.target.value === 'transferencia';
-    $('summary-transfer-details').style.display = isTransfer ? 'block' : 'none';
-  });
+      // Guardar temporalmente y mostrar resumen
+      pendingOrderData = { nombre, telefono, comentarios, items };
+      const lines = [];
+      if(items.paltas) lines.push(`<div><strong>${escapeHTML(productos.paltas.nombre)}:</strong> ${items.paltas.qty} ${items.paltas.unit}</div>`);
+      if(items.champi) lines.push(`<div><strong>${escapeHTML(productos.champi.nombre)}:</strong> ${items.champi.qty} ${items.champi.unit}</div>`);
+      if(items.frutillas) lines.push(`<div><strong>${escapeHTML(productos.frutillas.nombre)}:</strong> ${items.frutillas.qty} ${items.frutillas.unit}</div>`);
+      $('summary-items').innerHTML = lines.join('');
+      $('summary-total').textContent = money(total);
+      $('summary-payment-method').value = 'efectivo';
+      $('summary-transfer-details').style.display = 'none';
+      showModal('order-summary-modal');
+    });
+  }
+
+  // Modal resumen: método de pago
+  const spm = $('summary-payment-method');
+  if(spm){
+    spm.addEventListener('change', () => {
+      const val = spm.value;
+      $('summary-transfer-details').style.display = (val === 'transferencia') ? 'block' : 'none';
+    });
+  }
 
   // Confirmar pedido
-  $('confirm-order')?.addEventListener('click', () => {
-    const nombre = $('nombre').value.trim();
-    const telefono = normPhone($('telefono').value.trim());
-    const comentarios = $('comentarios').value.trim();
-    const items = getClientOrderItems();
-    const paymentMethod = $('summary-payment-method').value;
-    const pedido = crearPedido({ nombre, telefono, items, comentarios, paymentMethod });
-    hideModal('order-summary-modal');
-    // mensaje gracias
-    const thanks = $('thanks-overlay');
-    thanks.style.display = 'flex';
-    setTimeout(()=> thanks.style.display='none', 2000);
-    // reset campos cliente
-    $('comentarios').value = '';
-    document.querySelectorAll('.client-qty').forEach(inp => {
-      const key = inp.dataset.product;
-      const base = productos[key]?.baseUnit || 'kg';
-      inp.value = (base === 'kg' || base === 'caja') ? 1 : 0;
+  const confirmBtn = $('confirm-order');
+  if(confirmBtn){
+    confirmBtn.addEventListener('click', () => {
+      if(!pendingOrderData) return;
+      const pm = $('summary-payment-method').value || 'efectivo';
+      const pedido = crearPedido({ ...pendingOrderData, paymentMethod: pm });
+      hideModal('order-summary-modal');
+      // Reset formulario cliente
+      $('nombre').value = '';
+      $('telefono').value = '';
+      $('comentarios').value = '';
+      document.querySelectorAll('.client-qty').forEach(inp => {
+        const key = inp.getAttribute('data-product');
+        const prod = productos[key];
+        inp.value = (prod.baseUnit === 'kg') ? 1 : 0;
+      });
+      pendingOrderData = null;
+
+      // Mostrar gracias
+      const overlay = $('thanks-overlay');
+      overlay.style.display = 'flex';
+      setTimeout(() => { overlay.style.display = 'none'; }, 2500);
+      notify(`Pedido enviado: ${pedido.nombre}`);
     });
-    notify('Pedido enviado');
-  });
+  }
 
   // Cancelar resumen
-  $('reject-order')?.addEventListener('click', () => hideModal('order-summary-modal'));
-  $('close-order-summary')?.addEventListener('click', () => hideModal('order-summary-modal'));
-
-  // Admin login
-  $('admin-login-link')?.addEventListener('click', () => showModal('login-modal'));
-  $('login-btn')?.addEventListener('click', () => {
-    const email = $('admin-email').value.trim();
-    const pass = $('admin-password').value.trim();
-    const ok = (email === 'admin@valledor.com' && pass === 'admin123');
-    if(ok){
-      $('login-error').style.display = 'none';
-      hideModal('login-modal');
-      setAdminMode(true);
-      notify('Bienvenido al panel administrador');
-    } else {
-      $('login-error').style.display = 'block';
-    }
+  const rejectBtn = $('reject-order');
+  const closeSummary = $('close-order-summary');
+  [rejectBtn, closeSummary].forEach(btn => {
+    if(btn) btn.addEventListener('click', () => { hideModal('order-summary-modal'); pendingOrderData = null; });
   });
-  $('cancel-login')?.addEventListener('click', () => hideModal('login-modal'));
-  $('close-login')?.addEventListener('click', () => hideModal('login-modal'));
+}
 
-  // Admin acciones
-  $('logout-btn')?.addEventListener('click', () => { setAdminMode(false); notify('Sesión cerrada'); });
-  $('refresh-btn')?.addEventListener('click', () => { renderAll(); notify('Actualizado'); });
-  $('export-btn')?.addEventListener('click', exportCSV);
-
-  // Agregar pedido rápido (prompt)
-  $('add-order-btn')?.addEventListener('click', () => {
-    const nombre = prompt('Nombre del cliente:') || '';
-    if(!nombre.trim()) return;
-    const telefono = prompt('Teléfono:') || '';
-    const comentarios = prompt('Comentarios (opcional):') || '';
-    // Items mínimo: permitir agregar rápidamente cantidades de base
-    const items = {};
-    const addPaltas = prompt('Paltas: cantidad y unidad (ej: "2 kg" o "1 saco"). Dejar vacío para omitir:');
-    if(addPaltas && addPaltas.trim()){
-      const [q, u] = addPaltas.trim().split(/\s+/);
-      items.paltas = { qty: Number(q)||0, unit: (u||'kg') };
-    }
-    const addChampi = prompt('Champiñones: cantidad y unidad (ej: "1 caja" o "500 g"). Dejar vacío para omitir:');
-    if(addChampi && addChampi.trim()){
-      const [q, u] = addChampi.trim().split(/\s+/);
-      items.champi = { qty: Number(q)||0, unit: (u||'caja') };
-    }
-    const addFrut = prompt('Frutillas: cantidad y unidad (ej: "300 g"). Dejar vacío para omitir:');
-    if(addFrut && addFrut.trim()){
-      const [q, u] = addFrut.trim().split(/\s+/);
-      items.frutillas = { qty: Number(q)||0, unit: (u||'g') };
-    }
-    if(Object.keys(items).length === 0){ alert('No se agregó ningún producto'); return; }
-    crearPedido({ nombre, telefono: normPhone(telefono), items, comentarios, paymentMethod: 'efectivo' });
-    notify('Pedido agregado');
+function setupAdminEvents(){
+  // Abrir login modal
+  const adminLink = $('admin-login-link');
+  if(adminLink){
+    adminLink.addEventListener('click', () => { showModal('login-modal'); });
+  }
+  // Cerrar login
+  const cancelLogin = $('cancel-login');
+  const closeLoginX = $('close-login');
+  [cancelLogin, closeLoginX].forEach(btn => {
+    if(btn) btn.addEventListener('click', () => { hideModal('login-modal'); });
   });
-
-  // Filtros y búsqueda
-  $('search-input')?.addEventListener('input', () => renderOrders($('search-input').value, $('payment-filter').value));
-  $('payment-filter')?.addEventListener('change', () => renderOrders($('search-input').value, $('payment-filter').value));
-  $('search-paid-input')?.addEventListener('input', () => renderPaidOrders($('search-paid-input').value, $('paid-filter').value));
-  $('paid-filter')?.addEventListener('change', () => renderPaidOrders($('search-paid-input').value, $('paid-filter').value));
-
-  // Modal pago
-  $('save-payment')?.addEventListener('click', handleSavePayment);
-  $('toggle-payment-history')?.addEventListener('click', () => {
-    const c = $('payment-history-container');
-    c.style.display = (c.style.display === 'none' || !c.style.display) ? 'block' : 'none';
-  });
-  $('close-payment')?.addEventListener('click', () => hideModal('payment-modal'));
-
-  // Guardar productos
-  $('save-products-btn')?.addEventListener('click', () => {
-    Object.keys(productos).forEach(k => {
-      const p = productos[k];
-      p.nombre = $(`cfg-${k}-name`).value || p.nombre;
-      p.precio = Number($(`cfg-${k}-price`).value) || p.precio;
-      p.baseUnit = $(`cfg-${k}-baseunit`).value || p.baseUnit;
-      p.disponible = ($(`cfg-${k}-avail`).value === 'true');
-      if(k === 'paltas'){
-        p.sacoKg = Number($(`cfg-${k}-sacokg`).value) || p.sacoKg || 25;
-      }
-      if(k === 'champi'){
-        p.packGramos = Number($(`cfg-${k}-packg`).value) || p.packGramos || 250;
-      }
-      if(k === 'frutillas'){
-        p.bloqueGramos = Number($(`cfg-${k}-bloque`).value) || p.bloqueGramos || 100;
+  // Login simple
+  const loginBtn = $('login-btn');
+  if(loginBtn){
+    loginBtn.addEventListener('click', () => {
+      const email = $('admin-email').value.trim();
+      const pass = $('admin-password').value.trim();
+      const ok = (email === 'admin@valledor.com' && pass === 'admin123');
+      $('login-error').style.display = ok ? 'none' : 'block';
+      if(ok){
+        hideModal('login-modal');
+        setAdminMode(true);
+        notify('Modo administrador activado');
       }
     });
-    saveAll();
-    renderAll();
-    notify('Productos guardados');
-  });
+  }
+  // Logout
+  const logoutBtn = $('logout-btn');
+  if(logoutBtn){
+    logoutBtn.addEventListener('click', () => {
+      setAdminMode(false);
+      notify('Sesión cerrada');
+    });
+  }
 
-  $('reset-products-btn')?.addEventListener('click', () => {
-    if(!confirm('¿Restablecer configuración de productos a valores por defecto?')) return;
-    productos = deepClone(DEFAULT_PRODUCTOS);
-    saveAll();
-    renderAll();
-    notify('Productos restablecidos');
-  });
-});
+  // Agregar pedido (rápido con prompts)
+  const addOrderBtn = $('add-order-btn');
+  if(addOrderBtn){
+    addOrderBtn.addEventListener('click', openAdminCreateOrder);
+  }
+  function openAdminCreateOrder(){
+    const nombre = prompt('Nombre del cliente:');
+    if(!nombre) return notify('Nombre requerido', 2000);
+    const telefono = prompt('Teléfono (opcional):') || '';
+
+    const items = {};
+
+    // Paltas
+    if(productos.paltas && productos.paltas.disponible){
+      const unitP = productos.paltas.baseUnit || 'kg';
+      const qtyP = Number(prompt(`Cantidad de ${productos.paltas.nombre} (${unitP}):`, unitP === 'kg' ? 1 : 0)) || 0;
+      if(qtyP > 0) items.paltas = { qty: qtyP, unit: unitP };
+    }
+
+    // Champiñones
+    if(productos.champi && productos.champi.disponible){
+      const unitC = productos.champi.baseUnit || 'caja';
+      const qtyC = Number(prompt(`Cantidad de ${productos.champi.nombre} (${unitC}):`, unitC === 'caja' ? 1 : 0)) || 0;
+      if(qtyC > 0) items.champi = { qty: qtyC, unit: unitC };
+    }
+
+    // Frutillas
+    if(productos.frutillas && productos.frutillas.disponible){
+      const unitF = productos.frutillas.baseUnit || 'g';
+      const defaultQty = unitF === 'g' ? (productos.frutillas.bloqueGramos || 100) : 1;
+      const qtyF = Number(prompt(`Cantidad de ${productos.frutillas.nombre} (${unitF}):`, defaultQty)) || 0;
+      if(qtyF > 0) items.frutillas = { qty: qtyF, unit: unitF };
+    }
+
+    const comentarios = prompt('Comentarios / Destino despacho (opcional):') || '';
+    const pedido = crearPedido({ nombre, telefono, items, comentarios, paymentMethod:'efectivo' });
+    notify(`Pedido creado: ${pedido.nombre} — Total ${money(pedido.total)}`);
+  }
+
+  // Exportar CSV
+  const exportBtn = $('export-btn');
+  if(exportBtn){
+    exportBtn.addEventListener('click', () => {
+      const ordersCSV = buildOrdersCSV();
+      const paymentsCSV = buildPaymentsCSV();
+      downloadCSV('pedidos.csv', ordersCSV);
+      downloadCSV('pagos.csv', paymentsCSV);
+      notify('CSV exportado');
+    });
+  }
+
+  // Actualizar
+  const refreshBtn = $('refresh-btn');
+  if(refreshBtn){
+    refreshBtn.addEventListener('click', () => {
+      renderAll();
+      notify('Actualizado');
+    });
+  }
+
+  // Toggle historial en modal pagos
+  const toggleHistory = $('toggle-payment-history');
+  if(toggleHistory){
+    toggleHistory.addEventListener('click', () => {
+      const cont = $('payment-history-container');
+      if(!cont) return;
+      const show = cont.style.display !== 'block';
+      cont.style.display = show ? 'block' : 'none';
+    });
+  }
+
+  // Guardar productos
+  const saveProductsBtn = $('save-products-btn');
+  if(saveProductsBtn){
+    saveProductsBtn.addEventListener('click', () => {
+      Object.keys(productos).forEach(k => {
+        const name = $(`cfg-${k}-name`).value || productos[k].nombre;
+        const price = Number($(`cfg-${k}-price`).value) || productos[k].precio;
+        const baseUnit = $(`cfg-${k}-baseunit`).value || productos[k].baseUnit;
+        const avail = $(`cfg-${k}-avail`).value === 'true';
+
+        productos[k].nombre = name;
+        productos[k].precio = price;
+        productos[k].baseUnit = baseUnit;
+        productos[k].disponible = avail;
+      });
+      saveAll();
+      renderAll();
+      notify('Productos guardados');
+    });
+  }
+
+  // Reset productos a default
+  const resetProductsBtn = $('reset-products-btn');
+  if(resetProductsBtn){
+    resetProductsBtn.addEventListener('click', () => {
+      if(confirm('¿Resetear productos al estado por defecto?')){
+        productos = structuredClone(DEFAULT_PRODUCTOS);
+        saveAll();
+        renderAll();
+        notify('Productos reseteados');
+      }
+    });
+  }
+
+  // Filtros y búsqueda
+  const si = $('search-input');
+  const pf = $('payment-filter');
+  if(si){ si.addEventListener('input', () => renderOrders(si.value, pf ? pf.value : 'allActivos')); }
+  if(pf){ pf.addEventListener('change', () => renderOrders(si ? si.value : '', pf.value)); }
+
+  const spi = $('search-paid-input');
+  const pafd = $('paid-filter');
+  if(spi){ spi.addEventListener('input', () => renderPaidOrders(spi.value, pafd ? pafd.value : 'pagado')); }
+  if(pafd){ pafd.addEventListener('change', () => renderPaidOrders(spi ? spi.value : '', pafd.value)); }
+}
+
+// Cerrar modal pago por X
+const closePaymentX = $('close-payment');
+if(closePaymentX){ closePaymentX.addEventListener('click', () => hideModal('payment-modal')); }
+
+/* ====== Boot ====== */
+loadAll();
+renderAll();
+setupClientEvents();
+setupAdminEvents();
 </script>
 </body>
 </html>
