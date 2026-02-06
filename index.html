@@ -868,7 +868,13 @@ function renderFinanzas(){
       d.style.display='flex';
       d.style.justifyContent='space-between';
       d.style.padding='4px 0';
-      d.innerHTML = `<span>${escapeHTML(n)}<br><span class="small muted">${new Date(pa.fecha).toLocaleString()} (${escapeHTML(pa.metodo)})</span></span><span style="font-weight:700">${money(pa.monto)}</span>`;
+      d.innerHTML = `
+        <span>
+          ${escapeHTML(n)}<br>
+          <span class="small muted">${new Date(pa.fecha).toLocaleString()} (${escapeHTML(pa.metodo)})</span>
+        </span>
+        <span style="font-weight:700">${money(pa.monto)}</span>
+      `;
       lpa.appendChild(d);
     });
   }
@@ -888,8 +894,10 @@ function renderFinanzas(){
         pendientePct = Math.round(pendientePct * factor);
       }
     }
-    bar.querySelector('.seg-cobrado').style.width = cobradoPct + '%';
-    bar.querySelector('.seg-pendiente').style.width = pendientePct + '%';
+    const segCobrado = bar.querySelector('.seg-cobrado');
+    const segPendiente = bar.querySelector('.seg-pendiente');
+    if(segCobrado) segCobrado.style.width = cobradoPct + '%';
+    if(segPendiente) segPendiente.style.width = pendientePct + '%';
     legend.textContent = `Cobrado: ${cobradoPct}% • Pendiente: ${pendientePct}%`;
   }
 }
@@ -998,335 +1006,326 @@ function handleSavePayment(){
 
 /* ====== CSV ====== */
 function buildOrdersCSV(){
-  const header = ['ID','Nombre','Telefono','Fecha','Productos','Comentarios','Total','Estado','DeudaPendiente','PaymentMethod'];
-  const rows = [header];
-  pedidos.forEach(p => {
-    const items = [];
-    if(p.items.paltas && p.items.paltas.qty) items.push(`${p.items.paltas.qty} ${p.items.paltas.unit} Paltas`);
-    if(p.items.champi && p.items.champi.qty) items.push(`${p.items.champi.qty} ${p.items.champi.unit} Champiñones`);
-    if(p.items.frutillas && p.items.frutillas.qty) items.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} Frutillas`);
-    rows.push([p.id, p.nombre, p.telefono, p.fecha, items.join(' | '), p.comentarios || '', p.total, p.estadoPago, p.deudaPendiente, p.paymentMethod || '']);
+  const headers = [
+    'id','nombre','telefono','total','estadoPago','deudaPendiente','fecha','comentarios','paymentMethod',
+    'items_paltas','items_champi','items_frutillas'
+  ];
+  const rows = pedidos.map(p => {
+    const ip = p.items.paltas && Number(p.items.paltas.qty) ? `${p.items.paltas.qty} ${p.items.paltas.unit}` : '';
+    const ic = p.items.champi && Number(p.items.champi.qty) ? `${p.items.champi.qty} ${p.items.champi.unit}` : '';
+    const ifr = p.items.frutillas && Number(p.items.frutillas.qty) ? `${p.items.frutillas.qty} ${p.items.frutillas.unit}` : '';
+    return [
+      p.id,
+      (p.nombre||'').replace(/"/g,'""'),
+      (p.telefono||'').replace(/"/g,'""'),
+      p.total,
+      p.estadoPago,
+      p.deudaPendiente||0,
+      p.fecha,
+      (p.comentarios||'').replace(/"/g,'""'),
+      p.paymentMethod||'',
+      ip,
+      ic,
+      ifr
+    ];
   });
-  return rows;
+  const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
+  return csv;
 }
-function exportCSV(filename, rows){
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+function buildPaymentsCSV(){
+  const headers = ['id','pedidoId','monto','metodo','notas','fecha','cliente'];
+  const rows = pagos.map(pa => {
+    const ped = pedidos.find(p=>p.id===pa.pedidoId);
+    return [
+      pa.id,
+      pa.pedidoId,
+      pa.monto,
+      pa.metodo,
+      (pa.notas||'').replace(/"/g,'""'),
+      pa.fecha,
+      ped ? ped.nombre.replace(/"/g,'""') : ''
+    ];
+  });
+  const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
+  return csv;
+}
+function downloadCSV(filename, contents){
+  const blob = new Blob([contents], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
-/* ====== Eventos principales ====== */
-function setupListeners(){
-  /* Cliente: enviar pedido */
-  $('enviar-pedido').addEventListener('click', () => {
-    const nombre = $('nombre').value.trim();
-    const telefono = normPhone($('telefono').value.trim());
-    if(!nombre || !telefono) return alert('Nombre y teléfono son requeridos');
-
-    const items = {};
-    document.querySelectorAll('.client-qty').forEach(input => {
-      const key = input.getAttribute('data-product');
-      const v = Number(input.value) || 0;
-      if(v > 0) items[key] = { qty: v, unit: productos[key].baseUnit };
-    });
-    if(Object.keys(items).length === 0) return alert('Selecciona al menos un producto');
-
-    const container = $('summary-items'); container.innerHTML = '';
-    Object.keys(items).forEach(k => {
-      const p = productos[k];
-      const subtotal = calcTotalFromItems({ [k]: items[k] });
-      const row = document.createElement('div'); row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.padding = '6px 0';
-      row.innerHTML = `<div>${items[k].qty} ${items[k].unit} ${escapeHTML(p.nombre)}</div><div style="font-weight:800">${money(subtotal)}</div>`;
-      container.appendChild(row);
-    });
-    if($('comentarios').value.trim()){
-      const c = document.createElement('div');
-      c.className = 'muted small';
-      c.style.marginTop = '8px';
-      c.textContent = 'Comentarios / Despacho: ' + $('comentarios').value.trim();
-      container.appendChild(c);
-    }
-    const total = calcTotalFromItems(Object.assign({}, items));
-    $('summary-total').textContent = money(total);
-    $('summary-payment-method').value = 'efectivo';
-    $('summary-transfer-details').style.display = 'none';
-    showModal('order-summary-modal');
-
-    $('confirm-order').onclick = () => {
-      const metodo = $('summary-payment-method').value;
-      crearPedido({
-        nombre,
-        telefono,
-        items,
-        comentarios: $('comentarios').value.trim(),
-        paymentMethod: metodo
-      });
-      hideModal('order-summary-modal');
-
-      const ov = $('thanks-overlay');
-      if(ov){
-        ov.style.display = 'flex';
-        setTimeout(()=>{ ov.style.display = 'none'; }, 3500);
-      }
-
-      notify('Pedido enviado. ¡Gracias por comprar con nosotros!');
-      document.querySelectorAll('.client-qty').forEach(i => { if(i.getAttribute('data-product') === 'paltas') i.value = 1; else i.value = 0; });
-      $('nombre').value = ''; $('telefono').value = ''; $('comentarios').value = '';
-    };
-  });
-
-  $('summary-payment-method').addEventListener('change', e => {
-    $('summary-transfer-details').style.display = e.target.value === 'transferencia' ? 'block' : 'none';
-  });
-  $('reject-order').addEventListener('click', () => hideModal('order-summary-modal'));
-  $('close-order-summary').addEventListener('click', () => hideModal('order-summary-modal'));
-
-  /* Login admin */
-  $('admin-login-link').addEventListener('click', () => showModal('login-modal'));
-  $('close-login').addEventListener('click', () => hideModal('login-modal'));
-  $('cancel-login').addEventListener('click', () => hideModal('login-modal'));
-  $('login-btn').addEventListener('click', () => {
-    const email = $('admin-email').value.trim();
-    const pass = $('admin-password').value;
-    if(email === 'admin@valledor.com' && pass === 'admin123'){
-      sessionStorage.setItem('isAdmin','1');
-      hideModal('login-modal'); $('admin-email').value = ''; $('admin-password').value = '';
-      setAdminMode(true);
-      notify('Acceso administrador concedido');
-    } else {
-      $('login-error').style.display = 'block'; setTimeout(()=> {$('login-error').style.display = 'none';}, 2000);
-    }
-  });
-
-  $('logout-btn').addEventListener('click', () => {
-    sessionStorage.removeItem('isAdmin');
-    setAdminMode(false);
-    notify('Sesión cerrada');
-  });
-
-  /* Botones pago admin */
-  $('close-payment').addEventListener('click', () => hideModal('payment-modal'));
-  // Listener (permanece por compatibilidad, aunque el botón ya tiene onclick)
-  $('save-payment').addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleSavePayment();
-  });
-  $('toggle-payment-history').addEventListener('click', () => {
-    const el = $('payment-history-container');
-    if(el.style.display === 'block') el.style.display = 'none';
-    else { el.style.display = 'block'; if(currentPaymentPedidoId) renderPaymentHistoryForPedido(currentPaymentPedidoId); }
-  });
-
-  /* Productos admin */
-  $('save-products-btn').addEventListener('click', () => {
-    Object.keys(productos).forEach(k => {
-      productos[k].nombre = $(`cfg-${k}-name`).value || productos[k].nombre;
-      productos[k].precio = Number($(`cfg-${k}-price`).value) || productos[k].precio;
-      productos[k].baseUnit = $(`cfg-${k}-baseunit`).value || productos[k].baseUnit;
-      productos[k].disponible = $(`cfg-${k}-avail`).value === 'true';
-    });
-    saveAll(); renderAll(); notify('Productos guardados');
-  });
-  $('reset-products-btn').addEventListener('click', () => {
-    if(!confirm('Restablecer productos a valores por defecto?')) return;
-    productos = structuredClone(DEFAULT_PRODUCTOS);
-    saveAll(); renderAll(); notify('Productos restaurados');
-  });
-
-  /* Filtros tabla pedidos activos */
-  const si = $('search-input'); const pf = $('payment-filter');
-  if(si) si.addEventListener('input', e => renderOrders(e.target.value || '', pf?.value || 'allActivos'));
-  if(pf) pf.addEventListener('change', () => renderOrders(si?.value || '', pf?.value || 'allActivos'));
-
-  /* Filtros tabla pagos */
-  const spi = $('search-paid-input'); const spf = $('paid-filter');
-  if(spi) spi.addEventListener('input', e => renderPaidOrders(e.target.value || '', spf?.value || 'pagado'));
-  if(spf) spf.addEventListener('change', () => renderPaidOrders(spi?.value || '', spf?.value || 'pagado'));
-
-  /* Export CSV */
-  $('export-btn').addEventListener('click', () => {
-    const rows = buildOrdersCSV();
-    exportCSV('pedidos.csv', rows);
-    notify('CSV exportado');
-  });
-
-  /* Botón actualizar */
-  $('refresh-btn').addEventListener('click', () => {
-    renderAll();
-    notify('Panel actualizado');
-  });
-
-  /* Botón agregar pedido admin */
-  $('add-order-btn').addEventListener('click', () => {
-    if(!isAdmin) return notify('Debes iniciar sesión como admin', 2000);
-    const nombre = prompt('Nombre cliente:');
-    if(!nombre) return;
-    const tel = prompt('Teléfono:') || '';
-    const items = { paltas: { qty: 1, unit: 'kg' } };
-    crearPedido({ nombre, telefono: normPhone(tel), items, comentarios:'Creado por admin' });
-    notify('Pedido creado (admin)');
-  });
-}
-
-/* ====== renderAll ====== */
+/* ====== Render All ====== */
 function renderAll(){
   renderProductGrid();
-  if(isAdmin){
-    renderProductsAdmin();
-    renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'allActivos');
-    renderPaidOrders($('search-paid-input')?.value || '', $('paid-filter')?.value || 'pagado');
-    renderFinanzas();
-  }
+  renderOrders($('search-input') ? $('search-input').value : '', $('payment-filter') ? $('payment-filter').value : 'allActivos');
+  renderPaidOrders($('search-paid-input') ? $('search-paid-input').value : '', $('paid-filter') ? $('paid-filter').value : 'pagado');
+  renderProductsAdmin();
+  renderFinanzas();
 }
 
-/* ====== init ====== */
-(function init(){
-  loadAll();
-  setupListeners();
-  if(sessionStorage.getItem('isAdmin')){
-    setAdminMode(true);
-  } else {
-    setAdminMode(false);
-  }
-  setTimeout(() => {
-    document.querySelectorAll('.client-qty').forEach(i => { if(i && i.getAttribute('data-product') === 'paltas') i.value = 1; });
-  }, 200);
-})();
-</script>
+/* ====== Inicialización y eventos ====== */
+let pendingOrderData = null;
 
-<!-- Bloque adicional: Sync a Google Sheets -->
-<script>
-(function(){
-  // === CONFIG: URL del Web App de Apps Script (tu dirección) ===
-  // Publicado: Versión 18 — 2026-02-06 11:46 a.m.
-  // ID de implementación: AKfycby3kq0WwJ_gDXZSzHC3CwFKHaR3GZXCEl5Hb_OGnVuSjnlulBzrMRUZ7gdHHTuBS8-Z
-  const SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby3kq0WwJ_gDXZSzHC3CwFKHaR3GZXCEl5Hb_OGnVuSjnlulBzrMRUZ7gdHHTuBS8-Z/exec';
+function setupClientEvents(){
+  // Enviar pedido -> abre modal resumen
+  const enviarBtn = $('enviar-pedido');
+  if(enviarBtn){
+    enviarBtn.addEventListener('click', () => {
+      const nombre = $('nombre').value.trim();
+      const telefono = $('telefono').value.trim();
+      const comentarios = $('comentarios').value.trim();
 
-  // (Opcional) Token anti-abuso. Si lo usas, valida body.token en Code.gs.
-  const SYNC_TOKEN = ''; // Por ahora vacío
+      if(!nombre){
+        alert('Por favor ingresa tu nombre.');
+        return;
+      }
 
-  // === Serializadores de datos para la planilla ===
-  function itemsToString(items) {
-    const parts = [];
-    if (items?.paltas && Number(items.paltas.qty)) parts.push(`${items.paltas.qty} ${items.paltas.unit} Paltas`);
-    if (items?.champi && Number(items.champi.qty)) parts.push(`${items.champi.qty} ${items.champi.unit} Champiñones`);
-    if (items?.frutillas && Number(items.frutillas.qty)) parts.push(`${items.frutillas.qty} ${items.frutillas.unit} Frutillas`);
-    return parts.join(' | ');
-  }
+      // Construir items desde inputs
+      const qtyInputs = document.querySelectorAll('.client-qty');
+      const items = {};
+      qtyInputs.forEach(inp => {
+        const key = inp.getAttribute('data-product');
+        const qty = Number(inp.value) || 0;
+        if(qty > 0){
+          const prod = productos[key];
+          const unit = prod.baseUnit || 'kg';
+          items[key] = { qty, unit };
+        }
+      });
 
-  function serializePedido(pedido) {
-    return {
-      id: pedido.id,
-      fecha: pedido.fecha,
-      nombre: pedido.nombre,
-      telefono: pedido.telefono,
-      itemsString: itemsToString(pedido.items),
-      itemsJSON: JSON.stringify(pedido.items || {}),
-      total: Number(pedido.total || 0),
-      estadoPago: pedido.estadoPago || 'pendiente',
-      deudaPendiente: Number(pedido.deudaPendiente || pedido.total || 0),
-      comentarios: pedido.comentarios || '',
-      paymentMethod: pedido.paymentMethod || ''
-    };
-  }
+      const total = calcTotalFromItems(items);
+      if(total <= 0){
+        alert('Ingresa cantidades mayores a 0 para al menos un producto.');
+        return;
+      }
 
-  function serializePago(pago) {
-    // Usa el arreglo global 'pedidos' si existe, para adjuntar contexto
-    const pedArray = (typeof pedidos !== 'undefined' && Array.isArray(pedidos)) ? pedidos : [];
-    const ped = pedArray.find(p => p.id === pago.pedidoId);
-    return {
-      id: pago.id,
-      pedidoId: pago.pedidoId,
-      fecha: pago.fecha,
-      nombre: ped ? ped.nombre : '',
-      telefono: ped ? ped.telefono : '',
-      monto: Number(pago.monto || 0),
-      metodo: pago.metodo || '',
-      notas: pago.notas || '',
-      totalPedido: ped ? Number(ped.total || 0) : 0,
-      deudaPosterior: ped ? Number(ped.deudaPendiente || 0) : 0
-    };
-  }
-
-  // === Envío y cola offline (reintentos automáticos) ===
-  let pendingSync = [];
-  try { pendingSync = JSON.parse(localStorage.getItem('pendingSync') || '[]'); } catch(_) { pendingSync = []; }
-
-  function persistQueue() {
-    try { localStorage.setItem('pendingSync', JSON.stringify(pendingSync)); } catch (_) {}
-  }
-
-  async function postToSheet(payload) {
-    const toSend = SYNC_TOKEN ? { ...payload, token: SYNC_TOKEN } : payload;
-    // Content-Type: text/plain evita preflight CORS con Apps Script
-    await fetch(SHEET_WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(toSend)
+      // Guardar temporalmente y mostrar resumen
+      pendingOrderData = { nombre, telefono, comentarios, items };
+      const lines = [];
+      if(items.paltas) lines.push(`<div><strong>${escapeHTML(productos.paltas.nombre)}:</strong> ${items.paltas.qty} ${items.paltas.unit}</div>`);
+      if(items.champi) lines.push(`<div><strong>${escapeHTML(productos.champi.nombre)}:</strong> ${items.champi.qty} ${items.champi.unit}</div>`);
+      if(items.frutillas) lines.push(`<div><strong>${escapeHTML(productos.frutillas.nombre)}:</strong> ${items.frutillas.qty} ${items.frutillas.unit}</div>`);
+      $('summary-items').innerHTML = lines.join('');
+      $('summary-total').textContent = money(total);
+      $('summary-payment-method').value = 'efectivo';
+      $('summary-transfer-details').style.display = 'none';
+      showModal('order-summary-modal');
     });
-    return true;
   }
 
-  function enqueue(payload) {
-    pendingSync.push(payload);
-    persistQueue();
+  // Modal resumen: método de pago
+  const spm = $('summary-payment-method');
+  if(spm){
+    spm.addEventListener('change', () => {
+      const val = spm.value;
+      $('summary-transfer-details').style.display = (val === 'transferencia') ? 'block' : 'none';
+    });
   }
 
-  async function flushQueue() {
-    if (!pendingSync.length) return;
-    const copy = pendingSync.slice();
-    pendingSync = [];
-    persistQueue();
+  // Confirmar pedido
+  const confirmBtn = $('confirm-order');
+  if(confirmBtn){
+    confirmBtn.addEventListener('click', () => {
+      if(!pendingOrderData) return;
+      const pm = $('summary-payment-method').value || 'efectivo';
+      const pedido = crearPedido({ ...pendingOrderData, paymentMethod: pm });
+      hideModal('order-summary-modal');
+      // Reset formulario cliente
+      $('nombre').value = '';
+      $('telefono').value = '';
+      $('comentarios').value = '';
+      document.querySelectorAll('.client-qty').forEach(inp => {
+        const key = inp.getAttribute('data-product');
+        const prod = productos[key];
+        inp.value = (prod.baseUnit === 'kg') ? 1 : 0;
+      });
+      pendingOrderData = null;
 
-    for (const payload of copy) {
-      try {
-        await postToSheet(payload);
-      } catch (e) {
-        // Si falla (offline/red), re-encolar y detener
-        pendingSync.unshift(payload, ...copy.slice(copy.indexOf(payload) + 1));
-        persistQueue();
-        break;
+      // Mostrar gracias
+      const overlay = $('thanks-overlay');
+      overlay.style.display = 'flex';
+      setTimeout(() => { overlay.style.display = 'none'; }, 2500);
+      notify(`Pedido enviado: ${pedido.nombre}`);
+    });
+  }
+
+  // Cancelar resumen
+  const rejectBtn = $('reject-order');
+  const closeSummary = $('close-order-summary');
+  [rejectBtn, closeSummary].forEach(btn => {
+    if(btn) btn.addEventListener('click', () => { hideModal('order-summary-modal'); pendingOrderData = null; });
+  });
+}
+
+function setupAdminEvents(){
+  // Abrir login modal
+  const adminLink = $('admin-login-link');
+  if(adminLink){
+    adminLink.addEventListener('click', () => { showModal('login-modal'); });
+  }
+  // Cerrar login
+  const cancelLogin = $('cancel-login');
+  const closeLoginX = $('close-login');
+  [cancelLogin, closeLoginX].forEach(btn => {
+    if(btn) btn.addEventListener('click', () => { hideModal('login-modal'); });
+  });
+  // Login simple
+  const loginBtn = $('login-btn');
+  if(loginBtn){
+    loginBtn.addEventListener('click', () => {
+      const email = $('admin-email').value.trim();
+      const pass = $('admin-password').value.trim();
+      const ok = (email === 'admin@valledor.com' && pass === 'admin123');
+      $('login-error').style.display = ok ? 'none' : 'block';
+      if(ok){
+        hideModal('login-modal');
+        setAdminMode(true);
+        notify('Modo administrador activado');
       }
+    });
+  }
+  // Logout
+  const logoutBtn = $('logout-btn');
+  if(logoutBtn){
+    logoutBtn.addEventListener('click', () => {
+      setAdminMode(false);
+      notify('Sesión cerrada');
+    });
+  }
+
+  // Agregar pedido (rápido con prompts)
+  const addOrderBtn = $('add-order-btn');
+  if(addOrderBtn){
+    addOrderBtn.addEventListener('click', openAdminCreateOrder);
+  }
+  function openAdminCreateOrder(){
+    const nombre = prompt('Nombre del cliente:');
+    if(!nombre) return notify('Nombre requerido', 2000);
+    const telefono = prompt('Teléfono (opcional):') || '';
+
+    const items = {};
+
+    // Paltas
+    if(productos.paltas && productos.paltas.disponible){
+      const unitP = productos.paltas.baseUnit || 'kg';
+      const qtyP = Number(prompt(`Cantidad de ${productos.paltas.nombre} (${unitP}):`, unitP === 'kg' ? 1 : 0)) || 0;
+      if(qtyP > 0) items.paltas = { qty: qtyP, unit: unitP };
     }
+
+    // Champiñones
+    if(productos.champi && productos.champi.disponible){
+      const unitC = productos.champi.baseUnit || 'caja';
+      const qtyC = Number(prompt(`Cantidad de ${productos.champi.nombre} (${unitC}):`, unitC === 'caja' ? 1 : 0)) || 0;
+      if(qtyC > 0) items.champi = { qty: qtyC, unit: unitC };
+    }
+
+    // Frutillas
+    if(productos.frutillas && productos.frutillas.disponible){
+      const unitF = productos.frutillas.baseUnit || 'g';
+      const defaultQty = unitF === 'g' ? (productos.frutillas.bloqueGramos || 100) : 1;
+      const qtyF = Number(prompt(`Cantidad de ${productos.frutillas.nombre} (${unitF}):`, defaultQty)) || 0;
+      if(qtyF > 0) items.frutillas = { qty: qtyF, unit: unitF };
+    }
+
+    const comentarios = prompt('Comentarios / Destino despacho (opcional):') || '';
+    const pedido = crearPedido({ nombre, telefono, items, comentarios, paymentMethod:'efectivo' });
+    notify(`Pedido creado: ${pedido.nombre} — Total ${money(pedido.total)}`);
   }
 
-  window.addEventListener('online', flushQueue);
-  document.addEventListener('DOMContentLoaded', flushQueue);
-
-  // === Integración: envolver funciones existentes ===
-  // 1) crearPedido(...): tras crear, encola y sincroniza
-  if (typeof crearPedido === 'function') {
-    const _crearPedido = crearPedido;
-    crearPedido = function (...args) {
-      const pedido = _crearPedido.apply(this, args);
-      try {
-        enqueue({ type: 'pedido', data: serializePedido(pedido) });
-        flushQueue();
-      } catch (e) { console.warn('Sync pedido falló', e); }
-      return pedido;
-    };
+  // Exportar CSV
+  const exportBtn = $('export-btn');
+  if(exportBtn){
+    exportBtn.addEventListener('click', () => {
+      const ordersCSV = buildOrdersCSV();
+      const paymentsCSV = buildPaymentsCSV();
+      downloadCSV('pedidos.csv', ordersCSV);
+      downloadCSV('pagos.csv', paymentsCSV);
+      notify('CSV exportado');
+    });
   }
 
-  // 2) registrarPago(...): tras registrar, encola y sincroniza
-  if (typeof registrarPago === 'function') {
-    const _registrarPago = registrarPago;
-    registrarPago = function (pedidoId, payload) {
-      const pago = _registrarPago.call(this, pedidoId, payload);
-      if (!pago) { // robustez: si registrarPago falla, no se sincroniza
-        console.warn('registrarPago retornó falsy, no se sincroniza.');
-        return pago;
+  // Actualizar
+  const refreshBtn = $('refresh-btn');
+  if(refreshBtn){
+    refreshBtn.addEventListener('click', () => {
+      renderAll();
+      notify('Actualizado');
+    });
+  }
+
+  // Toggle historial en modal pagos
+  const toggleHistory = $('toggle-payment-history');
+  if(toggleHistory){
+    toggleHistory.addEventListener('click', () => {
+      const cont = $('payment-history-container');
+      if(!cont) return;
+      const show = cont.style.display !== 'block';
+      cont.style.display = show ? 'block' : 'none';
+    });
+  }
+
+  // Guardar productos
+  const saveProductsBtn = $('save-products-btn');
+  if(saveProductsBtn){
+    saveProductsBtn.addEventListener('click', () => {
+      Object.keys(productos).forEach(k => {
+        const name = $(`cfg-${k}-name`).value || productos[k].nombre;
+        const price = Number($(`cfg-${k}-price`).value) || productos[k].precio;
+        const baseUnit = $(`cfg-${k}-baseunit`).value || productos[k].baseUnit;
+        const avail = $(`cfg-${k}-avail`).value === 'true';
+
+        productos[k].nombre = name;
+        productos[k].precio = price;
+        productos[k].baseUnit = baseUnit;
+        productos[k].disponible = avail;
+      });
+      saveAll();
+      renderAll();
+      notify('Productos guardados');
+    });
+  }
+
+  // Reset productos a default
+  const resetProductsBtn = $('reset-products-btn');
+  if(resetProductsBtn){
+    resetProductsBtn.addEventListener('click', () => {
+      if(confirm('¿Resetear productos al estado por defecto?')){
+        productos = structuredClone(DEFAULT_PRODUCTOS);
+        saveAll();
+        renderAll();
+        notify('Productos reseteados');
       }
-      try {
-        enqueue({ type: 'pago', data: serializePago(pago) });
-        flushQueue();
-      } catch (e) { console.warn('Sync pago falló', e); }
-      return pago;
-    };
+    });
   }
-})();
+
+  // Filtros y búsqueda
+  const si = $('search-input');
+  const pf = $('payment-filter');
+  if(si){ si.addEventListener('input', () => renderOrders(si.value, pf ? pf.value : 'allActivos')); }
+  if(pf){ pf.addEventListener('change', () => renderOrders(si ? si.value : '', pf.value)); }
+
+  const spi = $('search-paid-input');
+  const pafd = $('paid-filter');
+  if(spi){ spi.addEventListener('input', () => renderPaidOrders(spi.value, pafd ? pafd.value : 'pagado')); }
+  if(pafd){ pafd.addEventListener('change', () => renderPaidOrders(spi ? spi.value : '', pafd.value)); }
+}
+
+// Cerrar modal pago por X
+const closePaymentX = $('close-payment');
+if(closePaymentX){ closePaymentX.addEventListener('click', () => hideModal('payment-modal')); }
+
+/* ====== Boot ====== */
+loadAll();
+renderAll();
+setupClientEvents();
+setupAdminEvents();
 </script>
 </body>
 </html>
