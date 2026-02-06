@@ -1104,7 +1104,7 @@ function setupListeners(){
 
   /* Botones pago admin */
   $('close-payment').addEventListener('click', () => hideModal('payment-modal'));
-  // Evitar comportamientos por defecto y cerrar modal en handleSavePayment
+  // Listener para guardar y cerrar modal
   $('save-payment').addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
