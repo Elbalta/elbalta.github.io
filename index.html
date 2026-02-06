@@ -1194,6 +1194,132 @@ function renderAll(){
     document.querySelectorAll('.client-qty').forEach(i => { if(i && i.getAttribute('data-product') === 'paltas') i.value = 1; });
   }, 200);
 })();
+<!-- Bloque adicional: Sync a Google Sheets (pegar antes de </body>) -->
+<script>
+(function(){
+  // === CONFIG: URL del Web App de Apps Script (tu dirección) ===
+  // Publicado: Versión 18 — 2026-02-06 11:46 a.m.
+  // ID de implementación: AKfycby3kq0WwJ_gDXZSzHC3CwFKHaR3GZXCEl5Hb_OGnVuSjnlulBzrMRUZ7gdHHTuBS8-Z
+  const SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby3kq0WwJ_gDXZSzHC3CwFKHaR3GZXCEl5Hb_OGnVuSjnlulBzrMRUZ7gdHHTuBS8-Z/exec';
+
+  // (Opcional) Token anti-abuso. Si lo usas, valida body.token en Code.gs.
+  const SYNC_TOKEN = ''; // Ej.: 'TU_TOKEN_LARGO_Y_UNICO'
+
+  // === Serializadores de datos para la planilla ===
+  function itemsToString(items) {
+    const parts = [];
+    if (items?.paltas && Number(items.paltas.qty)) parts.push(`${items.paltas.qty} ${items.paltas.unit} Paltas`);
+    if (items?.champi && Number(items.champi.qty)) parts.push(`${items.champi.qty} ${items.champi.unit} Champiñones`);
+    if (items?.frutillas && Number(items.frutillas.qty)) parts.push(`${items.frutillas.qty} ${items.frutillas.unit} Frutillas`);
+    return parts.join(' | ');
+  }
+
+  function serializePedido(pedido) {
+    return {
+      id: pedido.id,
+      fecha: pedido.fecha,
+      nombre: pedido.nombre,
+      telefono: pedido.telefono,
+      itemsString: itemsToString(pedido.items),
+      itemsJSON: JSON.stringify(pedido.items || {}),
+      total: Number(pedido.total || 0),
+      estadoPago: pedido.estadoPago || 'pendiente',
+      deudaPendiente: Number(pedido.deudaPendiente || pedido.total || 0),
+      comentarios: pedido.comentarios || '',
+      paymentMethod: pedido.paymentMethod || ''
+    };
+  }
+
+  function serializePago(pago) {
+    // Usa el arreglo global 'pedidos' si existe, para adjuntar contexto
+    const pedArray = (typeof pedidos !== 'undefined' && Array.isArray(pedidos)) ? pedidos : [];
+    const ped = pedArray.find(p => p.id === pago.pedidoId);
+    return {
+      id: pago.id,
+      pedidoId: pago.pedidoId,
+      fecha: pago.fecha,
+      nombre: ped ? ped.nombre : '',
+      telefono: ped ? ped.telefono : '',
+      monto: Number(pago.monto || 0),
+      metodo: pago.metodo || '',
+      notas: pago.notas || '',
+      totalPedido: ped ? Number(ped.total || 0) : 0,
+      deudaPosterior: ped ? Number(ped.deudaPendiente || 0) : 0
+    };
+  }
+
+  // === Envío y cola offline (reintentos automáticos) ===
+  let pendingSync = [];
+  try { pendingSync = JSON.parse(localStorage.getItem('pendingSync') || '[]'); } catch(_) { pendingSync = []; }
+
+  function persistQueue() {
+    try { localStorage.setItem('pendingSync', JSON.stringify(pendingSync)); } catch (_) {}
+  }
+
+  async function postToSheet(payload) {
+    const toSend = SYNC_TOKEN ? { ...payload, token: SYNC_TOKEN } : payload;
+    // Content-Type: text/plain evita preflight CORS con Apps Script
+    await fetch(SHEET_WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(toSend)
+    });
+    return true;
+  }
+
+  function enqueue(payload) {
+    pendingSync.push(payload);
+    persistQueue();
+  }
+
+  async function flushQueue() {
+    if (!pendingSync.length) return;
+    const copy = pendingSync.slice();
+    pendingSync = [];
+    persistQueue();
+
+    for (const payload of copy) {
+      try {
+        await postToSheet(payload);
+      } catch (e) {
+        // Si falla (offline/red), re-encolar y detener
+        pendingSync.unshift(payload, ...copy.slice(copy.indexOf(payload) + 1));
+        persistQueue();
+        break;
+      }
+    }
+  }
+
+  window.addEventListener('online', flushQueue);
+  document.addEventListener('DOMContentLoaded', flushQueue);
+
+  // === Integración sin tocar tu código: envolver funciones existentes ===
+  // 1) crearPedido(...): tras crear, encola y sincroniza
+  if (typeof crearPedido === 'function') {
+    const _crearPedido = crearPedido;
+    crearPedido = function (...args) {
+      const pedido = _crearPedido.apply(this, args);
+      try {
+        enqueue({ type: 'pedido', data: serializePedido(pedido) });
+        flushQueue();
+      } catch (e) { console.warn('Sync pedido falló', e); }
+      return pedido;
+    };
+  }
+
+  // 2) registrarPago(...): tras registrar, encola y sincroniza
+  if (typeof registrarPago === 'function') {
+    const _registrarPago = registrarPago;
+    registrarPago = function (pedidoId, payload) {
+      const pago = _registrarPago.call(this, pedidoId, payload);
+      try {
+        enqueue({ type: 'pago', data: serializePago(pago) });
+        flushQueue();
+      } catch (e) { console.warn('Sync pago falló', e); }
+      return pago;
+    };
+  }
+})();
 </script>
 </body>
 </html>
