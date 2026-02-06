@@ -58,11 +58,11 @@
       color:#ffffff; /* Título en blanco para resaltar */
     }
     .brand p{
-  margin:0;
-  font-size:.9rem;
-  opacity:.95;
-  color:#ffffff; /* color blanco */
-}  
+      margin:0;
+      font-size:.9rem;
+      opacity:.95;
+      color:#ffffff; /* color blanco */
+    }
     .header-actions{display:flex;gap:8px;align-items:center}
 
     /* Layout */
@@ -134,18 +134,9 @@
       padding:0 10px;gap:6px;
     }
     .icon-btn span{white-space:nowrap;}
-    .icon-pay{
-      background:var(--btn-blue-bg);
-      color:var(--btn-blue-text);
-    }
-    .icon-view{
-      background:var(--btn-green-bg);
-      color:var(--btn-green-text);
-    }
-    .icon-delete{
-      background:var(--btn-red-bg);
-      color:var(--btn-red-text);
-    }
+    .icon-pay{background:var(--btn-blue-bg);color:var(--btn-blue-text);}
+    .icon-view{background:var(--btn-green-bg);color:var(--btn-green-text);}
+    .icon-delete{background:var(--btn-red-bg);color:var(--btn-red-text);}
     td.actions{width:210px;max-width:220px}
 
     .row-paid{background:var(--paid);}
@@ -1076,7 +1067,7 @@ function setupListeners(){
         setTimeout(()=>{ ov.style.display = 'none'; }, 3500);
       }
 
-      notify('Pedido enviado. ¡Gracias por comprar con nosotros!');
+      notify('Pedido enviado. ��Gracias por comprar con nosotros!');
       document.querySelectorAll('.client-qty').forEach(i => { if(i.getAttribute('data-product') === 'paltas') i.value = 1; else i.value = 0; });
       $('nombre').value = ''; $('telefono').value = ''; $('comentarios').value = '';
     };
@@ -1195,7 +1186,9 @@ function renderAll(){
   }, 200);
 })();
 </script>
-  <script>
+
+<!-- Bloque adicional: Sync a Google Sheets -->
+<script>
 (function(){
   // === CONFIG: URL del Web App de Apps Script (tu dirección) ===
   // Publicado: Versión 18 — 2026-02-06 11:46 a.m.
@@ -1203,7 +1196,7 @@ function renderAll(){
   const SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby3kq0WwJ_gDXZSzHC3CwFKHaR3GZXCEl5Hb_OGnVuSjnlulBzrMRUZ7gdHHTuBS8-Z/exec';
 
   // (Opcional) Token anti-abuso. Si lo usas, valida body.token en Code.gs.
-  const SYNC_TOKEN = ''; // Ej.: 'TU_TOKEN_LARGO_Y_UNICO'
+  const SYNC_TOKEN = ''; // Por ahora vacío
 
   // === Serializadores de datos para la planilla ===
   function itemsToString(items) {
@@ -1293,7 +1286,7 @@ function renderAll(){
   window.addEventListener('online', flushQueue);
   document.addEventListener('DOMContentLoaded', flushQueue);
 
-  // === Integración sin tocar tu código: envolver funciones existentes ===
+  // === Integración: envolver funciones existentes ===
   // 1) crearPedido(...): tras crear, encola y sincroniza
   if (typeof crearPedido === 'function') {
     const _crearPedido = crearPedido;
@@ -1312,6 +1305,10 @@ function renderAll(){
     const _registrarPago = registrarPago;
     registrarPago = function (pedidoId, payload) {
       const pago = _registrarPago.call(this, pedidoId, payload);
+      if (!pago) { // robustez: si registrarPago falla, no sincronizar
+        console.warn('registrarPago retornó falsy, no se sincroniza.');
+        return pago;
+      }
       try {
         enqueue({ type: 'pago', data: serializePago(pago) });
         flushQueue();
