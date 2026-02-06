@@ -390,6 +390,9 @@
           <button id="save-products-btn" class="btn">Guardar productos</button>
           <button id="reset-products-btn" class="btn danger">Reset</button>
         </div>
+        <div class="small muted" style="margin-top:8px;">
+          Si cambias la unidad, ajusta el parámetro asociado (saco kg / pack gramos / bloque gramos) para cálculos correctos.
+        </div>
       </div>
     </div>
 
@@ -514,7 +517,8 @@
     </div>
 
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-      <button id="save-payment" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">
+      <!-- onclick directo para asegurar cierre inmediato -->
+      <button id="save-payment" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)" onclick="handleSavePayment()">
         Guardar pago / marcar pagado
       </button>
       <button id="toggle-payment-history" class="btn gray">Historial</button>
@@ -1067,7 +1071,7 @@ function setupListeners(){
         setTimeout(()=>{ ov.style.display = 'none'; }, 3500);
       }
 
-      notify('Pedido enviado. ��Gracias por comprar con nosotros!');
+      notify('Pedido enviado. ¡Gracias por comprar con nosotros!');
       document.querySelectorAll('.client-qty').forEach(i => { if(i.getAttribute('data-product') === 'paltas') i.value = 1; else i.value = 0; });
       $('nombre').value = ''; $('telefono').value = ''; $('comentarios').value = '';
     };
@@ -1104,7 +1108,7 @@ function setupListeners(){
 
   /* Botones pago admin */
   $('close-payment').addEventListener('click', () => hideModal('payment-modal'));
-  // Listener para guardar y cerrar modal
+  // Listener (permanece por compatibilidad, aunque el botón ya tiene onclick)
   $('save-payment').addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1147,6 +1151,12 @@ function setupListeners(){
     const rows = buildOrdersCSV();
     exportCSV('pedidos.csv', rows);
     notify('CSV exportado');
+  });
+
+  /* Botón actualizar */
+  $('refresh-btn').addEventListener('click', () => {
+    renderAll();
+    notify('Panel actualizado');
   });
 
   /* Botón agregar pedido admin */
@@ -1305,7 +1315,7 @@ function renderAll(){
     const _registrarPago = registrarPago;
     registrarPago = function (pedidoId, payload) {
       const pago = _registrarPago.call(this, pedidoId, payload);
-      if (!pago) { // robustez: si registrarPago falla, no sincronizar
+      if (!pago) { // robustez: si registrarPago falla, no se sincroniza
         console.warn('registrarPago retornó falsy, no se sincroniza.');
         return pago;
       }
