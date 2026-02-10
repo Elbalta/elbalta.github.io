@@ -552,6 +552,13 @@
 <div id="notification" style="position:fixed;right:16px;top:16px;background:var(--primary);color:#fff;padding:8px 12px;border-radius:10px;display:none;z-index:9999;transition:opacity .25s;"></div>
 
 <script>
+/* Polyfill structuredClone para navegadores viejos */
+if (typeof structuredClone !== 'function') {
+  window.structuredClone = function(obj){
+    return JSON.parse(JSON.stringify(obj));
+  };
+}
+
 /* ====== Estado ====== */
 const DEFAULT_PRODUCTOS = {
   paltas: { key:'paltas', nombre:'Paltas', precio:3500, baseUnit:'kg', sacoKg:25, disponible:true },
@@ -575,6 +582,7 @@ const normPhone = s => (s||'').replace(/\s|-/g,'').trim();
 function escapeHTML(s=''){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
 function notify(msg, time=3000){
   const el = $('notification');
+  if(!el) return;
   el.textContent = msg;
   el.style.display = 'block';
   el.style.opacity = '1';
@@ -607,15 +615,15 @@ function loadAll(){
     const pr = localStorage.getItem('productos');
     const p = localStorage.getItem('pedidos');
     const pay = localStorage.getItem('pagos');
-    if(pr) productos = {...DEFAULT_PRODUCTOS, ...JSON.parse(pr)};
+    if(pr) productos = Object.assign(structuredClone(DEFAULT_PRODUCTOS), JSON.parse(pr));
     if(p) pedidos = JSON.parse(p);
     if(pay) pagos = JSON.parse(pay);
   } catch(e){
     console.error('loadAll error', e);
   }
-  productos.paltas = { ...DEFAULT_PRODUCTOS.paltas, ...(productos.paltas || {}) };
-  productos.champi = { ...DEFAULT_PRODUCTOS.champi, ...(productos.champi || {}) };
-  productos.frutillas = { ...DEFAULT_PRODUCTOS.frutillas, ...(productos.frutillas || {}) };
+  productos.paltas = Object.assign(structuredClone(DEFAULT_PRODUCTOS.paltas), productos.paltas || {});
+  productos.champi = Object.assign(structuredClone(DEFAULT_PRODUCTOS.champi), productos.champi || {});
+  productos.frutillas = Object.assign(structuredClone(DEFAULT_PRODUCTOS.frutillas), productos.frutillas || {});
 }
 
 /* ====== Cálculo total ====== */
@@ -707,22 +715,23 @@ function renderProductGrid(){
 }
 
 /* Pedidos activos (pendiente + parcial) */
-function renderOrders(filterText = '', paymentFilter = 'allActivos'){
+function renderOrders(filterText, paymentFilter){
   const tbody = $('orders-body'); if(!tbody) return;
   tbody.innerHTML = '';
   const ft = (filterText || '').toLowerCase();
+  const pf = paymentFilter || 'allActivos';
   pedidos.forEach(p => {
     if(p.estadoPago === 'pagado') return;
     if(ft){
       const found = (p.nombre || '').toLowerCase().includes(ft) || (p.telefono || '').toLowerCase().includes(ft);
       if(!found) return;
     }
-    if(paymentFilter && paymentFilter !== 'allActivos'){
-      if(paymentFilter === 'moroso'){
+    if(pf && pf !== 'allActivos'){
+      if(pf === 'moroso'){
         const dias = (Date.now() - new Date(p.fecha).getTime()) / (1000*60*60*24);
         if(!(p.deudaPendiente > 0 && dias > 30)) return;
       } else {
-        if(p.estadoPago !== paymentFilter) return;
+        if(p.estadoPago !== pf) return;
       }
     }
 
@@ -760,16 +769,17 @@ function renderOrders(filterText = '', paymentFilter = 'allActivos'){
 }
 
 /* Tabla de pagos / pagados */
-function renderPaidOrders(searchText = '', filter = 'pagado'){
+function renderPaidOrders(searchText, filter){
   const tbody = $('paid-orders-body'); if(!tbody) return;
   tbody.innerHTML = '';
   const st = (searchText || '').toLowerCase();
+  const f = filter || 'pagado';
 
   pedidos.forEach(p => {
     const includeEstado =
-      filter === 'todos'
+      f === 'todos'
         ? (p.estadoPago === 'pagado' || p.estadoPago === 'parcial')
-        : p.estadoPago === filter;
+        : p.estadoPago === f;
 
     if(!includeEstado) return;
 
@@ -829,8 +839,10 @@ function renderProductsAdmin(){
       </select>
     `;
     container.appendChild(row);
-    $(`cfg-${k}-baseunit`).value = p.baseUnit || 'kg';
-    $(`cfg-${k}-avail`).value = p.disponible ? 'true' : 'false';
+    const bu = document.getElementById(`cfg-${k}-baseunit`);
+    const av = document.getElementById(`cfg-${k}-avail`);
+    if(bu) bu.value = p.baseUnit || 'kg';
+    if(av) av.value = p.disponible ? 'true' : 'false';
   });
 }
 
@@ -954,13 +966,15 @@ function openPaymentModal(pedidoId){
   $('payment-client-info').textContent = `${p.nombre} (${p.telefono}) — ${new Date(p.fecha).toLocaleString()}`;
   $('payment-amount').value = p.deudaPendiente || p.total || 0;
   $('payment-notes').value = '';
-  $('payment-history-container').style.display = 'none';
+  const histCont = $('payment-history-container');
+  if(histCont) histCont.style.display = 'none';
   renderPaymentHistoryForPedido(pedidoId);
   showModal('payment-modal');
 }
 function renderPaymentHistoryForPedido(pedidoId){
   const p = pedidos.find(x => x.id === pedidoId);
   const cont = $('modal-payment-history');
+  if(!cont) return;
   cont.innerHTML = '';
   if(!p || !p.pagos || p.pagos.length === 0){
     cont.textContent = 'No hay pagos registrados';
@@ -1013,27 +1027,28 @@ function buildItemsFromForm(){
 
 function fillSummary(items, total){
   const summary = $('summary-items');
+  if(!summary) return;
   summary.innerHTML = '';
   const lines = [];
   if(items.paltas) lines.push(`<div><strong>Paltas:</strong> ${items.paltas.qty} ${items.paltas.unit}</div>`);
   if(items.champi) lines.push(`<div><strong>Champiñones:</strong> ${items.champi.qty} ${items.champi.unit}</div>`);
   if(items.frutillas) lines.push(`<div><strong>Frutillas:</strong> ${items.frutillas.qty} ${items.frutillas.unit}</div>`);
   summary.innerHTML = lines.join('') || '<div class="muted">Sin productos</div>';
-  $('summary-total').textContent = money(total);
+  const st = $('summary-total'); if(st) st.textContent = money(total);
 }
 
 function clearClientForm(){
-  $('nombre').value = '';
-  $('telefono').value = '';
-  $('comentarios').value = '';
-  document.querySelectorAll('.client-qty').forEach(inp => inp.value = (inp.getAttribute('step') === '1' ? 0 : 0));
+  const n = $('nombre'); if(n) n.value = '';
+  const t = $('telefono'); if(t) t.value = '';
+  const c = $('comentarios'); if(c) c.value = '';
+  document.querySelectorAll('.client-qty').forEach(inp => inp.value = 0);
 }
 
 /* ====== Cliente: flujo pedido ====== */
 function handleClientSubmit(){
-  const nombre = $('nombre').value.trim();
-  const telefono = normPhone($('telefono').value);
-  const comentarios = $('comentarios').value.trim();
+  const nombre = ($('nombre') && $('nombre').value || '').trim();
+  const telefono = normPhone($('telefono') && $('telefono').value || '');
+  const comentarios = ($('comentarios') && $('comentarios').value || '').trim();
   const items = buildItemsFromForm();
 
   if(!nombre) return notify('Ingresa tu nombre', 2500);
@@ -1043,18 +1058,22 @@ function handleClientSubmit(){
   const total = calcTotalFromItems(items);
   pendingOrderDraft = { nombre, telefono, comentarios, items, total };
   fillSummary(items, total);
-  $('summary-payment-method').value = 'efectivo';
+  const spm = $('summary-payment-method');
+  if(spm) spm.value = 'efectivo';
   toggleTransferDetails();
   showModal('order-summary-modal');
 }
 
 function submitOrderFromSummary(){
   if(!pendingOrderDraft) return notify('No hay pedido en curso', 2000);
-  const paymentMethod = $('summary-payment-method').value;
-  const pedido = crearPedido({
-    ...pendingOrderDraft,
-    paymentMethod,
-    comentarios: pendingOrderDraft.comentarios
+  const spm = $('summary-payment-method');
+  const paymentMethod = spm ? spm.value : 'efectivo';
+  crearPedido({
+    nombre: pendingOrderDraft.nombre,
+    telefono: pendingOrderDraft.telefono,
+    comentarios: pendingOrderDraft.comentarios,
+    items: pendingOrderDraft.items,
+    paymentMethod
   });
   hideModal('order-summary-modal');
   pendingOrderDraft = null;
@@ -1073,11 +1092,15 @@ function showThanks(){
 /* ====== Admin: productos ====== */
 function saveProductosFromAdmin(){
   Object.keys(productos).forEach(k => {
-    const name = $(`cfg-${k}-name`)?.value || productos[k].nombre;
-    const price = Number($(`cfg-${k}-price`)?.value) || productos[k].precio;
-    const baseUnit = $(`cfg-${k}-baseunit`)?.value || productos[k].baseUnit;
-    const disponible = ($(`cfg-${k}-avail`)?.value || 'true') === 'true';
-    productos[k] = { ...productos[k], nombre:name, precio:price, baseUnit, disponible };
+    const nameEl = document.getElementById(`cfg-${k}-name`);
+    const priceEl = document.getElementById(`cfg-${k}-price`);
+    const baseEl = document.getElementById(`cfg-${k}-baseunit`);
+    const availEl = document.getElementById(`cfg-${k}-avail`);
+    const name = nameEl ? nameEl.value : productos[k].nombre;
+    const price = Number(priceEl ? priceEl.value : productos[k].precio) || productos[k].precio;
+    const baseUnit = baseEl ? baseEl.value : productos[k].baseUnit;
+    const disponible = (availEl ? availEl.value : 'true') === 'true';
+    productos[k] = Object.assign({}, productos[k], { nombre:name, precio:price, baseUnit, disponible });
   });
   saveAll();
   renderAll();
@@ -1093,15 +1116,15 @@ function resetProductos(){
 
 /* ====== Admin: login ====== */
 function handleLogin(){
-  const email = ($('admin-email').value || '').trim().toLowerCase();
-  const pass = $('admin-password').value || '';
+  const email = (($('admin-email') && $('admin-email').value) || '').trim().toLowerCase();
+  const pass = ($('admin-password') && $('admin-password').value) || '';
   if(email === ADMIN_EMAIL && pass === ADMIN_PASS){
-    $('login-error').style.display = 'none';
+    const le = $('login-error'); if(le) le.style.display = 'none';
     setAdminMode(true);
     hideModal('login-modal');
     notify('Sesión iniciada como admin');
   } else {
-    $('login-error').style.display = 'block';
+    const le = $('login-error'); if(le) le.style.display = 'block';
   }
 }
 
@@ -1141,9 +1164,13 @@ function exportCsv(){
 
 /* ====== Render All ====== */
 function renderAll(){
+  const si = $('search-input');
+  const pf = $('payment-filter');
+  const spi = $('search-paid-input');
+  const pfil = $('paid-filter');
   renderProductGrid();
-  renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'allActivos');
-  renderPaidOrders($('search-paid-input')?.value || '', $('paid-filter')?.value || 'pagado');
+  renderOrders(si ? si.value : '', pf ? pf.value : 'allActivos');
+  renderPaidOrders(spi ? spi.value : '', pfil ? pfil.value : 'pagado');
   renderProductsAdmin();
   renderFinanzas();
 }
@@ -1157,6 +1184,12 @@ function toggleTransferDetails(){
   }
 }
 
+/* Helper para agregar listeners si existe el elemento */
+function on(id, evt, fn){
+  const el = $(id);
+  if(el) el.addEventListener(evt, fn);
+}
+
 /* ====== INIT ====== */
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('button:not([type])').forEach(btn => btn.type = 'button');
@@ -1165,38 +1198,39 @@ document.addEventListener('DOMContentLoaded', () => {
   renderAll();
   setAdminMode(false);
 
-  $('admin-login-link')?.addEventListener('click', () => showModal('login-modal'));
-  $('cancel-login')?.addEventListener('click', () => hideModal('login-modal'));
-  $('close-login')?.addEventListener('click', () => hideModal('login-modal'));
-  $('login-btn')?.addEventListener('click', handleLogin);
+  on('admin-login-link','click', () => showModal('login-modal'));
+  on('cancel-login','click', () => hideModal('login-modal'));
+  on('close-login','click', () => hideModal('login-modal'));
+  on('login-btn','click', handleLogin);
 
-  $('enviar-pedido')?.addEventListener('click', handleClientSubmit);
-  $('confirm-order')?.addEventListener('click', submitOrderFromSummary);
-  $('reject-order')?.addEventListener('click', () => { pendingOrderDraft=null; hideModal('order-summary-modal'); });
-  $('close-order-summary')?.addEventListener('click', () => { pendingOrderDraft=null; hideModal('order-summary-modal'); });
-  $('summary-payment-method')?.addEventListener('change', toggleTransferDetails);
+  on('enviar-pedido','click', handleClientSubmit);
+  on('confirm-order','click', submitOrderFromSummary);
+  on('reject-order','click', () => { pendingOrderDraft=null; hideModal('order-summary-modal'); });
+  on('close-order-summary','click', () => { pendingOrderDraft=null; hideModal('order-summary-modal'); });
+  on('summary-payment-method','change', toggleTransferDetails);
 
-  $('logout-btn')?.addEventListener('click', () => { setAdminMode(false); notify('Sesión cerrada'); });
-  $('add-order-btn')?.addEventListener('click', () => { pendingOrderDraft=null; showModal('order-summary-modal'); });
-  $('refresh-btn')?.addEventListener('click', () => { loadAll(); renderAll(); notify('Datos recargados'); });
-  $('export-btn')?.addEventListener('click', exportCsv);
+  on('logout-btn','click', () => { setAdminMode(false); notify('Sesión cerrada'); });
+  on('add-order-btn','click', () => { pendingOrderDraft=null; showModal('order-summary-modal'); });
+  on('refresh-btn','click', () => { loadAll(); renderAll(); notify('Datos recargados'); });
+  on('export-btn','click', exportCsv);
 
-  $('save-products-btn')?.addEventListener('click', saveProductosFromAdmin);
-  $('reset-products-btn')?.addEventListener('click', resetProductos);
+  on('save-products-btn','click', saveProductosFromAdmin);
+  on('reset-products-btn','click', resetProductos);
 
-  $('search-input')?.addEventListener('input', e => renderOrders(e.target.value, $('payment-filter').value));
-  $('payment-filter')?.addEventListener('change', e => renderOrders($('search-input').value, e.target.value));
-  $('search-paid-input')?.addEventListener('input', e => renderPaidOrders(e.target.value, $('paid-filter').value));
-  $('paid-filter')?.addEventListener('change', e => renderPaidOrders($('search-paid-input').value, e.target.value));
+  on('search-input','input', e => renderOrders(e.target.value, ($('payment-filter') && $('payment-filter').value) || 'allActivos'));
+  on('payment-filter','change', e => renderOrders(($('search-input') && $('search-input').value) || '', e.target.value));
+  on('search-paid-input','input', e => renderPaidOrders(e.target.value, ($('paid-filter') && $('paid-filter').value) || 'pagado'));
+  on('paid-filter','change', e => renderPaidOrders(($('search-paid-input') && $('search-paid-input').value) || '', e.target.value));
 
-  $('close-payment')?.addEventListener('click', () => hideModal('payment-modal'));
-  $('toggle-payment-history')?.addEventListener('click', () => {
+  on('close-payment','click', () => hideModal('payment-modal'));
+  on('toggle-payment-history','click', () => {
     const c = $('payment-history-container');
     if(!c) return;
     c.style.display = (c.style.display === 'none' || !c.style.display) ? 'block' : 'none';
   });
 
-  $('thanks-overlay')?.addEventListener('click', () => $('thanks-overlay').style.display = 'none');
+  const tov = $('thanks-overlay');
+  if(tov) tov.addEventListener('click', () => { tov.style.display = 'none'; });
 
   setupTabs();
 });
