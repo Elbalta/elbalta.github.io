@@ -559,6 +559,9 @@ if (typeof structuredClone !== 'function') {
   };
 }
 
+/* ====== Config Sheets ====== */
+const SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxdxMRNL1rw86vA62iI4XAhYRP-yqEBtOGA0GJOsQY/dev';
+
 /* ====== Estado ====== */
 const DEFAULT_PRODUCTOS = {
   paltas: { key:'paltas', nombre:'Paltas', precio:3500, baseUnit:'kg', sacoKg:25, disponible:true },
@@ -606,9 +609,13 @@ function setAdminMode(on){
 
 /* ====== Storage ====== */
 function saveAll(){
-  localStorage.setItem('productos', JSON.stringify(productos));
-  localStorage.setItem('pedidos', JSON.stringify(pedidos));
-  localStorage.setItem('pagos', JSON.stringify(pagos));
+  try{
+    localStorage.setItem('productos', JSON.stringify(productos));
+    localStorage.setItem('pedidos', JSON.stringify(pedidos));
+    localStorage.setItem('pagos', JSON.stringify(pagos));
+  } catch(e){
+    console.warn('No se pudo guardar en localStorage', e);
+  }
 }
 function loadAll(){
   try{
@@ -624,6 +631,34 @@ function loadAll(){
   productos.paltas = Object.assign(structuredClone(DEFAULT_PRODUCTOS.paltas), productos.paltas || {});
   productos.champi = Object.assign(structuredClone(DEFAULT_PRODUCTOS.champi), productos.champi || {});
   productos.frutillas = Object.assign(structuredClone(DEFAULT_PRODUCTOS.frutillas), productos.frutillas || {});
+}
+
+/* ====== Util Sheets ====== */
+function itemsToString(items){
+  const parts = [];
+  if(items.paltas && items.paltas.qty) parts.push(`${items.paltas.qty} ${items.paltas.unit} Paltas`);
+  if(items.champi && items.champi.qty) parts.push(`${items.champi.qty} ${items.champi.unit} Champiñones`);
+  if(items.frutillas && items.frutillas.qty) parts.push(`${items.frutillas.qty} ${items.frutillas.unit} Frutillas`);
+  return parts.join(' | ');
+}
+async function postToSheets(type, data){
+  try{
+    const resp = await fetch(SHEETS_ENDPOINT, {
+      method: 'POST',
+      // text/plain evita preflight CORS en Apps Script
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ type, data })
+    });
+    const json = await resp.json().catch(()=> ({}));
+    if(!resp.ok || !json.ok){
+      throw new Error(json.error || `HTTP ${resp.status}`);
+    }
+    return true;
+  } catch(err){
+    console.error('Sheets error', err);
+    notify('No se pudo enviar a la planilla (guardado local ok)', 4000);
+    return false;
+  }
 }
 
 /* ====== Cálculo total ====== */
@@ -651,7 +686,7 @@ function calcTotalFromItems(items){
 }
 
 /* ====== Pedido / Pagos ====== */
-function crearPedido({ nombre, telefono, items, comentarios, paymentMethod='' }){
+async function crearPedido({ nombre, telefono, items, comentarios, paymentMethod='' }){
   const total = calcTotalFromItems(items);
   const pedido = {
     id: String(Date.now()) + Math.random().toString(36).slice(2,8),
@@ -669,10 +704,25 @@ function crearPedido({ nombre, telefono, items, comentarios, paymentMethod='' })
   pedidos.unshift(pedido);
   saveAll();
   renderAll();
+
+  // Enviar a Sheets (no bloquea el UI)
+  postToSheets('pedido', {
+    id: pedido.id,
+    fecha: pedido.fecha,
+    nombre: pedido.nombre,
+    telefono: pedido.telefono,
+    itemsString: itemsToString(items),
+    itemsJSON: JSON.stringify(items),
+    total: pedido.total,
+    estadoPago: pedido.estadoPago,
+    deudaPendiente: pedido.deudaPendiente,
+    comentarios: pedido.comentarios,
+    paymentMethod: pedido.paymentMethod
+  });
   return pedido;
 }
 
-function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
+async function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
   const pedido = pedidos.find(p => p.id === pedidoId);
   if(!pedido) return false;
   const pago = {
@@ -691,6 +741,21 @@ function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
   else if(pedido.deudaPendiente < pedido.total) pedido.estadoPago = 'parcial';
   saveAll();
   renderAll();
+
+  // Enviar a Sheets
+  postToSheets('pago', {
+    id: pago.id,
+    pedidoId: pago.pedidoId,
+    fecha: pago.fecha,
+    nombre: pedido.nombre,
+    telefono: pedido.telefono,
+    monto: pago.monto,
+    metodo: pago.metodo,
+    notas: pago.notas,
+    totalPedido: pedido.total,
+    deudaPosterior: pedido.deudaPendiente
+  });
+
   return pago;
 }
 
