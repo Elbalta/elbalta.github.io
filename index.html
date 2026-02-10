@@ -99,7 +99,7 @@
       display:flex;flex-direction:column;gap:8px;transition:transform .15s, box-shadow .15s
     }
     .product-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.08)}
-    .product-name{font-weight:700;font-size:1.02rem}
+    .product-name{font-weight:700;fontsize:1.02rem}
     .product-unit{font-size:.92rem;color:var(--muted)}
     .qty-row{display:flex;gap:10px;align-items:center;margin-top:6px}
     .qty-row input{flex:1;padding:12px;border-radius:10px;border:1px solid #ddd}
@@ -639,7 +639,6 @@ async function postToSheets(type, data){
   try{
     const resp = await fetch(SHEETS_ENDPOINT, {
       method: 'POST',
-      // text/plain evita preflight CORS en Apps Script
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ type, data })
     });
@@ -650,7 +649,7 @@ async function postToSheets(type, data){
     return true;
   } catch(err){
     console.error('Sheets error', err);
-    notify('No se pudo enviar a la planilla (guardado local ok)', 4000);
+    notify('No se pudo enviar a la planilla', 4000);
     return false;
   }
 }
@@ -945,7 +944,6 @@ function renderFinanzas(){
       const n = ped ? ped.nombre : 'Pedido';
       const d = document.createElement('div');
       d.style.display='flex';
-      d.style.justjustifyContent='space-between';
       d.style.justifyContent='space-between';
       d.style.padding='4px 0';
       d.innerHTML = `
@@ -1000,319 +998,307 @@ function setupTabs(){
   });
 }
 
-/* ====== Eventos globales (tabla admin) ====== */
-document.addEventListener('click', e => {
-  const btn = e.target.closest('button[data-action]');
+/* ====== Borrado con envío a Sheets ====== */
+async function deletePedido(pedidoId, btn){
+  const idx = pedidos.findIndex(p => p.id === pedidoId);
+  if(idx === -1) return;
+  if(!confirm('¿Borrar este pedido? Se marcará como eliminado en la planilla.')) return;
+
+  let originalHTML;
+  if(btn){
+    btn.disabled = true;
+    originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Borrando...</span>';
+  }
+
+  const removed = pedidos.splice(idx, 1)[0];
+  renderAll();
+
+  const ok = await postToSheets('delete-pedido', { id: pedidoId, fecha: nowISO() });
+
+  if(!ok){
+    pedidos.splice(idx, 0, removed);
+    renderAll();
+    notify('No se pudo borrar en Sheets. Se revirtió el borrado.', 4000);
+  } else {
+    notify('Pedido marcado como eliminado en Sheets.', 2500);
+  }
+
+  if(btn){
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+  }
+}
+
+/* ====== Eventos ====== */
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
   if(!btn) return;
-  const action = btn.getAttribute('data-action');
-  const id = btn.getAttribute('data-id');
-  if(action === 'open-pay') openPaymentModal(id);
-  else if(action === 'view') viewPedidoDetails(id);
-  else if(action === 'delete'){
-    if(confirm('Eliminar pedido? Esta acción es irreversible.')){
-      pedidos = pedidos.filter(pp => pp.id !== id);
-      renderAll(); notify('Pedido eliminado');
-    }
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+
+  if(action === 'delete'){
+    deletePedido(id, btn);
+  } else if(action === 'open-pay'){
+    openPaymentModal(id);
+  } else if(action === 'view'){
+    viewOrder(id);
   }
 });
 
-/* ====== Ver pedido simple ====== */
-function viewPedidoDetails(id){
-  const p = pedidos.find(x => x.id === id);
-  if(!p) return notify('Pedido no encontrado', 2500);
-  let text = `Pedido: ${p.nombre}\nTel: ${p.telefono}\nFecha: ${new Date(p.fecha).toLocaleString()}\nProductos:\n`;
-  if(p.items && p.items.paltas && p.items.paltas.qty) text += ` - ${p.items.paltas.qty} ${p.items.paltas.unit} Paltas\n`;
-  if(p.items && p.items.champi && p.items.champi.qty) text += ` - ${p.items.champi.qty} ${p.items.champi.unit} Champiñones\n`;
-  if(p.items && p.items.frutillas && p.items.frutillas.qty) text += ` - ${p.items.frutillas.qty} ${p.items.frutillas.unit} Frutillas\n`;
-  text += `Total: ${money(p.total)}\nPendiente: ${money(p.deudaPendiente)}\nComentarios: ${p.comentarios || '-'}`;
-  alert(text);
-}
-
-/* ====== Pago modal ====== */
-function openPaymentModal(pedidoId){
-  const p = pedidos.find(x => x.id === pedidoId);
-  if(!p) return notify('Pedido no encontrado', 2500);
-  currentPaymentPedidoId = pedidoId;
-  $('payment-client-info').textContent = `${p.nombre} (${p.telefono}) — ${new Date(p.fecha).toLocaleString()}`;
-  $('payment-amount').value = p.deudaPendiente || p.total || 0;
-  $('payment-notes').value = '';
-  const histCont = $('payment-history-container');
-  if(histCont) histCont.style.display = 'none';
-  renderPaymentHistoryForPedido(pedidoId);
-  showModal('payment-modal');
-}
-function renderPaymentHistoryForPedido(pedidoId){
-  const p = pedidos.find(x => x.id === pedidoId);
-  const cont = $('modal-payment-history');
-  if(!cont) return;
-  cont.innerHTML = '';
-  if(!p || !p.pagos || p.pagos.length === 0){
-    cont.textContent = 'No hay pagos registrados';
-    return;
-  }
-  p.pagos.slice().reverse().forEach(pa => {
-    const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.justifyContent = 'space-between';
-    div.style.padding = '6px 0';
-    div.innerHTML = `<div>${new Date(pa.fecha).toLocaleString()} <span class="muted small">(${escapeHTML(pa.metodo)})</span></div><div style="font-weight:700">${money(pa.monto)}</div>`;
-    cont.appendChild(div);
-  });
-}
-
-/* ====== Guardar pago único ====== */
-function handleSavePayment(){
-  if(!currentPaymentPedidoId) return notify('No hay pedido seleccionado', 1600);
-  const pedido = pedidos.find(p => p.id === currentPaymentPedidoId);
-  if(!pedido) return notify('Pedido no encontrado', 1600);
-
-  const monto = Number($('payment-amount').value) || 0;
-  const metodo = $('payment-method').value;
-  const notas = $('payment-notes').value || '';
-
-  if(monto <= 0) return alert('Ingresa un monto válido');
-
-  registrarPago(currentPaymentPedidoId, { monto, metodo, notas, fecha: nowISO() });
-  if(pedido.deudaPendiente <= 0){
-    notify('Pago registrado y pedido marcado como PAGADO');
+/* Admin login/logout */
+function handleLogin(){
+  const email = $('admin-email')?.value || '';
+  const pass  = $('admin-password')?.value || '';
+  if(email.trim().toLowerCase() === ADMIN_EMAIL && pass === ADMIN_PASS){
+    $('login-error').style.display = 'none';
+    hideModal('login-modal');
+    setAdminMode(true);
   } else {
-    notify('Abono registrado. Queda saldo pendiente.');
+    $('login-error').style.display = 'block';
   }
-  hideModal('payment-modal');
+}
+function handleLogout(){
+  setAdminMode(false);
 }
 
-/* ====== Helpers UI Cliente ====== */
-function buildItemsFromForm(){
+/* Pedido cliente */
+function gatherClientItems(){
+  ensureProductos();
+  const qtyInputs = document.querySelectorAll('.client-qty');
   const items = {};
-  Object.keys(productos || {}).forEach(key => {
-    const input = document.querySelector(`input.client-qty[data-product="${key}"]`);
-    if(!input) return;
-    const qty = Number(input.value);
+  qtyInputs.forEach(input => {
+    const key = input.dataset.product;
+    const qty = Number(input.value)||0;
     if(qty > 0){
-      items[key] = { qty, unit: productos[key].baseUnit };
+      const prod = productos[key];
+      const unit = prod ? prod.baseUnit : 'unit';
+      items[key] = { qty, unit };
     }
   });
   return items;
 }
-
-function fillSummary(items, total){
-  const summary = $('summary-items');
-  if(!summary) return;
-  summary.innerHTML = '';
-  const lines = [];
-  if(items.paltas) lines.push(`<div><strong>Paltas:</strong> ${items.paltas.qty} ${items.paltas.unit}</div>`);
-  if(items.champi) lines.push(`<div><strong>Champiñones:</strong> ${items.champi.qty} ${items.champi.unit}</div>`);
-  if(items.frutillas) lines.push(`<div><strong>Frutillas:</strong> ${items.frutillas.qty} ${items.frutillas.unit}</div>`);
-  summary.innerHTML = lines.join('') || '<div class="muted">Sin productos</div>';
-  const st = $('summary-total'); if(st) st.textContent = money(total);
-}
-
-function clearClientForm(){
-  const n = $('nombre'); if(n) n.value = '';
-  const t = $('telefono'); if(t) t.value = '';
-  const c = $('comentarios'); if(c) c.value = '';
-  document.querySelectorAll('.client-qty').forEach(inp => inp.value = 0);
-}
-
-/* ====== Cliente: flujo pedido ====== */
-function handleClientSubmit(){
-  ensureProductos();
-  const nombre = ($('nombre') && $('nombre').value || '').trim();
-  const telefono = normPhone($('telefono') && $('telefono').value || '');
-  const comentarios = ($('comentarios') && $('comentarios').value || '').trim();
-  const items = buildItemsFromForm();
-
-  if(!nombre) return notify('Ingresa tu nombre', 2500);
-  if(!telefono) return notify('Ingresa tu teléfono', 2500);
-  if(Object.keys(items).length === 0) return notify('Debes seleccionar al menos un producto', 2500);
-
+function openOrderSummary(){
+  const nombre = $('nombre')?.value.trim();
+  const telefono = normPhone($('telefono')?.value);
+  const comentarios = $('comentarios')?.value.trim();
+  const items = gatherClientItems();
+  if(!nombre || !telefono){
+    notify('Completa nombre y teléfono', 2500); return;
+  }
+  if(!Object.keys(items).length){
+    notify('Agrega al menos un producto', 2500); return;
+  }
   const total = calcTotalFromItems(items);
-  pendingOrderDraft = { nombre, telefono, comentarios, items, total };
-  fillSummary(items, total);
-  const spm = $('summary-payment-method');
-  if(spm) spm.value = 'efectivo';
-  toggleTransferDetails();
+  pendingOrderDraft = { nombre, telefono, comentarios, items };
+  const list = $('summary-items');
+  list.innerHTML = Object.keys(items).map(k=>{
+    const it = items[k];
+    return `<div style="padding:4px 0;"><strong>${escapeHTML(productos[k].nombre)}</strong>: ${it.qty} ${it.unit}</div>`;
+  }).join('');
+  $('summary-total').textContent = money(total);
+  $('summary-payment-method').value = 'efectivo';
+  $('summary-transfer-details').style.display = 'none';
   showModal('order-summary-modal');
 }
 
-function submitOrderFromSummary(){
-  ensureProductos();
-  if(!pendingOrderDraft) return notify('No hay pedido en curso', 2000);
-  const spm = $('summary-payment-method');
-  const paymentMethod = spm ? spm.value : 'efectivo';
-  crearPedido({
-    nombre: pendingOrderDraft.nombre,
-    telefono: pendingOrderDraft.telefono,
-    comentarios: pendingOrderDraft.comentarios,
-    items: pendingOrderDraft.items,
+/* Confirmar pedido */
+async function confirmOrder(){
+  if(!pendingOrderDraft) return;
+  const paymentMethod = $('summary-payment-method').value;
+  const pedido = await crearPedido({
+    ...pendingOrderDraft,
     paymentMethod
   });
-  hideModal('order-summary-modal');
   pendingOrderDraft = null;
-  clearClientForm();
+  hideModal('order-summary-modal');
   showThanks();
-  notify('Pedido enviado');
 }
 
+/* Mostrar gracias */
 function showThanks(){
-  const ov = $('thanks-overlay');
-  if(!ov) return;
-  ov.style.display = 'flex';
-  setTimeout(()=>{ ov.style.display='none'; }, 2200);
+  const overlay = $('thanks-overlay');
+  if(!overlay) return;
+  overlay.style.display = 'flex';
+  setTimeout(()=> overlay.style.display = 'none', 2200);
 }
 
-/* ====== Admin: productos ====== */
-function saveProductosFromAdmin(){
-  ensureProductos();
-  Object.keys(productos).forEach(k => {
-    const nameEl = document.getElementById(`cfg-${k}-name`);
-    const priceEl = document.getElementById(`cfg-${k}-price`);
-    const baseEl = document.getElementById(`cfg-${k}-baseunit`);
-    const availEl = document.getElementById(`cfg-${k}-avail`);
-    const name = nameEl ? nameEl.value : productos[k].nombre;
-    const price = Number(priceEl ? priceEl.value : productos[k].precio) || productos[k].precio;
-    const baseUnit = baseEl ? baseEl.value : productos[k].baseUnit;
-    const disponible = (availEl ? availEl.value : 'true') === 'true';
-    productos[k] = Object.assign({}, productos[k], { nombre:name, precio:price, baseUnit, disponible });
+/* Ver pedido (modal simple) */
+function viewOrder(id){
+  const p = pedidos.find(x=>x.id===id);
+  if(!p){ notify('Pedido no encontrado'); return; }
+  const items = p.items || {};
+  const lines = [];
+  if(items.paltas && Number(items.paltas.qty)) lines.push(`${items.paltas.qty} ${items.paltas.unit} Paltas`);
+  if(items.champi && Number(items.champi.qty)) lines.push(`${items.champi.qty} ${items.champi.unit} Champiñones`);
+  if(items.frutillas && Number(items.frutillas.qty)) lines.push(`${items.frutillas.qty} ${items.frutillas.unit} Frutillas`);
+  alert(
+    `Pedido de ${p.nombre}\nTel: ${p.telefono}\n\nProductos:\n- ${lines.join('\n- ')}\n\nTotal: ${money(p.total)}\nEstado: ${p.estadoPago.toUpperCase()}\nComentarios: ${p.comentarios || '—'}`
+  );
+}
+
+/* Pago */
+function openPaymentModal(id){
+  currentPaymentPedidoId = id;
+  const p = pedidos.find(x=>x.id===id);
+  if(!p) { notify('Pedido no encontrado'); return; }
+  $('payment-client-info').innerHTML = `<strong>${escapeHTML(p.nombre)}</strong><br><span class="small muted">${escapeHTML(p.telefono)}</span>`;
+  $('payment-amount').value = p.deudaPendiente || p.total || 0;
+  $('payment-notes').value = '';
+  $('payment-history-container').style.display = 'none';
+  renderPaymentHistory(p);
+  showModal('payment-modal');
+}
+function renderPaymentHistory(p){
+  const box = $('modal-payment-history'); if(!box) return;
+  box.innerHTML = '';
+  (p.pagos || []).forEach(pa => {
+    const div = document.createElement('div');
+    div.style.padding='4px 0';
+    div.innerHTML = `<strong>${money(pa.monto)}</strong> — ${escapeHTML(pa.metodo)}<br><span class="small muted">${new Date(pa.fecha).toLocaleString()} ${escapeHTML(pa.notas||'')}</span>`;
+    box.appendChild(div);
   });
-  renderAll();
-  notify('Productos guardados');
+}
+async function handleSavePayment(){
+  if(!currentPaymentPedidoId) return;
+  const monto = $('payment-amount')?.value;
+  const metodo = $('payment-method')?.value;
+  const notas = $('payment-notes')?.value;
+  if(!monto || Number(monto)<=0){ notify('Monto inválido'); return; }
+  await registrarPago(currentPaymentPedidoId, { monto, metodo, notas });
+  hideModal('payment-modal');
 }
 
-function resetProductos(){
+/* Productos admin */
+function saveProducts(){
+  const keys = Object.keys(productos);
+  keys.forEach(k => {
+    const name = $(`cfg-${k}-name`)?.value || productos[k].nombre;
+    const price = Number($(`cfg-${k}-price`)?.value)||productos[k].precio;
+    const baseUnit = $(`cfg-${k}-baseunit`)?.value || productos[k].baseUnit;
+    const avail = ($(`cfg-${k}-avail`)?.value || 'true') === 'true';
+    productos[k] = { ...productos[k], nombre:name, precio:price, baseUnit, disponible:avail };
+  });
+  renderProductGrid();
+  renderProductsAdmin();
+  renderAll();
+  notify('Productos guardados (local)', 2000);
+}
+function resetProducts(){
   productos = structuredClone(DEFAULT_PRODUCTOS);
+  renderProductGrid();
+  renderProductsAdmin();
   renderAll();
-  notify('Productos reiniciados');
+  notify('Productos reseteados', 2000);
 }
 
-/* ====== Admin: login ====== */
-function handleLogin(){
-  const email = (($('admin-email') && $('admin-email').value) || '').trim().toLowerCase();
-  const pass = ($('admin-password') && $('admin-password').value) || '';
-  if(email === ADMIN_EMAIL && pass === ADMIN_PASS){
-    const le = $('login-error'); if(le) le.style.display = 'none';
-    setAdminMode(true);
-    hideModal('login-modal');
-    notify('Sesión iniciada como admin');
-  } else {
-    const le = $('login-error'); if(le) le.style.display = 'block';
-  }
-}
-
-/* ====== Export CSV ====== */
-function exportCsv(){
-  if(!pedidos.length) return notify('No hay pedidos para exportar');
-  const headers = ['id','nombre','telefono','total','estadoPago','deudaPendiente','fecha','comentarios','items','paymentMethod'];
-  const rows = pedidos.map(p => {
-    const items = [];
-    if(p.items && p.items.paltas) items.push(`paltas:${p.items.paltas.qty}${p.items.paltas.unit}`);
-    if(p.items && p.items.champi) items.push(`champi:${p.items.champi.qty}${p.items.champi.unit}`);
-    if(p.items && p.items.frutillas) items.push(`frutillas:${p.items.frutillas.qty}${p.items.frutillas.unit}`);
-    return [
-      p.id,
-      `"${(p.nombre||'').replace(/"/g,'""')}"`,
-      `"${(p.telefono||'').replace(/"/g,'""')}"`,
-      p.total,
-      p.estadoPago,
-      p.deudaPendiente,
-      p.fecha,
-      `"${(p.comentarios||'').replace(/"/g,'""')}"`,
-      `"${items.join(';').replace(/"/g,'""')}"`,
-      p.paymentMethod || ''
-    ].join(',');
-  });
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+/* Export CSV */
+function exportCSV(){
+  const rows = [
+    ['id','fecha','nombre','telefono','total','estadoPago','deuda','comentarios','items'],
+    ...pedidos.map(p => [
+      p.id, p.fecha, p.nombre, p.telefono, p.total, p.estadoPago, p.deudaPendiente, p.comentarios, itemsToString(p.items||{})
+    ])
+  ];
+  const csv = rows.map(r => r.map(x=> `"${String(x||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `pedidos-${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);
+  a.download = 'pedidos.csv';
   a.click();
-  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
-/* ====== Render All ====== */
+/* Refresh (placeholder) */
+function refreshData(){
+  renderAll();
+  notify('Actualizado', 1500);
+}
+
+/* Render global */
 function renderAll(){
-  ensureProductos();
-  const si = $('search-input');
-  const pf = $('payment-filter');
-  const spi = $('search-paid-input');
-  const pfil = $('paid-filter');
-  renderProductGrid();
-  renderOrders(si ? si.value : '', pf ? pf.value : 'allActivos');
-  renderPaidOrders(spi ? spi.value : '', pfil ? pfil.value : 'pagado');
+  renderOrders($('search-input')?.value, $('payment-filter')?.value);
+  renderPaidOrders($('search-paid-input')?.value, $('paid-filter')?.value);
   renderProductsAdmin();
   renderFinanzas();
 }
 
-/* ====== Toggle transferencia detalle ====== */
-function toggleTransferDetails(){
-  const sel = $('summary-payment-method');
-  const box = $('summary-transfer-details');
-  if(sel && box){
-    box.style.display = sel.value === 'transferencia' ? 'block' : 'none';
-  }
-}
-
-/* Helper para agregar listeners si existe el elemento */
-function on(id, evt, fn){
-  const el = $(id);
-  if(el) el.addEventListener(evt, fn);
-}
-
-/* ====== INIT ====== */
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('button:not([type])').forEach(btn => btn.type = 'button');
-
+/* Init */
+function init(){
   loadAll();
+  renderProductGrid();
   renderAll();
-  setAdminMode(false);
 
-  on('admin-login-link','click', () => showModal('login-modal'));
-  on('cancel-login','click', () => hideModal('login-modal'));
-  on('close-login','click', () => hideModal('login-modal'));
-  on('login-btn','click', handleLogin);
+  // Botones cliente
+  $('enviar-pedido')?.addEventListener('click', openOrderSummary);
+  $('confirm-order')?.addEventListener('click', confirmOrder);
+  $('reject-order')?.addEventListener('click', ()=> hideModal('order-summary-modal'));
+  $('summary-payment-method')?.addEventListener('change', (e)=>{
+    $('summary-transfer-details').style.display = e.target.value === 'transferencia' ? 'block' : 'none';
+  });
+  $('close-order-summary')?.addEventListener('click', ()=> hideModal('order-summary-modal'));
 
-  on('enviar-pedido','click', handleClientSubmit);
-  on('confirm-order','click', submitOrderFromSummary);
-  on('reject-order','click', () => { pendingOrderDraft=null; hideModal('order-summary-modal'); });
-  on('close-order-summary','click', () => { pendingOrderDraft=null; hideModal('order-summary-modal'); });
-  on('summary-payment-method','change', toggleTransferDetails);
+  // Admin login
+  $('admin-login-link')?.addEventListener('click', ()=> showModal('login-modal'));
+  $('close-login')?.addEventListener('click', ()=> hideModal('login-modal'));
+  $('cancel-login')?.addEventListener('click', ()=> hideModal('login-modal'));
+  $('login-btn')?.addEventListener('click', handleLogin);
 
-  on('logout-btn','click', () => { setAdminMode(false); notify('Sesión cerrada'); });
-  on('add-order-btn','click', () => { pendingOrderDraft=null; showModal('order-summary-modal'); });
-  on('refresh-btn','click', () => { loadAll(); renderAll(); notify('Datos recargados'); });
-  on('export-btn','click', exportCsv);
+  // Logout
+  $('logout-btn')?.addEventListener('click', handleLogout);
 
-  on('save-products-btn','click', saveProductosFromAdmin);
-  on('reset-products-btn','click', resetProductos);
+  // Tab filters
+  $('search-input')?.addEventListener('input', ()=> renderOrders($('search-input').value, $('payment-filter').value));
+  $('payment-filter')?.addEventListener('change', ()=> renderOrders($('search-input').value, $('payment-filter').value));
+  $('search-paid-input')?.addEventListener('input', ()=> renderPaidOrders($('search-paid-input').value, $('paid-filter').value));
+  $('paid-filter')?.addEventListener('change', ()=> renderPaidOrders($('search-paid-input').value, $('paid-filter').value));
 
-  on('search-input','input', e => renderOrders(e.target.value, ($('payment-filter') && $('payment-filter').value) || 'allActivos'));
-  on('payment-filter','change', e => renderOrders(($('search-input') && $('search-input').value) || '', e.target.value));
-  on('search-paid-input','input', e => renderPaidOrders(e.target.value, ($('paid-filter') && $('paid-filter').value) || 'pagado'));
-  on('paid-filter','change', e => renderPaidOrders(($('search-paid-input') && $('search-paid-input').value) || '', e.target.value));
+  // Productos admin
+  $('save-products-btn')?.addEventListener('click', saveProducts);
+  $('reset-products-btn')?.addEventListener('click', resetProducts);
 
-  on('close-payment','click', () => hideModal('payment-modal'));
-  on('toggle-payment-history','click', () => {
+  // Export / refresh
+  $('export-btn')?.addEventListener('click', exportCSV);
+  $('refresh-btn')?.addEventListener('click', refreshData);
+
+  // Payment modal
+  $('close-payment')?.addEventListener('click', ()=> hideModal('payment-modal'));
+  $('toggle-payment-history')?.addEventListener('click', ()=>{
     const c = $('payment-history-container');
     if(!c) return;
-    c.style.display = (c.style.display === 'none' || !c.style.display) ? 'block' : 'none';
+    c.style.display = c.style.display === 'none' ? 'block' : 'none';
   });
 
-  const tov = $('thanks-overlay');
-  if(tov) tov.addEventListener('click', () => { tov.style.display = 'none'; });
-
-  setupTabs();
-});
-
-/* ====== Acceso rápido ESC para cerrar modales ====== */
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape'){
-    ['login-modal','order-summary-modal','payment-modal'].forEach(hideModal);
+  // Add order from admin -> flujo cliente
+  const addOrderBtn = $('add-order-btn');
+  if(addOrderBtn){
+    addOrderBtn.addEventListener('click', () => {
+      setAdminMode(false);
+      const form = $('cliente-card');
+      if(form){
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        $('nombre')?.focus();
+      }
+    });
   }
-});
+
+  // Close modal by overlay click
+  document.querySelectorAll('.modal').forEach(modal=>{
+    modal.addEventListener('click', (e)=>{
+      if(e.target === modal) modal.style.display='none';
+    });
+  });
+
+  // Keyboard ESC closes modals
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape'){
+      document.querySelectorAll('.modal').forEach(m=> m.style.display='none');
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
