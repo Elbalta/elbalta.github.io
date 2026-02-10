@@ -55,13 +55,13 @@
     }
     .brand h1{
       font-size:1.15rem;margin:0;
-      color:#ffffff; /* Título en blanco para resaltar */
+      color:#ffffff;
     }
     .brand p{
       margin:0;
       font-size:.9rem;
       opacity:.95;
-      color:#ffffff; /* color blanco */
+      color:#ffffff;
     }
     .header-actions{display:flex;gap:8px;align-items:center}
 
@@ -179,8 +179,8 @@
       box-shadow:inset 0 1px 2px rgba(0,0,0,.06);
     }
     .storage-bar .seg{height:100%}
-    .seg-cobrado{background:#2e7d32;}      /* verde (cobrado) */
-    .seg-pendiente{background:#f59e0b;}    /* amarillo (pendiente) */
+    .seg-cobrado{background:#2e7d32;}
+    .seg-pendiente{background:#f59e0b;}
     .storage-legend{font-size:.85rem;color:#6b7280}
 
     /* MENSAJE GRACIAS CENTRADO */
@@ -204,7 +204,7 @@
     .thanks-card h3{
       margin:0 0 6px 0;
       font-size:1.1rem;
-      color:var(--primary-strong);
+      color:#2e7d32;
     }
     .thanks-card p{
       margin:0;
@@ -234,7 +234,7 @@
     .admin-controls .btn.small{
       border-radius:999px;
       padding:8px 14px;
-      color:#ffffff; /* texto blanco para ver bien */
+      color:#ffffff;
     }
     .btn-pill-green{background:linear-gradient(90deg,#2e7d32,#1b5e20);}
     .btn-pill-gray{background:linear-gradient(90deg,#9ca3af,#6b7280);}
@@ -253,7 +253,6 @@
       header{padding:14px}
     }
 
-    /* Ocultar formulario de cliente cuando admin está activo */
     body.admin-mode #cliente-card { display: none !important; }
   </style>
 </head>
@@ -267,7 +266,7 @@
     </div>
   </div>
   <div class="header-actions">
-    <button id="admin-login-link" class="btn"><i class="fas fa-user-shield" style="margin-right:8px"></i> Administrador</button>
+    <button id="admin-login-link" class="btn" type="button"><i class="fas fa-user-shield" style="margin-right:8px"></i> Administrador</button>
   </div>
 </header>
 
@@ -298,7 +297,7 @@
       </div>
 
       <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end">
-        <button id="enviar-pedido" class="btn"><i class="fas fa-paper-plane" style="margin-right:8px"></i> Enviar pedido</button>
+        <button id="enviar-pedido" class="btn" type="button"><i class="fas fa-paper-plane" style="margin-right:8px"></i> Enviar pedido</button>
       </div>
     </div>
   </div>
@@ -311,18 +310,18 @@
         <div class="small muted">Gestiona productos, pedidos y pagos</div>
       </div>
       <div class="admin-controls">
-        <button id="add-order-btn" class="btn small btn-pill-green">Agregar pedido</button>
-        <button id="export-btn" class="btn small btn-pill-gray">Exportar CSV</button>
-        <button id="refresh-btn" class="btn small btn-pill-green" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Actualizar</button>
-        <button id="logout-btn" class="btn small btn-pill-red">Salir</button>
+        <button id="add-order-btn" class="btn small btn-pill-green" type="button">Agregar pedido</button>
+        <button id="export-btn" class="btn small btn-pill-gray" type="button">Exportar CSV</button>
+        <button id="refresh-btn" class="btn small btn-pill-green" type="button" style="background:linear-gradient(90deg,#388e3c,#1b5e20)">Actualizar</button>
+        <button id="logout-btn" class="btn small btn-pill-red" type="button">Salir</button>
       </div>
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" data-tab="tab-pedidos">Pedidos activos</button>
-      <button class="tab-btn" data-tab="tab-pagos">Pagos / Pagados</button>
-      <button class="tab-btn" data-tab="tab-productos">Productos</button>
-      <button class="tab-btn" data-tab="tab-finanzas">Finanzas</button>
+      <button class="tab-btn active" data-tab="tab-pedidos" type="button">Pedidos activos</button>
+      <button class="tab-btn" data-tab="tab-pagos" type="button">Pagos / Pagados</button>
+      <button class="tab-btn" data-tab="tab-productos" type="button">Productos</button>
+      <button class="tab-btn" data-tab="tab-finanzas" type="button">Finanzas</button>
     </div>
 
     <!-- PEDIDOS ACTIVOS -->
@@ -387,8 +386,8 @@
         <h4 style="margin:0">Configuración de productos (Administrador)</h4>
         <div id="products-admin" style="margin-top:10px"></div>
         <div style="margin-top:10px;display:flex;gap:8px;">
-          <button id="save-products-btn" class="btn">Guardar productos</button>
-          <button id="reset-products-btn" class="btn danger">Reset</button>
+          <button id="save-products-btn" class="btn" type="button">Guardar productos</button>
+          <button id="reset-products-btn" class="btn danger" type="button">Reset</button>
         </div>
         <div class="small muted" style="margin-top:8px;">
           Si cambias la unidad, ajusta el parámetro asociado (saco kg / pack gramos / bloque gramos) para cálculos correctos.
@@ -415,7 +414,6 @@
           </div>
         </div>
 
-        <!-- Gráfico estilo barra de memoria (iPhone) -->
         <div class="card" style="margin-top:12px">
           <div class="storage-card-title">Distribución cobros (estilo memoria)</div>
           <div id="fin-storage-bar" class="storage-bar" aria-label="Distribución memoria estilo iPhone">
@@ -468,8 +466,8 @@
       </div>
 
       <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-        <button id="confirm-order" class="btn">Confirmar pedido</button>
-        <button id="reject-order" class="btn gray">Cancelar</button>
+        <button id="confirm-order" class="btn" type="button">Confirmar pedido</button>
+        <button id="reject-order" class="btn gray" type="button">Cancelar</button>
       </div>
     </div>
 
@@ -517,11 +515,10 @@
     </div>
 
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-      <!-- onclick directo para asegurar cierre inmediato -->
-      <button id="save-payment" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)" onclick="handleSavePayment()">
+      <button id="save-payment" class="btn" style="background:linear-gradient(90deg,#388e3c,#1b5e20)" type="button" onclick="handleSavePayment()">
         Guardar pago / marcar pagado
       </button>
-      <button id="toggle-payment-history" class="btn gray">Historial</button>
+      <button id="toggle-payment-history" class="btn gray" type="button">Historial</button>
     </div>
 
     <div id="payment-history-container" style="display:none;margin-top:12px;">
@@ -544,8 +541,8 @@
       <input id="admin-password" type="password" placeholder="admin123">
     </div>
     <div style="display:flex;gap:8px;margin-top:12px;">
-      <button id="login-btn" class="btn">Iniciar sesión</button>
-      <button id="cancel-login" class="btn gray">Cancelar</button>
+      <button id="login-btn" class="btn" type="button">Iniciar sesión</button>
+      <button id="cancel-login" class="btn gray" type="button">Cancelar</button>
     </div>
     <div id="login-error" class="muted" style="color:var(--danger);display:none;margin-top:8px;">Credenciales incorrectas</div>
   </div>
@@ -561,12 +558,15 @@ const DEFAULT_PRODUCTOS = {
   champi: { key:'champi', nombre:'Champiñones', precio:2500, baseUnit:'caja', packGramos:250, disponible:true },
   frutillas: { key:'frutillas', nombre:'Frutillas', precio:1200, baseUnit:'g', bloqueGramos:100, disponible:true }
 };
+const ADMIN_EMAIL = 'admin@valledor.com';
+const ADMIN_PASS  = 'admin123';
 
 let productos = structuredClone(DEFAULT_PRODUCTOS);
 let pedidos = [];
 let pagos = [];
 let isAdmin = false;
 let currentPaymentPedidoId = null;
+let pendingOrderDraft = null;
 
 const $ = id => document.getElementById(id);
 const money = n => `$${(Number(n)||0).toLocaleString('es-CL')}`;
@@ -688,10 +688,11 @@ function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
 
 /* ====== Render ====== */
 function renderProductGrid(){
-  const grid = $('product-grid'); grid.innerHTML = '';
+  const grid = $('product-grid'); if(!grid) return;
+  grid.innerHTML = '';
   Object.keys(productos).forEach(key => {
     const p = productos[key];
-    if(!p.disponible) return; // NO mostrar productos desactivados
+    if(!p.disponible) return;
     const card = document.createElement('div'); card.className = 'product-card';
     const step = (p.baseUnit === 'g') ? 100 : 1;
     card.innerHTML = `
@@ -711,8 +712,7 @@ function renderOrders(filterText = '', paymentFilter = 'allActivos'){
   tbody.innerHTML = '';
   const ft = (filterText || '').toLowerCase();
   pedidos.forEach(p => {
-    if(p.estadoPago === 'pagado') return; // sólo activos
-
+    if(p.estadoPago === 'pagado') return;
     if(ft){
       const found = (p.nombre || '').toLowerCase().includes(ft) || (p.telefono || '').toLowerCase().includes(ft);
       if(!found) return;
@@ -743,13 +743,13 @@ function renderOrders(filterText = '', paymentFilter = 'allActivos'){
       <td>${new Date(p.fecha).toLocaleString()}</td>
       <td class="actions" style="text-align:right">
         <div class="order-actions">
-          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}">
+          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}" type="button">
             <i class="fas fa-money-bill-wave"></i><span>Pago</span>
           </button>
-          <button class="icon-btn icon-view" data-action="view" data-id="${p.id}">
+          <button class="icon-btn icon-view" data-action="view" data-id="${p.id}" type="button">
             <i class="fas fa-eye"></i><span>Ver</span>
           </button>
-          <button class="icon-btn icon-delete" data-action="delete" data-id="${p.id}">
+          <button class="icon-btn icon-delete" data-action="delete" data-id="${p.id}" type="button">
             <i class="fas fa-trash"></i><span>Borrar</span>
           </button>
         </div>
@@ -799,10 +799,10 @@ function renderPaidOrders(searchText = '', filter = 'pagado'){
       <td>${lastPayment}</td>
       <td class="actions" style="text-align:right">
         <div class="order-actions">
-          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}">
+          <button class="icon-btn icon-pay" data-action="open-pay" data-id="${p.id}" type="button">
             <i class="fas fa-money-bill-wave"></i><span>Pago</span>
           </button>
-          <button class="icon-btn icon-view" data-action="view" data-id="${p.id}">
+          <button class="icon-btn icon-view" data-action="view" data-id="${p.id}" type="button">
             <i class="fas fa-eye"></i><span>Ver</span>
           </button>
         </div>
@@ -843,7 +843,6 @@ function renderFinanzas(){
   if($('fin-pendiente')) $('fin-pendiente').textContent = money(totalPendiente);
   if($('fin-cobrado')) $('fin-cobrado').textContent = money(totalCobrado);
 
-  /* Lista de pedidos con deuda */
   const lp = $('fin-pedidos-list'); if(lp){
     lp.innerHTML = '';
     pedidos
@@ -858,7 +857,6 @@ function renderFinanzas(){
       });
   }
 
-  /* Últimos pagos */
   const lpa = $('fin-pagos-list'); if(lpa){
     lpa.innerHTML = '';
     pagos.slice(0,15).forEach(pa => {
@@ -879,14 +877,12 @@ function renderFinanzas(){
     });
   }
 
-  /* Barra estilo memoria: proporción cobrado vs pendiente respecto del total vendido */
   const bar = $('fin-storage-bar'); const legend = $('fin-storage-legend');
   if(bar && legend){
     let cobradoPct = 0, pendientePct = 0;
     if(totalPedidos > 0){
       cobradoPct = Math.max(0, Math.min(100, Math.round((totalCobrado / totalPedidos) * 100)));
       pendientePct = Math.max(0, Math.min(100, Math.round((totalPendiente / totalPedidos) * 100)));
-      /* Ajuste si por redondeo se excede 100 */
       const sum = cobradoPct + pendientePct;
       if(sum > 100){
         const factor = 100 / sum;
@@ -980,7 +976,7 @@ function renderPaymentHistoryForPedido(pedidoId){
   });
 }
 
-/* ====== Guardar pago único (abono o total) ====== */
+/* ====== Guardar pago único ====== */
 function handleSavePayment(){
   if(!currentPaymentPedidoId) return notify('No hay pedido seleccionado', 1600);
   const pedido = pedidos.find(p => p.id === currentPaymentPedidoId);
@@ -998,63 +994,145 @@ function handleSavePayment(){
   } else {
     notify('Abono registrado. Queda saldo pendiente.');
   }
-  renderPaymentHistoryForPedido(currentPaymentPedidoId);
-
-  // Cerrar el modal automáticamente
   hideModal('payment-modal');
 }
 
-/* ====== CSV ====== */
-function buildOrdersCSV(){
-  const headers = [
-    'id','nombre','telefono','total','estadoPago','deudaPendiente','fecha','comentarios','paymentMethod',
-    'items_paltas','items_champi','items_frutillas'
-  ];
+/* ====== Helpers UI Cliente ====== */
+function buildItemsFromForm(){
+  const items = {};
+  Object.keys(productos).forEach(key => {
+    const input = document.querySelector(`input.client-qty[data-product="${key}"]`);
+    if(!input) return;
+    const qty = Number(input.value);
+    if(qty > 0){
+      items[key] = { qty, unit: productos[key].baseUnit };
+    }
+  });
+  return items;
+}
+
+function fillSummary(items, total){
+  const summary = $('summary-items');
+  summary.innerHTML = '';
+  const lines = [];
+  if(items.paltas) lines.push(`<div><strong>Paltas:</strong> ${items.paltas.qty} ${items.paltas.unit}</div>`);
+  if(items.champi) lines.push(`<div><strong>Champiñones:</strong> ${items.champi.qty} ${items.champi.unit}</div>`);
+  if(items.frutillas) lines.push(`<div><strong>Frutillas:</strong> ${items.frutillas.qty} ${items.frutillas.unit}</div>`);
+  summary.innerHTML = lines.join('') || '<div class="muted">Sin productos</div>';
+  $('summary-total').textContent = money(total);
+}
+
+function clearClientForm(){
+  $('nombre').value = '';
+  $('telefono').value = '';
+  $('comentarios').value = '';
+  document.querySelectorAll('.client-qty').forEach(inp => inp.value = (inp.getAttribute('step') === '1' ? 0 : 0));
+}
+
+/* ====== Cliente: flujo pedido ====== */
+function handleClientSubmit(){
+  const nombre = $('nombre').value.trim();
+  const telefono = normPhone($('telefono').value);
+  const comentarios = $('comentarios').value.trim();
+  const items = buildItemsFromForm();
+
+  if(!nombre) return notify('Ingresa tu nombre', 2500);
+  if(!telefono) return notify('Ingresa tu teléfono', 2500);
+  if(Object.keys(items).length === 0) return notify('Debes seleccionar al menos un producto', 2500);
+
+  const total = calcTotalFromItems(items);
+  pendingOrderDraft = { nombre, telefono, comentarios, items, total };
+  fillSummary(items, total);
+  $('summary-payment-method').value = 'efectivo';
+  toggleTransferDetails();
+  showModal('order-summary-modal');
+}
+
+function submitOrderFromSummary(){
+  if(!pendingOrderDraft) return notify('No hay pedido en curso', 2000);
+  const paymentMethod = $('summary-payment-method').value;
+  const pedido = crearPedido({
+    ...pendingOrderDraft,
+    paymentMethod,
+    comentarios: pendingOrderDraft.comentarios
+  });
+  hideModal('order-summary-modal');
+  pendingOrderDraft = null;
+  clearClientForm();
+  showThanks();
+  notify('Pedido enviado');
+}
+
+function showThanks(){
+  const ov = $('thanks-overlay');
+  if(!ov) return;
+  ov.style.display = 'flex';
+  setTimeout(()=>{ ov.style.display='none'; }, 2200);
+}
+
+/* ====== Admin: productos ====== */
+function saveProductosFromAdmin(){
+  Object.keys(productos).forEach(k => {
+    const name = $(`cfg-${k}-name`)?.value || productos[k].nombre;
+    const price = Number($(`cfg-${k}-price`)?.value) || productos[k].precio;
+    const baseUnit = $(`cfg-${k}-baseunit`)?.value || productos[k].baseUnit;
+    const disponible = ($(`cfg-${k}-avail`)?.value || 'true') === 'true';
+    productos[k] = { ...productos[k], nombre:name, precio:price, baseUnit, disponible };
+  });
+  saveAll();
+  renderAll();
+  notify('Productos guardados');
+}
+
+function resetProductos(){
+  productos = structuredClone(DEFAULT_PRODUCTOS);
+  saveAll();
+  renderAll();
+  notify('Productos reiniciados');
+}
+
+/* ====== Admin: login ====== */
+function handleLogin(){
+  const email = ($('admin-email').value || '').trim().toLowerCase();
+  const pass = $('admin-password').value || '';
+  if(email === ADMIN_EMAIL && pass === ADMIN_PASS){
+    $('login-error').style.display = 'none';
+    setAdminMode(true);
+    hideModal('login-modal');
+    notify('Sesión iniciada como admin');
+  } else {
+    $('login-error').style.display = 'block';
+  }
+}
+
+/* ====== Export CSV ====== */
+function exportCsv(){
+  if(!pedidos.length) return notify('No hay pedidos para exportar');
+  const headers = ['id','nombre','telefono','total','estadoPago','deudaPendiente','fecha','comentarios','items','paymentMethod'];
   const rows = pedidos.map(p => {
-    const ip = p.items.paltas && Number(p.items.paltas.qty) ? `${p.items.paltas.qty} ${p.items.paltas.unit}` : '';
-    const ic = p.items.champi && Number(p.items.champi.qty) ? `${p.items.champi.qty} ${p.items.champi.unit}` : '';
-    const ifr = p.items.frutillas && Number(p.items.frutillas.qty) ? `${p.items.frutillas.qty} ${p.items.frutillas.unit}` : '';
+    const items = [];
+    if(p.items.paltas) items.push(`paltas:${p.items.paltas.qty}${p.items.paltas.unit}`);
+    if(p.items.champi) items.push(`champi:${p.items.champi.qty}${p.items.champi.unit}`);
+    if(p.items.frutillas) items.push(`frutillas:${p.items.frutillas.qty}${p.items.frutillas.unit}`);
     return [
       p.id,
-      (p.nombre||'').replace(/"/g,'""'),
-      (p.telefono||'').replace(/"/g,'""'),
+      `"${(p.nombre||'').replace(/"/g,'""')}"`,
+      `"${(p.telefono||'').replace(/"/g,'""')}"`,
       p.total,
       p.estadoPago,
-      p.deudaPendiente||0,
+      p.deudaPendiente,
       p.fecha,
-      (p.comentarios||'').replace(/"/g,'""'),
-      p.paymentMethod||'',
-      ip,
-      ic,
-      ifr
-    ];
+      `"${(p.comentarios||'').replace(/"/g,'""')}"`,
+      `"${items.join(';').replace(/"/g,'""')}"`,
+      p.paymentMethod || ''
+    ].join(',');
   });
-  const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
-  return csv;
-}
-function buildPaymentsCSV(){
-  const headers = ['id','pedidoId','monto','metodo','notas','fecha','cliente'];
-  const rows = pagos.map(pa => {
-    const ped = pedidos.find(p=>p.id===pa.pedidoId);
-    return [
-      pa.id,
-      pa.pedidoId,
-      pa.monto,
-      pa.metodo,
-      (pa.notas||'').replace(/"/g,'""'),
-      pa.fecha,
-      ped ? ped.nombre.replace(/"/g,'""') : ''
-    ];
-  });
-  const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
-  return csv;
-}
-function downloadCSV(filename, contents){
-  const blob = new Blob([contents], { type: 'text/csv;charset=utf-8;' });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename;
+  a.download = `pedidos-${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -1064,268 +1142,71 @@ function downloadCSV(filename, contents){
 /* ====== Render All ====== */
 function renderAll(){
   renderProductGrid();
-  renderOrders($('search-input') ? $('search-input').value : '', $('payment-filter') ? $('payment-filter').value : 'allActivos');
-  renderPaidOrders($('search-paid-input') ? $('search-paid-input').value : '', $('paid-filter') ? $('paid-filter').value : 'pagado');
+  renderOrders($('search-input')?.value || '', $('payment-filter')?.value || 'allActivos');
+  renderPaidOrders($('search-paid-input')?.value || '', $('paid-filter')?.value || 'pagado');
   renderProductsAdmin();
   renderFinanzas();
 }
 
-/* ====== Inicialización y eventos ====== */
-let pendingOrderData = null;
-
-function setupClientEvents(){
-  // Enviar pedido -> abre modal resumen
-  const enviarBtn = $('enviar-pedido');
-  if(enviarBtn){
-    enviarBtn.addEventListener('click', () => {
-      const nombre = $('nombre').value.trim();
-      const telefono = $('telefono').value.trim();
-      const comentarios = $('comentarios').value.trim();
-
-      if(!nombre){
-        alert('Por favor ingresa tu nombre.');
-        return;
-      }
-
-      // Construir items desde inputs
-      const qtyInputs = document.querySelectorAll('.client-qty');
-      const items = {};
-      qtyInputs.forEach(inp => {
-        const key = inp.getAttribute('data-product');
-        const qty = Number(inp.value) || 0;
-        if(qty > 0){
-          const prod = productos[key];
-          const unit = prod.baseUnit || 'kg';
-          items[key] = { qty, unit };
-        }
-      });
-
-      const total = calcTotalFromItems(items);
-      if(total <= 0){
-        alert('Ingresa cantidades mayores a 0 para al menos un producto.');
-        return;
-      }
-
-      // Guardar temporalmente y mostrar resumen
-      pendingOrderData = { nombre, telefono, comentarios, items };
-      const lines = [];
-      if(items.paltas) lines.push(`<div><strong>${escapeHTML(productos.paltas.nombre)}:</strong> ${items.paltas.qty} ${items.paltas.unit}</div>`);
-      if(items.champi) lines.push(`<div><strong>${escapeHTML(productos.champi.nombre)}:</strong> ${items.champi.qty} ${items.champi.unit}</div>`);
-      if(items.frutillas) lines.push(`<div><strong>${escapeHTML(productos.frutillas.nombre)}:</strong> ${items.frutillas.qty} ${items.frutillas.unit}</div>`);
-      $('summary-items').innerHTML = lines.join('');
-      $('summary-total').textContent = money(total);
-      $('summary-payment-method').value = 'efectivo';
-      $('summary-transfer-details').style.display = 'none';
-      showModal('order-summary-modal');
-    });
+/* ====== Toggle transferencia detalle ====== */
+function toggleTransferDetails(){
+  const sel = $('summary-payment-method');
+  const box = $('summary-transfer-details');
+  if(sel && box){
+    box.style.display = sel.value === 'transferencia' ? 'block' : 'none';
   }
-
-  // Modal resumen: método de pago
-  const spm = $('summary-payment-method');
-  if(spm){
-    spm.addEventListener('change', () => {
-      const val = spm.value;
-      $('summary-transfer-details').style.display = (val === 'transferencia') ? 'block' : 'none';
-    });
-  }
-
-  // Confirmar pedido
-  const confirmBtn = $('confirm-order');
-  if(confirmBtn){
-    confirmBtn.addEventListener('click', () => {
-      if(!pendingOrderData) return;
-      const pm = $('summary-payment-method').value || 'efectivo';
-      const pedido = crearPedido({ ...pendingOrderData, paymentMethod: pm });
-      hideModal('order-summary-modal');
-      // Reset formulario cliente
-      $('nombre').value = '';
-      $('telefono').value = '';
-      $('comentarios').value = '';
-      document.querySelectorAll('.client-qty').forEach(inp => {
-        const key = inp.getAttribute('data-product');
-        const prod = productos[key];
-        inp.value = (prod.baseUnit === 'kg') ? 1 : 0;
-      });
-      pendingOrderData = null;
-
-      // Mostrar gracias
-      const overlay = $('thanks-overlay');
-      overlay.style.display = 'flex';
-      setTimeout(() => { overlay.style.display = 'none'; }, 2500);
-      notify(`Pedido enviado: ${pedido.nombre}`);
-    });
-  }
-
-  // Cancelar resumen
-  const rejectBtn = $('reject-order');
-  const closeSummary = $('close-order-summary');
-  [rejectBtn, closeSummary].forEach(btn => {
-    if(btn) btn.addEventListener('click', () => { hideModal('order-summary-modal'); pendingOrderData = null; });
-  });
 }
 
-function setupAdminEvents(){
-  // Abrir login modal
-  const adminLink = $('admin-login-link');
-  if(adminLink){
-    adminLink.addEventListener('click', () => { showModal('login-modal'); });
-  }
-  // Cerrar login
-  const cancelLogin = $('cancel-login');
-  const closeLoginX = $('close-login');
-  [cancelLogin, closeLoginX].forEach(btn => {
-    if(btn) btn.addEventListener('click', () => { hideModal('login-modal'); });
+/* ====== INIT ====== */
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('button:not([type])').forEach(btn => btn.type = 'button');
+
+  loadAll();
+  renderAll();
+  setAdminMode(false);
+
+  $('admin-login-link')?.addEventListener('click', () => showModal('login-modal'));
+  $('cancel-login')?.addEventListener('click', () => hideModal('login-modal'));
+  $('close-login')?.addEventListener('click', () => hideModal('login-modal'));
+  $('login-btn')?.addEventListener('click', handleLogin);
+
+  $('enviar-pedido')?.addEventListener('click', handleClientSubmit);
+  $('confirm-order')?.addEventListener('click', submitOrderFromSummary);
+  $('reject-order')?.addEventListener('click', () => { pendingOrderDraft=null; hideModal('order-summary-modal'); });
+  $('close-order-summary')?.addEventListener('click', () => { pendingOrderDraft=null; hideModal('order-summary-modal'); });
+  $('summary-payment-method')?.addEventListener('change', toggleTransferDetails);
+
+  $('logout-btn')?.addEventListener('click', () => { setAdminMode(false); notify('Sesión cerrada'); });
+  $('add-order-btn')?.addEventListener('click', () => { pendingOrderDraft=null; showModal('order-summary-modal'); });
+  $('refresh-btn')?.addEventListener('click', () => { loadAll(); renderAll(); notify('Datos recargados'); });
+  $('export-btn')?.addEventListener('click', exportCsv);
+
+  $('save-products-btn')?.addEventListener('click', saveProductosFromAdmin);
+  $('reset-products-btn')?.addEventListener('click', resetProductos);
+
+  $('search-input')?.addEventListener('input', e => renderOrders(e.target.value, $('payment-filter').value));
+  $('payment-filter')?.addEventListener('change', e => renderOrders($('search-input').value, e.target.value));
+  $('search-paid-input')?.addEventListener('input', e => renderPaidOrders(e.target.value, $('paid-filter').value));
+  $('paid-filter')?.addEventListener('change', e => renderPaidOrders($('search-paid-input').value, e.target.value));
+
+  $('close-payment')?.addEventListener('click', () => hideModal('payment-modal'));
+  $('toggle-payment-history')?.addEventListener('click', () => {
+    const c = $('payment-history-container');
+    if(!c) return;
+    c.style.display = (c.style.display === 'none' || !c.style.display) ? 'block' : 'none';
   });
-  // Login simple
-  const loginBtn = $('login-btn');
-  if(loginBtn){
-    loginBtn.addEventListener('click', () => {
-      const email = $('admin-email').value.trim();
-      const pass = $('admin-password').value.trim();
-      const ok = (email === 'admin@valledor.com' && pass === 'admin123');
-      $('login-error').style.display = ok ? 'none' : 'block';
-      if(ok){
-        hideModal('login-modal');
-        setAdminMode(true);
-        notify('Modo administrador activado');
-      }
-    });
+
+  $('thanks-overlay')?.addEventListener('click', () => $('thanks-overlay').style.display = 'none');
+
+  setupTabs();
+});
+
+/* ====== Acceso rápido ESC para cerrar modales ====== */
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    ['login-modal','order-summary-modal','payment-modal'].forEach(hideModal);
   }
-  // Logout
-  const logoutBtn = $('logout-btn');
-  if(logoutBtn){
-    logoutBtn.addEventListener('click', () => {
-      setAdminMode(false);
-      notify('Sesión cerrada');
-    });
-  }
-
-  // Agregar pedido (rápido con prompts)
-  const addOrderBtn = $('add-order-btn');
-  if(addOrderBtn){
-    addOrderBtn.addEventListener('click', openAdminCreateOrder);
-  }
-  function openAdminCreateOrder(){
-    const nombre = prompt('Nombre del cliente:');
-    if(!nombre) return notify('Nombre requerido', 2000);
-    const telefono = prompt('Teléfono (opcional):') || '';
-
-    const items = {};
-
-    // Paltas
-    if(productos.paltas && productos.paltas.disponible){
-      const unitP = productos.paltas.baseUnit || 'kg';
-      const qtyP = Number(prompt(`Cantidad de ${productos.paltas.nombre} (${unitP}):`, unitP === 'kg' ? 1 : 0)) || 0;
-      if(qtyP > 0) items.paltas = { qty: qtyP, unit: unitP };
-    }
-
-    // Champiñones
-    if(productos.champi && productos.champi.disponible){
-      const unitC = productos.champi.baseUnit || 'caja';
-      const qtyC = Number(prompt(`Cantidad de ${productos.champi.nombre} (${unitC}):`, unitC === 'caja' ? 1 : 0)) || 0;
-      if(qtyC > 0) items.champi = { qty: qtyC, unit: unitC };
-    }
-
-    // Frutillas
-    if(productos.frutillas && productos.frutillas.disponible){
-      const unitF = productos.frutillas.baseUnit || 'g';
-      const defaultQty = unitF === 'g' ? (productos.frutillas.bloqueGramos || 100) : 1;
-      const qtyF = Number(prompt(`Cantidad de ${productos.frutillas.nombre} (${unitF}):`, defaultQty)) || 0;
-      if(qtyF > 0) items.frutillas = { qty: qtyF, unit: unitF };
-    }
-
-    const comentarios = prompt('Comentarios / Destino despacho (opcional):') || '';
-    const pedido = crearPedido({ nombre, telefono, items, comentarios, paymentMethod:'efectivo' });
-    notify(`Pedido creado: ${pedido.nombre} — Total ${money(pedido.total)}`);
-  }
-
-  // Exportar CSV
-  const exportBtn = $('export-btn');
-  if(exportBtn){
-    exportBtn.addEventListener('click', () => {
-      const ordersCSV = buildOrdersCSV();
-      const paymentsCSV = buildPaymentsCSV();
-      downloadCSV('pedidos.csv', ordersCSV);
-      downloadCSV('pagos.csv', paymentsCSV);
-      notify('CSV exportado');
-    });
-  }
-
-  // Actualizar
-  const refreshBtn = $('refresh-btn');
-  if(refreshBtn){
-    refreshBtn.addEventListener('click', () => {
-      renderAll();
-      notify('Actualizado');
-    });
-  }
-
-  // Toggle historial en modal pagos
-  const toggleHistory = $('toggle-payment-history');
-  if(toggleHistory){
-    toggleHistory.addEventListener('click', () => {
-      const cont = $('payment-history-container');
-      if(!cont) return;
-      const show = cont.style.display !== 'block';
-      cont.style.display = show ? 'block' : 'none';
-    });
-  }
-
-  // Guardar productos
-  const saveProductsBtn = $('save-products-btn');
-  if(saveProductsBtn){
-    saveProductsBtn.addEventListener('click', () => {
-      Object.keys(productos).forEach(k => {
-        const name = $(`cfg-${k}-name`).value || productos[k].nombre;
-        const price = Number($(`cfg-${k}-price`).value) || productos[k].precio;
-        const baseUnit = $(`cfg-${k}-baseunit`).value || productos[k].baseUnit;
-        const avail = $(`cfg-${k}-avail`).value === 'true';
-
-        productos[k].nombre = name;
-        productos[k].precio = price;
-        productos[k].baseUnit = baseUnit;
-        productos[k].disponible = avail;
-      });
-      saveAll();
-      renderAll();
-      notify('Productos guardados');
-    });
-  }
-
-  // Reset productos a default
-  const resetProductsBtn = $('reset-products-btn');
-  if(resetProductsBtn){
-    resetProductsBtn.addEventListener('click', () => {
-      if(confirm('¿Resetear productos al estado por defecto?')){
-        productos = structuredClone(DEFAULT_PRODUCTOS);
-        saveAll();
-        renderAll();
-        notify('Productos reseteados');
-      }
-    });
-  }
-
-  // Filtros y búsqueda
-  const si = $('search-input');
-  const pf = $('payment-filter');
-  if(si){ si.addEventListener('input', () => renderOrders(si.value, pf ? pf.value : 'allActivos')); }
-  if(pf){ pf.addEventListener('change', () => renderOrders(si ? si.value : '', pf.value)); }
-
-  const spi = $('search-paid-input');
-  const pafd = $('paid-filter');
-  if(spi){ spi.addEventListener('input', () => renderPaidOrders(spi.value, pafd ? pafd.value : 'pagado')); }
-  if(pafd){ pafd.addEventListener('change', () => renderPaidOrders(spi ? spi.value : '', pafd.value)); }
-}
-
-// Cerrar modal pago por X
-const closePaymentX = $('close-payment');
-if(closePaymentX){ closePaymentX.addEventListener('click', () => hideModal('payment-modal')); }
-
-/* ====== Boot ====== */
-loadAll();
-renderAll();
-setupClientEvents();
-setupAdminEvents();
+});
 </script>
 </body>
 </html>
