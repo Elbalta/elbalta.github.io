@@ -618,26 +618,12 @@ function setAdminMode(on){
 }
 
 /* ====== Storage ====== */
-function saveAll(){
-  try{
-    localStorage.setItem('productos', JSON.stringify(productos));
-    localStorage.setItem('pedidos', JSON.stringify(pedidos));
-    localStorage.setItem('pagos', JSON.stringify(pagos));
-  } catch(e){
-    console.warn('No se pudo guardar en localStorage', e);
-  }
-}
+// Storage deshabilitado: trabajamos en memoria y enviamos a Sheets
+function saveAll(){ /* localStorage deshabilitado */ }
 function loadAll(){
-  try{
-    const pr = localStorage.getItem('productos');
-    const p = localStorage.getItem('pedidos');
-    const pay = localStorage.getItem('pagos');
-    if(pr) productos = Object.assign(structuredClone(DEFAULT_PRODUCTOS), JSON.parse(pr));
-    if(p) pedidos = JSON.parse(p);
-    if(pay) pagos = JSON.parse(pay);
-  } catch(e){
-    console.error('loadAll error', e);
-  }
+  productos = structuredClone(DEFAULT_PRODUCTOS);
+  pedidos = [];
+  pagos = [];
   ensureProductos();
 }
 
@@ -712,7 +698,6 @@ async function crearPedido({ nombre, telefono, items, comentarios, paymentMethod
     paymentMethod
   };
   pedidos.unshift(pedido);
-  saveAll();
   renderAll();
 
   // Enviar a Sheets (no bloquea el UI)
@@ -750,7 +735,6 @@ async function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
   pedido.deudaPendiente = Math.max(0, Number(pedido.deudaPendiente || pedido.total) - Number(pago.monto || 0));
   if(pedido.deudaPendiente <= 0) pedido.estadoPago = 'pagado';
   else if(pedido.deudaPendiente < pedido.total) pedido.estadoPago = 'parcial';
-  saveAll();
   renderAll();
 
   // Enviar a Sheets
@@ -813,11 +797,12 @@ function renderOrders(filterText, paymentFilter){
       }
     }
 
+    const items = p.items || {};
     const itemsLines = [];
     const prod = productos || DEFAULT_PRODUCTOS;
-    if(p.items.paltas && Number(p.items.paltas.qty)) itemsLines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML((prod.paltas && prod.paltas.nombre) || 'Paltas')}`);
-    if(p.items.champi && Number(p.items.champi.qty)) itemsLines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML((prod.champi && prod.champi.nombre) || 'Champiñones')}`);
-    if(p.items.frutillas && Number(p.items.frutillas.qty)) itemsLines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML((prod.frutillas && prod.frutillas.nombre) || 'Frutillas')}`);
+    if(items.paltas && Number(items.paltas.qty)) itemsLines.push(`${items.paltas.qty} ${items.paltas.unit} ${escapeHTML((prod.paltas && prod.paltas.nombre) || 'Paltas')}`);
+    if(items.champi && Number(items.champi.qty)) itemsLines.push(`${items.champi.qty} ${items.champi.unit} ${escapeHTML((prod.champi && prod.champi.nombre) || 'Champiñones')}`);
+    if(items.frutillas && Number(items.frutillas.qty)) itemsLines.push(`${items.frutillas.qty} ${items.frutillas.unit} ${escapeHTML((prod.frutillas && prod.frutillas.nombre) || 'Frutillas')}`);
 
     const tr = document.createElement('tr');
     tr.className = p.estadoPago === 'parcial' ? 'row-partial' : 'row-pending';
@@ -868,11 +853,12 @@ function renderPaidOrders(searchText, filter){
       if(!found) return;
     }
 
+    const items = p.items || {};
     const itemsLines = [];
     const prod = productos || DEFAULT_PRODUCTOS;
-    if(p.items.paltas && Number(p.items.paltas.qty)) itemsLines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML((prod.paltas && prod.paltas.nombre) || 'Paltas')}`);
-    if(p.items.champi && Number(p.items.champi.qty)) itemsLines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML((prod.champi && prod.champi.nombre) || 'Champiñones')}`);
-    if(p.items.frutillas && Number(p.items.frutillas.qty)) itemsLines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML((prod.frutillas && prod.frutillas.nombre) || 'Frutillas')}`);
+    if(items.paltas && Number(items.paltas.qty)) itemsLines.push(`${items.paltas.qty} ${items.paltas.unit} ${escapeHTML((prod.paltas && prod.paltas.nombre) || 'Paltas')}`);
+    if(items.champi && Number(items.champi.qty)) itemsLines.push(`${items.champi.qty} ${items.champi.unit} ${escapeHTML((prod.champi && prod.champi.nombre) || 'Champiñones')}`);
+    if(items.frutillas && Number(items.frutillas.qty)) itemsLines.push(`${items.frutillas.qty} ${items.frutillas.unit} ${escapeHTML((prod.frutillas && prod.frutillas.nombre) || 'Frutillas')}`);
 
     const lastPayment = (p.pagos && p.pagos.length)
       ? new Date(p.pagos[p.pagos.length-1].fecha).toLocaleString()
@@ -1025,7 +1011,7 @@ document.addEventListener('click', e => {
   else if(action === 'delete'){
     if(confirm('Eliminar pedido? Esta acción es irreversible.')){
       pedidos = pedidos.filter(pp => pp.id !== id);
-      saveAll(); renderAll(); notify('Pedido eliminado');
+      renderAll(); notify('Pedido eliminado');
     }
   }
 });
@@ -1035,9 +1021,9 @@ function viewPedidoDetails(id){
   const p = pedidos.find(x => x.id === id);
   if(!p) return notify('Pedido no encontrado', 2500);
   let text = `Pedido: ${p.nombre}\nTel: ${p.telefono}\nFecha: ${new Date(p.fecha).toLocaleString()}\nProductos:\n`;
-  if(p.items.paltas && p.items.paltas.qty) text += ` - ${p.items.paltas.qty} ${p.items.paltas.unit} Paltas\n`;
-  if(p.items.champi && p.items.champi.qty) text += ` - ${p.items.champi.qty} ${p.items.champi.unit} Champiñones\n`;
-  if(p.items.frutillas && p.items.frutillas.qty) text += ` - ${p.items.frutillas.qty} ${p.items.frutillas.unit} Frutillas\n`;
+  if(p.items && p.items.paltas && p.items.paltas.qty) text += ` - ${p.items.paltas.qty} ${p.items.paltas.unit} Paltas\n`;
+  if(p.items && p.items.champi && p.items.champi.qty) text += ` - ${p.items.champi.qty} ${p.items.champi.unit} Champiñones\n`;
+  if(p.items && p.items.frutillas && p.items.frutillas.qty) text += ` - ${p.items.frutillas.qty} ${p.items.frutillas.unit} Frutillas\n`;
   text += `Total: ${money(p.total)}\nPendiente: ${money(p.deudaPendiente)}\nComentarios: ${p.comentarios || '-'}`;
   alert(text);
 }
@@ -1189,14 +1175,12 @@ function saveProductosFromAdmin(){
     const disponible = (availEl ? availEl.value : 'true') === 'true';
     productos[k] = Object.assign({}, productos[k], { nombre:name, precio:price, baseUnit, disponible });
   });
-  saveAll();
   renderAll();
   notify('Productos guardados');
 }
 
 function resetProductos(){
   productos = structuredClone(DEFAULT_PRODUCTOS);
-  saveAll();
   renderAll();
   notify('Productos reiniciados');
 }
@@ -1221,9 +1205,9 @@ function exportCsv(){
   const headers = ['id','nombre','telefono','total','estadoPago','deudaPendiente','fecha','comentarios','items','paymentMethod'];
   const rows = pedidos.map(p => {
     const items = [];
-    if(p.items.paltas) items.push(`paltas:${p.items.paltas.qty}${p.items.paltas.unit}`);
-    if(p.items.champi) items.push(`champi:${p.items.champi.qty}${p.items.champi.unit}`);
-    if(p.items.frutillas) items.push(`frutillas:${p.items.frutillas.qty}${p.items.frutillas.unit}`);
+    if(p.items && p.items.paltas) items.push(`paltas:${p.items.paltas.qty}${p.items.paltas.unit}`);
+    if(p.items && p.items.champi) items.push(`champi:${p.items.champi.qty}${p.items.champi.unit}`);
+    if(p.items && p.items.frutillas) items.push(`frutillas:${p.items.frutillas.qty}${p.items.frutillas.unit}`);
     return [
       p.id,
       `"${(p.nombre||'').replace(/"/g,'""')}"`,
