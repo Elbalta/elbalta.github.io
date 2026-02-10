@@ -595,6 +595,16 @@ function notify(msg, time=3000){
   }, time);
 }
 
+/* ====== Sanitizar productos ====== */
+function ensureProductos(){
+  if(!productos || typeof productos !== 'object'){
+    productos = structuredClone(DEFAULT_PRODUCTOS);
+  }
+  ['paltas','champi','frutillas'].forEach(k => {
+    productos[k] = Object.assign(structuredClone(DEFAULT_PRODUCTOS[k]), productos[k] || {});
+  });
+}
+
 /* ====== Admin Mode (visibilidad) ====== */
 function setAdminMode(on){
   isAdmin = !!on;
@@ -628,9 +638,7 @@ function loadAll(){
   } catch(e){
     console.error('loadAll error', e);
   }
-  productos.paltas = Object.assign(structuredClone(DEFAULT_PRODUCTOS.paltas), productos.paltas || {});
-  productos.champi = Object.assign(structuredClone(DEFAULT_PRODUCTOS.champi), productos.champi || {});
-  productos.frutillas = Object.assign(structuredClone(DEFAULT_PRODUCTOS.frutillas), productos.frutillas || {});
+  ensureProductos();
 }
 
 /* ====== Util Sheets ====== */
@@ -663,6 +671,7 @@ async function postToSheets(type, data){
 
 /* ====== Cálculo total ====== */
 function calcTotalFromItems(items){
+  ensureProductos();
   let total = 0;
   if(items.paltas && Number(items.paltas.qty)){
     const q = Number(items.paltas.qty)||0;
@@ -687,6 +696,7 @@ function calcTotalFromItems(items){
 
 /* ====== Pedido / Pagos ====== */
 async function crearPedido({ nombre, telefono, items, comentarios, paymentMethod='' }){
+  ensureProductos();
   const total = calcTotalFromItems(items);
   const pedido = {
     id: String(Date.now()) + Math.random().toString(36).slice(2,8),
@@ -723,6 +733,7 @@ async function crearPedido({ nombre, telefono, items, comentarios, paymentMethod
 }
 
 async function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
+  ensureProductos();
   const pedido = pedidos.find(p => p.id === pedidoId);
   if(!pedido) return false;
   const pago = {
@@ -761,6 +772,7 @@ async function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
 
 /* ====== Render ====== */
 function renderProductGrid(){
+  ensureProductos();
   const grid = $('product-grid'); if(!grid) return;
   grid.innerHTML = '';
   Object.keys(productos).forEach(key => {
@@ -781,6 +793,7 @@ function renderProductGrid(){
 
 /* Pedidos activos (pendiente + parcial) */
 function renderOrders(filterText, paymentFilter){
+  ensureProductos();
   const tbody = $('orders-body'); if(!tbody) return;
   tbody.innerHTML = '';
   const ft = (filterText || '').toLowerCase();
@@ -801,9 +814,10 @@ function renderOrders(filterText, paymentFilter){
     }
 
     const itemsLines = [];
-    if(p.items.paltas && Number(p.items.paltas.qty)) itemsLines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML(productos.paltas.nombre)}`);
-    if(p.items.champi && Number(p.items.champi.qty)) itemsLines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML(productos.champi.nombre)}`);
-    if(p.items.frutillas && Number(p.items.frutillas.qty)) itemsLines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML(productos.frutillas.nombre)}`);
+    const prod = productos || DEFAULT_PRODUCTOS;
+    if(p.items.paltas && Number(p.items.paltas.qty)) itemsLines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML((prod.paltas && prod.paltas.nombre) || 'Paltas')}`);
+    if(p.items.champi && Number(p.items.champi.qty)) itemsLines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML((prod.champi && prod.champi.nombre) || 'Champiñones')}`);
+    if(p.items.frutillas && Number(p.items.frutillas.qty)) itemsLines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML((prod.frutillas && prod.frutillas.nombre) || 'Frutillas')}`);
 
     const tr = document.createElement('tr');
     tr.className = p.estadoPago === 'parcial' ? 'row-partial' : 'row-pending';
@@ -835,6 +849,7 @@ function renderOrders(filterText, paymentFilter){
 
 /* Tabla de pagos / pagados */
 function renderPaidOrders(searchText, filter){
+  ensureProductos();
   const tbody = $('paid-orders-body'); if(!tbody) return;
   tbody.innerHTML = '';
   const st = (searchText || '').toLowerCase();
@@ -854,9 +869,10 @@ function renderPaidOrders(searchText, filter){
     }
 
     const itemsLines = [];
-    if(p.items.paltas && Number(p.items.paltas.qty)) itemsLines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML(productos.paltas.nombre)}`);
-    if(p.items.champi && Number(p.items.champi.qty)) itemsLines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML(productos.champi.nombre)}`);
-    if(p.items.frutillas && Number(p.items.frutillas.qty)) itemsLines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML(productos.frutillas.nombre)}`);
+    const prod = productos || DEFAULT_PRODUCTOS;
+    if(p.items.paltas && Number(p.items.paltas.qty)) itemsLines.push(`${p.items.paltas.qty} ${p.items.paltas.unit} ${escapeHTML((prod.paltas && prod.paltas.nombre) || 'Paltas')}`);
+    if(p.items.champi && Number(p.items.champi.qty)) itemsLines.push(`${p.items.champi.qty} ${p.items.champi.unit} ${escapeHTML((prod.champi && prod.champi.nombre) || 'Champiñones')}`);
+    if(p.items.frutillas && Number(p.items.frutillas.qty)) itemsLines.push(`${p.items.frutillas.qty} ${p.items.frutillas.unit} ${escapeHTML((prod.frutillas && prod.frutillas.nombre) || 'Frutillas')}`);
 
     const lastPayment = (p.pagos && p.pagos.length)
       ? new Date(p.pagos[p.pagos.length-1].fecha).toLocaleString()
@@ -888,6 +904,7 @@ function renderPaidOrders(searchText, filter){
 }
 
 function renderProductsAdmin(){
+  ensureProductos();
   const container = $('products-admin'); if(!container) return;
   container.innerHTML = '';
   Object.keys(productos).forEach(k => {
@@ -912,6 +929,7 @@ function renderProductsAdmin(){
 }
 
 function renderFinanzas(){
+  ensureProductos();
   const totalPedidos = pedidos.reduce((acc,p)=> acc + (Number(p.total)||0), 0);
   const totalPendiente = pedidos.reduce((acc,p)=> acc + (Number(p.deudaPendiente)||0), 0);
   const totalCobrado = pagos.reduce((acc,pa)=> acc + (Number(pa.monto)||0), 0);
@@ -941,6 +959,7 @@ function renderFinanzas(){
       const n = ped ? ped.nombre : 'Pedido';
       const d = document.createElement('div');
       d.style.display='flex';
+      d.style.justjustifyContent='space-between';
       d.style.justifyContent='space-between';
       d.style.padding='4px 0';
       d.innerHTML = `
@@ -1079,7 +1098,7 @@ function handleSavePayment(){
 /* ====== Helpers UI Cliente ====== */
 function buildItemsFromForm(){
   const items = {};
-  Object.keys(productos).forEach(key => {
+  Object.keys(productos || {}).forEach(key => {
     const input = document.querySelector(`input.client-qty[data-product="${key}"]`);
     if(!input) return;
     const qty = Number(input.value);
@@ -1111,6 +1130,7 @@ function clearClientForm(){
 
 /* ====== Cliente: flujo pedido ====== */
 function handleClientSubmit(){
+  ensureProductos();
   const nombre = ($('nombre') && $('nombre').value || '').trim();
   const telefono = normPhone($('telefono') && $('telefono').value || '');
   const comentarios = ($('comentarios') && $('comentarios').value || '').trim();
@@ -1130,6 +1150,7 @@ function handleClientSubmit(){
 }
 
 function submitOrderFromSummary(){
+  ensureProductos();
   if(!pendingOrderDraft) return notify('No hay pedido en curso', 2000);
   const spm = $('summary-payment-method');
   const paymentMethod = spm ? spm.value : 'efectivo';
@@ -1156,6 +1177,7 @@ function showThanks(){
 
 /* ====== Admin: productos ====== */
 function saveProductosFromAdmin(){
+  ensureProductos();
   Object.keys(productos).forEach(k => {
     const nameEl = document.getElementById(`cfg-${k}-name`);
     const priceEl = document.getElementById(`cfg-${k}-price`);
@@ -1229,6 +1251,7 @@ function exportCsv(){
 
 /* ====== Render All ====== */
 function renderAll(){
+  ensureProductos();
   const si = $('search-input');
   const pf = $('payment-filter');
   const spi = $('search-paid-input');
