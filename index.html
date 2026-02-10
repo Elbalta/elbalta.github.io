@@ -99,7 +99,7 @@
       display:flex;flex-direction:column;gap:8px;transition:transform .15s, box-shadow .15s
     }
     .product-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.08)}
-    .product-name{font-weight:700;fontsize:1.02rem}
+    .product-name{font-weight:700;font-size:1.02rem}
     .product-unit{font-size:.92rem;color:var(--muted)}
     .qty-row{display:flex;gap:10px;align-items:center;margin-top:6px}
     .qty-row input{flex:1;padding:12px;border-radius:10px;border:1px solid #ddd}
@@ -617,8 +617,7 @@ function setAdminMode(on){
   renderAll();
 }
 
-/* ====== Storage ====== */
-// Storage deshabilitado: trabajamos en memoria y enviamos a Sheets
+/* ====== Storage (deshabilitado) ====== */
 function saveAll(){ /* localStorage deshabilitado */ }
 function loadAll(){
   productos = structuredClone(DEFAULT_PRODUCTOS);
@@ -635,6 +634,7 @@ function itemsToString(items){
   if(items.frutillas && items.frutillas.qty) parts.push(`${items.frutillas.qty} ${items.frutillas.unit} Frutillas`);
   return parts.join(' | ');
 }
+
 async function postToSheets(type, data){
   try{
     const resp = await fetch(SHEETS_ENDPOINT, {
@@ -644,13 +644,48 @@ async function postToSheets(type, data){
     });
     const json = await resp.json().catch(()=> ({}));
     if(!resp.ok || !json.ok){
-      throw new Error(json.error || `HTTP ${resp.status}`);
+      const msg = json.error || `HTTP ${resp.status}`;
+      throw new Error(msg);
     }
     return true;
   } catch(err){
     console.error('Sheets error', err);
-    notify('No se pudo enviar a la planilla', 4000);
+    notify(`No se pudo enviar a la planilla: ${err.message}`, 5000);
     return false;
+  }
+}
+
+/* Leer todo desde Sheets al iniciar */
+async function fetchAllFromSheets(){
+  try{
+    const resp = await fetch(SHEETS_ENDPOINT);
+    const json = await resp.json();
+    if(!json.ok) throw new Error(json.error || 'Error de lectura');
+    pedidos = (json.pedidos || []).map(p => ({
+      ...p,
+      items: p.itemsJSON ? JSON.parse(p.itemsJSON) : {},
+      pagos: []
+    }));
+    pagos = (json.pagos || []).map(pa => ({
+      ...pa,
+      monto: Number(pa.monto)||0,
+      deudaPosterior: Number(pa.deudaPosterior)||0
+    }));
+    // vincular pagos a pedidos
+    pagos.forEach(pa => {
+      const ped = pedidos.find(p => p.id === pa.pedidoId);
+      if(ped){
+        ped.pagos = ped.pagos || [];
+        ped.pagos.push(pa);
+        ped.deudaPendiente = pa.deudaPosterior;
+        ped.estadoPago = pa.deudaPosterior <= 0 ? 'pagado' :
+                         pa.deudaPosterior < ped.total ? 'parcial' : 'pendiente';
+      }
+    });
+    renderAll();
+  } catch(err){
+    console.error('fetchAllFromSheets', err);
+    notify('No se pudo cargar datos de Sheets', 4000);
   }
 }
 
@@ -699,7 +734,6 @@ async function crearPedido({ nombre, telefono, items, comentarios, paymentMethod
   pedidos.unshift(pedido);
   renderAll();
 
-  // Enviar a Sheets (no bloquea el UI)
   postToSheets('pedido', {
     id: pedido.id,
     fecha: pedido.fecha,
@@ -736,7 +770,6 @@ async function registrarPago(pedidoId, { monto, metodo, notas, fecha }){
   else if(pedido.deudaPendiente < pedido.total) pedido.estadoPago = 'parcial';
   renderAll();
 
-  // Enviar a Sheets
   postToSheets('pago', {
     id: pago.id,
     pedidoId: pago.pedidoId,
@@ -1002,7 +1035,7 @@ function setupTabs(){
 async function deletePedido(pedidoId, btn){
   const idx = pedidos.findIndex(p => p.id === pedidoId);
   if(idx === -1) return;
-  if(!confirm('¿Borrar este pedido? Se marcará como eliminado en la planilla.')) return;
+  if(!confirm('¿Borrar este pedido? Se eliminará de la planilla.')) return;
 
   let originalHTML;
   if(btn){
@@ -1021,7 +1054,7 @@ async function deletePedido(pedidoId, btn){
     renderAll();
     notify('No se pudo borrar en Sheets. Se revirtió el borrado.', 4000);
   } else {
-    notify('Pedido marcado como eliminado en Sheets.', 2500);
+    notify('Pedido eliminado en Sheets.', 2500);
   }
 
   if(btn){
@@ -1106,7 +1139,7 @@ function openOrderSummary(){
 async function confirmOrder(){
   if(!pendingOrderDraft) return;
   const paymentMethod = $('summary-payment-method').value;
-  const pedido = await crearPedido({
+  await crearPedido({
     ...pendingOrderDraft,
     paymentMethod
   });
@@ -1123,7 +1156,7 @@ function showThanks(){
   setTimeout(()=> overlay.style.display = 'none', 2200);
 }
 
-/* Ver pedido (modal simple) */
+/* Ver pedido (alert simple) */
 function viewOrder(id){
   const p = pedidos.find(x=>x.id===id);
   if(!p){ notify('Pedido no encontrado'); return; }
@@ -1228,6 +1261,7 @@ function renderAll(){
 function init(){
   loadAll();
   renderProductGrid();
+  fetchAllFromSheets(); // carga desde Sheets
   renderAll();
 
   // Botones cliente
